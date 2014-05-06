@@ -2,7 +2,10 @@ package dh.newspaper.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
+import android.webkit.URLUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Attributes;
@@ -12,6 +15,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.FormElement;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.Entities.EscapeMode;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 import com.google.common.base.Strings;
@@ -21,8 +25,6 @@ import com.google.common.base.Strings;
  * @author hiep
  */
 public class ContentExtractor {
-	private static final String MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; U; Android 4.0.3; ko-kr; LG-L160L Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
-
 	/**
 	 * Get the simplify format of the article from a Webpage:
 	 * <ul>
@@ -40,7 +42,7 @@ public class ContentExtractor {
 	 * @throws IOException
 	 */
 	public static Elements extract(String addressUrl, String mainContentQuery) throws IOException {
-		Document doc = Jsoup.connect(addressUrl).userAgent(MOBILE_USER_AGENT).get();
+		Document doc = Jsoup.connect(addressUrl).userAgent(NetworkUtils.MOBILE_USER_AGENT).get();
 		doc.outputSettings().escapeMode(EscapeMode.xhtml);
 		return extract(doc, mainContentQuery);
 	}
@@ -124,5 +126,75 @@ public class ContentExtractor {
             }
         }
     }
+
+	public static List<RssItem> parseRss(String addressUrl, String charSet) throws RssParserException, IOException {
+		InputStream input = NetworkUtils.getStreamFromUrl2(addressUrl);
+		Document doc = Jsoup.parse(input, charSet, addressUrl, Parser.xmlParser());
+		input.close();
+		return extractRssItem(doc);
+	}
+
+	public static List<RssItem> extractRssItem(Document doc) throws RssParserException {
+		Elements itemsElem = doc.select("rss>channel>item");
+
+		int itemCount = itemsElem.size();
+		List<RssItem> resu = new ArrayList<>(itemCount);
+		for (int i=0; i<itemCount; i++) {
+			Element elem = itemsElem.get(i);
+			RssItem rssItem = new RssItem(
+					parseTitle(elem, i),
+					parsePublishDate(elem, i),
+					parseDescription(elem, i),
+					parseUri(elem, i)
+				);
+			rssItem.author = parseAuthor(elem, i);
+			resu.add(rssItem);
+		}
+
+		return resu;
+	}
+
+	private static String parseUri(Element elem, int pos) throws RssParserException {
+		String uri = elem.select("guid").first().text();
+		if (URLUtil.isValidUrl(uri)) {
+			return uri;
+		}
+		uri = elem.select("link").first().text();
+		if (URLUtil.isValidUrl(uri)) {
+			return uri;
+		}
+		throw new RssParserException("Unable to find URI in <guid> or <link> tag", pos);
+	}
+
+	private static String parseTitle(Element elem, int pos) throws RssParserException {
+		String title = elem.select("title").first().text();
+		if (Strings.isNullOrEmpty(title)) {
+			throw new RssParserException("<title> is empty", pos);
+		}
+		return title;
+	}
+
+	private static String parsePublishDate(Element elem, int pos) throws RssParserException {
+		String pubDate = elem.select("pubDate").first().text();
+		if (Strings.isNullOrEmpty(pubDate)) {
+			throw new RssParserException("<pubDate> is empty", pos);
+		}
+		return pubDate;
+	}
+	private static String parseDescription(Element elem, int pos) throws RssParserException {
+		String description = elem.select("description").first().text();
+		if (Strings.isNullOrEmpty(description)) {
+			throw new RssParserException("<description> is empty", pos);
+		}
+		return description;
+	}
+
+	/**
+	 * Optional
+	 * @return
+	 */
+	private static String parseAuthor(Element elem, int pos) {
+		return elem.select("author").first().text();
+	}
 
 }

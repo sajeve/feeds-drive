@@ -6,6 +6,7 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://D:/prg/Developper/.gradle/caches/modules-2/files-2.1/org.jdom/jdom/1.1.1-android-fork/f57b289ac98cb38c5ab60bc04615888c02e04c80/jdom-1.1.1-android-fork-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jdom/jdom/1.0/jdom-1.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

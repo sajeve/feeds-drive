@@ -2,6 +2,7 @@ package dh.newspaper;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -20,10 +21,13 @@ import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.TextView;
 
+import com.etsy.android.grid.StaggeredGridView;
 import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndEntry;
 import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndFeed;
 import com.google.code.rome.android.repackaged.com.sun.syndication.io.SyndFeedInput;
 import com.google.code.rome.android.repackaged.com.sun.syndication.io.XmlReader;
+import dh.newspaper.parser.ContentExtractor;
+import dh.newspaper.parser.RssItem;
 
 public class MainActivity extends Activity implements
 		NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -155,7 +159,7 @@ public class MainActivity extends Activity implements
 
 			textView.setText(Integer.toString(sectionNumber));
 
-			GridView gridView = (GridView)rootView.findViewById(R.id.articles_gridview);
+			StaggeredGridView gridView = (StaggeredGridView)rootView.findViewById(R.id.articles_gridview);
 			if (this.getActivity()!=null && gridView != null) {
 				gridViewAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_list_item_1, this.data);
 				gridView.setAdapter(gridViewAdapter);
@@ -167,9 +171,15 @@ public class MainActivity extends Activity implements
 							ArrayList<String> resu = new ArrayList<String>();
 
 							//URL feedUrl = new URL("http://vnexpress.net/rss/thoi-su.rss");
-							URL feedUrl = new URL("http://www.huffingtonpost.com/feeds/verticals/education/news.xml");
+							String feedUrl = "http://www.huffingtonpost.com/feeds/verticals/education/news.xml";
 
-							SyndFeedInput input = new SyndFeedInput();
+							List<RssItem> feeds = ContentExtractor.parseRss(feedUrl, "UTF-8");
+
+							for (RssItem t : feeds) {
+								resu.add(t.getTitle());
+							}
+
+						/*	SyndFeedInput input = new SyndFeedInput();
 							SyndFeed feed = input.build(new XmlReader(feedUrl));
 
 							for (Object o : feed.getEntries()) {
@@ -182,7 +192,7 @@ public class MainActivity extends Activity implements
 //								System.out.println(entry.getDescription().getValue()); //so get image from the first <img> tag here
 //								System.out.println(entry.getUri());
 //								System.out.println("-------------");
-							}
+							}*/
 
 							return resu;
 							//System.out.println(feed);
@@ -197,7 +207,9 @@ public class MainActivity extends Activity implements
 					protected void onPostExecute(java.util.ArrayList<String> result) {
 						try {
 							PlaceholderFragment.this.data.clear();
-							PlaceholderFragment.this.data.addAll(result);
+                            if (result!=null) {
+                                PlaceholderFragment.this.data.addAll(result);
+                            }
 							gridViewAdapter.notifyDataSetChanged();
 						}
 						catch (Exception ex) {

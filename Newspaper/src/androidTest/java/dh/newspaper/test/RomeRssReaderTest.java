@@ -5,6 +5,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
+import android.os.AsyncTask;
+import android.util.Log;
+import dh.newspaper.parser.NetworkUtils;
 import junit.framework.Assert;
 
 import org.apache.http.HttpResponse;
@@ -23,25 +26,67 @@ import com.google.code.rome.android.repackaged.com.sun.syndication.io.XmlReader;
 import com.google.common.base.Strings;
 
 import dh.newspaper.MainActivity;
+import org.jsoup.nodes.Entities;
+import org.jsoup.parser.Parser;
 
 public class RomeRssReaderTest extends ActivityUnitTestCase<MainActivity> {
 
-	public RomeRssReaderTest(Class<MainActivity> activityClass) {
-		super(activityClass);
-		// TODO Auto-generated constructor stub
+	private final static String TAG = RomeRssReaderTest.class.getName();
+
+  /*  public RomeRssReaderTest(String name) {
+        super();
+    }
+*/
+
+    public RomeRssReaderTest() {
+        super(MainActivity.class);
+    }
+    /*public RomeRssReaderTest(Class<MainActivity> activityClass) {
+        super(activityClass);
+    }*/
+
+	public void testAsync() throws Exception {
+		String address = "http://www.huffingtonpost.com/feeds/verticals/education/news.xml";
+
+		AsyncTask<String, Void, Document> loadPage = new AsyncTask<String, Void, Document>() {
+			@Override
+			protected Document doInBackground(String...params) {
+				try {
+					String address = params[0];
+					InputStream input = NetworkUtils.getStreamFromUrl(address);
+					return Jsoup.parse(input, "UTF-8", address, Parser.xmlParser());
+				} catch (IOException e) {
+					//e.printStackTrace();
+					Log.w(TAG, e);
+				}
+				return null;
+			}
+
+			@Override
+			protected void onPostExecute(Document doc) {
+				doc.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
+				//doc.normalise();
+				System.out.println(doc.html());
+				Log.i(TAG, doc.html());
+			}
+		};
+		loadPage.execute(address);
 	}
 
+    public void testRetreiveFeeds() throws Exception {
+		//URL feedUrl = new URL("http://www.huffingtonpost.com/feeds/verticals/education/news.xml");
+		String address = "http://www.huffingtonpost.com/feeds/verticals/education/news.xml";
+		InputStream input = NetworkUtils.getStreamFromUrl2(address);
+		Document doc = Jsoup.parse(input, "UTF-8", address, Parser.xmlParser());
 
-	public void testRetreiveFeeds() throws Exception {
-		URL feedUrl = new URL("http://www.huffingtonpost.com/feeds/verticals/education/news.xml");
-
+		doc.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
+		//doc.normalise();
+		System.out.println(doc.html());
+		Log.i(TAG, doc.html());
+/*
 		SyndFeedInput input = new SyndFeedInput();
 		SyndFeed feed = input.build(new XmlReader(feedUrl));
-
 		Assert.assertTrue("Read feed OK", feed != null);
-
-		ArrayList<String> resu = new ArrayList<String>();
-
 		for (Object o : feed.getEntries()) {
 			SyndEntry entry = (SyndEntry)o;
 			//System.out.println(entry);
@@ -57,7 +102,7 @@ public class RomeRssReaderTest extends ActivityUnitTestCase<MainActivity> {
 		}
 
 		Assert.assertTrue("Found feed", feed.getEntries().size()>0);
-		Assert.assertFalse("Feed seems valid", Strings.isNullOrEmpty(resu.get(0)));
+		Assert.assertFalse("Feed seems valid", Strings.isNullOrEmpty(resu.get(0)));*/
 	}
 
 
@@ -73,7 +118,6 @@ public class RomeRssReaderTest extends ActivityUnitTestCase<MainActivity> {
 
     public void testHtmlParser() throws Exception {
     	Document doc = Jsoup.connect("https://fr.news.yahoo.com/").get();
-
 
     	Assert.assertFalse(Strings.isNullOrEmpty(doc.title()));
 
