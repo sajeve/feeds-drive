@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/EtsyStaggeredGrid/EtsyStaggeredGrid.iml" filepath="$PROJECT_DIR$/EtsyStaggeredGrid/EtsyStaggeredGrid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Newspaper/Newspaper.iml" filepath="$PROJECT_DIR$/Newspaper/Newspaper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/work-andstd.iml" filepath="$PROJECT_DIR$/work-andstd.iml" />
+    </modules>
+  </component>
+</project>
+
