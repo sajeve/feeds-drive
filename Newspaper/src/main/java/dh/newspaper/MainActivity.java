@@ -1,6 +1,5 @@
 package dh.newspaper;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,16 +17,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.GridView;
 import android.widget.TextView;
 
 import com.etsy.android.grid.StaggeredGridView;
-import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndEntry;
-import com.google.code.rome.android.repackaged.com.sun.syndication.feed.synd.SyndFeed;
-import com.google.code.rome.android.repackaged.com.sun.syndication.io.SyndFeedInput;
-import com.google.code.rome.android.repackaged.com.sun.syndication.io.XmlReader;
-import dh.newspaper.parser.ContentExtractor;
+import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.RssItem;
+
+import javax.inject.Inject;
 
 public class MainActivity extends Activity implements
 		NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -52,7 +48,7 @@ public class MainActivity extends Activity implements
 		mNavigationDrawerFragment = (NavigationDrawerFragment) getFragmentManager()
 				.findFragmentById(R.id.navigation_drawer);
 		mTitle = getTitle();
-		//mTitle = ContentExtractor.sayHello();
+		//mTitle = ContentParser.sayHello();
 
 		// Set up the drawer.
 
@@ -123,6 +119,7 @@ public class MainActivity extends Activity implements
 	 */
 	public static class PlaceholderFragment extends Fragment {
 		static final String TAG = PlaceholderFragment.class.getName();
+		@Inject ContentParser contentParser;
 		ArrayAdapter<String> gridViewAdapter;
 		ArrayList<String> data = new ArrayList<String>();
 
@@ -145,6 +142,15 @@ public class MainActivity extends Activity implements
 		}
 
 		public PlaceholderFragment() {
+		}
+
+		@Override
+		public void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+
+			if (this.getActivity()!=null) {
+				((MyApplication) this.getActivity().getApplication()).getObjectGraph().inject(this);
+			}
 		}
 
 		@Override
@@ -173,26 +179,11 @@ public class MainActivity extends Activity implements
 							//URL feedUrl = new URL("http://vnexpress.net/rss/thoi-su.rss");
 							String feedUrl = "http://www.huffingtonpost.com/feeds/verticals/education/news.xml";
 
-							List<RssItem> feeds = ContentExtractor.parseRss(feedUrl, "UTF-8");
+							List<RssItem> feeds = contentParser.parseRssUrl(feedUrl, "UTF-8");
 
 							for (RssItem t : feeds) {
 								resu.add(t.getTitle());
 							}
-
-						/*	SyndFeedInput input = new SyndFeedInput();
-							SyndFeed feed = input.build(new XmlReader(feedUrl));
-
-							for (Object o : feed.getEntries()) {
-								SyndEntry entry = (SyndEntry)o;
-								//System.out.println(entry);
-								resu.add(entry.getTitle());
-//								System.out.println(entry.getTitle());
-//								System.out.println(entry.getPublishedDate());
-//								System.out.println(entry.getDescription().getType()); //if it is text/html
-//								System.out.println(entry.getDescription().getValue()); //so get image from the first <img> tag here
-//								System.out.println(entry.getUri());
-//								System.out.println("-------------");
-							}*/
 
 							return resu;
 							//System.out.println(feed);

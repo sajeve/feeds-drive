@@ -15,6 +15,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Entities;
 import org.jsoup.parser.Parser;
 
 import android.content.Context;
@@ -42,7 +44,7 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 		Log.i(TAG, "Begin test");
 		String address = "http://kinhdoanh.vnexpress.net/tin-tuc/ebank/sap-nhap-ngan-hang-yeu-co-khien-kho-khan-bi-cong-don-2985213.html";
 		{
-			InputStream input = NetworkUtils.getStreamFromUrl2(address);
+			InputStream input = NetworkUtils.getStreamFromUrl(address);
 			writeToFile(ctx.getExternalFilesDir(null)+"/vnexpress.UrlConnection.html", input, false);
 			input.close();
 		}
@@ -54,8 +56,13 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 		Log.i(TAG, "Finish test");
 	}
 
-    public void testEmptyCase() {
+    public void testEmptyCase() throws IOException {
+		InputStream input = NetworkUtils.getStreamFromUrl("http://kinhdoanh.vnexpress.net/tin-tuc/ebank/sap-nhap-ngan-hang-yeu-co-khien-kho-khan-bi-cong-don-2985213.html");
+		Document doc=Jsoup.parse(input, "utf-8", "ssd");
 
+		assertNotNull(doc);
+		doc.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
+		System.out.println(doc.html());
     }
 
     private static void writeToFile(String filename, String content, boolean wrapHtml) throws IOException {
