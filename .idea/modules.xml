@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/EtsyStaggeredGrid/EtsyStaggeredGrid.iml" filepath="$PROJECT_DIR$/EtsyStaggeredGrid/EtsyStaggeredGrid.iml" />
       <module fileurl="file://$PROJECT_DIR$/Newspaper/Newspaper.iml" filepath="$PROJECT_DIR$/Newspaper/Newspaper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/NewspaperJava/NewspaperJava.iml" filepath="$PROJECT_DIR$/NewspaperJava/NewspaperJava.iml" />
+      <module fileurl="file://$PROJECT_DIR$/NewspaperJavaTest/NewspaperJavaTest.iml" filepath="$PROJECT_DIR$/NewspaperJavaTest/NewspaperJavaTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/work-andstd.iml" filepath="$PROJECT_DIR$/work-andstd.iml" />
     </modules>
   </component>

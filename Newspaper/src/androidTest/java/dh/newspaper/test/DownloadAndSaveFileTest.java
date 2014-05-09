@@ -45,12 +45,12 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 		String address = "http://kinhdoanh.vnexpress.net/tin-tuc/ebank/sap-nhap-ngan-hang-yeu-co-khien-kho-khan-bi-cong-don-2985213.html";
 		{
 			InputStream input = NetworkUtils.getStreamFromUrl(address);
-			writeToFile(ctx.getExternalFilesDir(null)+"/vnexpress.UrlConnection.html", input, false);
+			TestUtils.writeToFile(ctx.getExternalFilesDir(null)+"/vnexpress.UrlConnection.html", input, false);
 			input.close();
 		}
 		{
 			InputStream input = NetworkUtils.getStreamFromUrl(address);
-			writeToFile(ctx.getExternalFilesDir(null)+"/vnexpress.HttpGet.html", input, false);
+			TestUtils.writeToFile(ctx.getExternalFilesDir(null)+"/vnexpress.HttpGet.html", input, false);
 			input.close();
 		}
 		Log.i(TAG, "Finish test");
@@ -65,42 +65,5 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 		System.out.println(doc.html());
     }
 
-    private static void writeToFile(String filename, String content, boolean wrapHtml) throws IOException {
-    	Log.d(TAG, "Start write to file "+filename);
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filename)));
-
-		if (wrapHtml) {
-			writer.write("<!DOCTYPE html>\n");
-			writer.write("<html><head><meta charset=\"utf-8\"></head><body>");
-		}
-		writer.write(content);
-		if (wrapHtml) {
-			writer.write("</body></html>");
-		}
-		writer.close();
-	}
-
-    private static void writeToFile(String filename, InputStream content, boolean wrapHtml) throws IOException {
-    	Log.d(TAG, "Start write to file "+filename);
-
-    	BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filename)));
-		if (wrapHtml) {
-			writer.write("<!DOCTYPE html>\n");
-			writer.write("<html><head><meta charset=\"utf-8\"></head><body>");
-		}
-
-		BufferedInputStream bis = new BufferedInputStream(content);
-		InputStreamReader sr = new InputStreamReader(bis);
-
-		char[] buffer = new char[100];
-		while (sr.read(buffer) > 0) {
-			writer.write(buffer);
-		}
-
-		if (wrapHtml) {
-			writer.write("</body></html>");
-		}
-		writer.close();
-	}
 }

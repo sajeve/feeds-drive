@@ -1,9 +1,8 @@
 package dh.newspaper.test;
 
-import java.io.IOException;
-
-import dh.newspaper.parser.HtmlTransformer;
 import junit.framework.TestCase;
+
+import java.io.IOException;
 
 public class ExampleTestCase extends TestCase {
 

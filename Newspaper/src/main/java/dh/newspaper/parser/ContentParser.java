@@ -2,10 +2,13 @@ package dh.newspaper.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.webkit.URLUtil;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Attributes;
@@ -48,7 +51,9 @@ public class ContentParser {
 	 * @throws IOException
 	 */
 	public Elements extractContent(String addressUrl, String mainContentQuery) throws IOException {
-		Document doc = Jsoup.connect(addressUrl).userAgent(NetworkUtils.MOBILE_USER_AGENT).get();
+		Connection connection = Jsoup.connect(addressUrl).userAgent(NetworkUtils.MOBILE_USER_AGENT);
+		Document doc = connection.get();
+
 		doc.outputSettings().escapeMode(EscapeMode.xhtml);
 		return extractContent(doc, mainContentQuery);
 	}
@@ -81,13 +86,12 @@ public class ContentParser {
 	 * @see {@link #extractContent(String, String)}
 	 * @see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>
 	 */
-	public Elements extractContent(Document doc, String mainContentQuery) {
+	public Elements extractContent(Document doc, String mainContentQuery) throws MalformedURLException {
 		doc.outputSettings().escapeMode(EscapeMode.xhtml);
 		Element body = doc.body();
 		if (Strings.isNullOrEmpty(mainContentQuery)) {
 			return new Elements(cleanHtml(body));
 		}
-
 		Elements elems = body.select(mainContentQuery);
 		for(Element e : elems) {
 			cleanHtml(e);
@@ -96,15 +100,35 @@ public class ContentParser {
 		return elems;
 	}
 
+	private void absolutePath(Element content) throws MalformedURLException {
+		Elements imgElems = content.select("img");
+		for (Element imgelem : imgElems) {
+			String absolutePath = imgelem.attr("abs:src");
+			if (!Strings.isNullOrEmpty(absolutePath)) {
+				imgelem.attr("src", absolutePath);
+			}
+		}
+
+		Elements linksElems = content.select("a");
+		for (Element linkelem : linksElems) {
+			String absolutePath = linkelem.attr("abs:href");
+			if (!Strings.isNullOrEmpty(absolutePath)) {
+				linkelem.attr("href", absolutePath);
+			}
+		}
+	}
+
 	/**
 	 * Remove
-	 * - script
+	 * - script, style, link (to css, javascript)
+	 * - convert image path to absolute
 	 * @see {@link #cleanUselessContent(Node)}
 	 */
-	private Element cleanHtml(Element mainContent) {
+	private Element cleanHtml(Element mainContent) throws MalformedURLException {
 		mainContent.select("script, style, link").remove(); //remove all script tags + contents
 		mainContent.select("span").unwrap(); //remove all span tags
 		cleanUselessContent(mainContent);
+		absolutePath(mainContent);
 		return mainContent;
 	}
 

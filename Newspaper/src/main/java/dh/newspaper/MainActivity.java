@@ -16,10 +16,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.etsy.android.grid.StaggeredGridView;
+import dh.newspaper.adapter.ArticlePreviewGridAdapter;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.RssItem;
 
@@ -120,8 +120,8 @@ public class MainActivity extends Activity implements
 	public static class PlaceholderFragment extends Fragment {
 		static final String TAG = PlaceholderFragment.class.getName();
 		@Inject ContentParser contentParser;
-		ArrayAdapter<String> gridViewAdapter;
-		ArrayList<String> data = new ArrayList<String>();
+		ArticlePreviewGridAdapter gridViewAdapter;
+		List<RssItem> data = new ArrayList<RssItem>();
 
 		/**
 		 * The fragment argument representing the section number for this
@@ -167,26 +167,17 @@ public class MainActivity extends Activity implements
 
 			StaggeredGridView gridView = (StaggeredGridView)rootView.findViewById(R.id.articles_gridview);
 			if (this.getActivity()!=null && gridView != null) {
-				gridViewAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_list_item_1, this.data);
+				//gridViewAdapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_list_item_1, this.data);
+				gridViewAdapter = new ArticlePreviewGridAdapter(this.getActivity(), R.layout.article_preview, data);
 				gridView.setAdapter(gridViewAdapter);
 
-				AsyncTask<String, Void, ArrayList<String>> articlesDownloadTask = new AsyncTask<String, Void, ArrayList<String>>() {
+				AsyncTask<String, Void, List<RssItem>> articlesDownloadTask = new AsyncTask<String, Void, List<RssItem>>() {
 					@Override
-					protected ArrayList<String> doInBackground(String... params) {
+					protected List<RssItem> doInBackground(String... params) {
 						try {
-							ArrayList<String> resu = new ArrayList<String>();
-
 							//URL feedUrl = new URL("http://vnexpress.net/rss/thoi-su.rss");
 							String feedUrl = "http://www.huffingtonpost.com/feeds/verticals/education/news.xml";
-
-							List<RssItem> feeds = contentParser.parseRssUrl(feedUrl, "UTF-8");
-
-							for (RssItem t : feeds) {
-								resu.add(t.getTitle());
-							}
-
-							return resu;
-							//System.out.println(feed);
+							return contentParser.parseRssUrl(feedUrl, "UTF-8");
 						} catch (Exception ex) {
 							Log.w(TAG, ex);
 						}
@@ -195,7 +186,7 @@ public class MainActivity extends Activity implements
 					}
 
 					@Override
-					protected void onPostExecute(java.util.ArrayList<String> result) {
+					protected void onPostExecute(java.util.List<RssItem> result) {
 						try {
 							PlaceholderFragment.this.data.clear();
                             if (result!=null) {
