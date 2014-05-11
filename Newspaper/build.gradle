@@ -58,4 +58,6 @@ dependencies {
 	compile project(':EtsyStaggeredGrid')
 	compile 'com.squareup.dagger:dagger:1.2.1'
 	compile 'com.squareup.dagger:dagger-compiler:1.2.1'
+	compile 'com.jakewharton.timber:timber:2.2.+'
+	compile 'de.greenrobot:eventbus:2.2.+'
 }

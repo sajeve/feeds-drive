@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingActivity.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingActivityModule.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingApplication.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingBroadcastReceiver.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingDialogFragment.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingDialogFragmentV4.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingFragment.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingFragmentActivity.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingFragmentModule.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingFragmentModuleV4.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingFragmentV4.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingListFragment.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingListFragmentV4.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingPreferenceActivity.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/InjectingService.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Newspaper/src/main/java/dh/newspaper/base/Injector.java" charset="UTF-8" />
+  </component>
 </project>
 

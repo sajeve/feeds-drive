@@ -1,33 +1,29 @@
 package dh.newspaper;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.app.ActionBar;
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.TextView;
-
 import com.etsy.android.grid.StaggeredGridView;
+import de.greenrobot.event.EventBus;
 import dh.newspaper.adapter.ArticlePreviewGridAdapter;
+import dh.newspaper.base.InjectingActivity;
+import dh.newspaper.base.InjectingFragment;
+import dh.newspaper.event.EventOneArg;
+import dh.newspaper.modules.ParserModule;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.RssItem;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends Activity implements
-		NavigationDrawerFragment.NavigationDrawerCallbacks {
-
+public class MainActivity extends InjectingActivity {
 	/**
 	 * Fragment managing the behaviors, interactions and presentation of the
 	 * navigation drawer.
@@ -48,10 +44,8 @@ public class MainActivity extends Activity implements
 		mNavigationDrawerFragment = (NavigationDrawerFragment) getFragmentManager()
 				.findFragmentById(R.id.navigation_drawer);
 		mTitle = getTitle();
-		//mTitle = ContentParser.sayHello();
 
 		// Set up the drawer.
-
 		mNavigationDrawerFragment.setUp(R.id.navigation_drawer,
 				(DrawerLayout) findViewById(R.id.drawer_layout));
 
@@ -59,26 +53,44 @@ public class MainActivity extends Activity implements
 	}
 
 	@Override
-	public void onNavigationDrawerItemSelected(int position) {
+	public void onResume() {
+		super.onResume();
+		EventBus.getDefault().register(this);
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		EventBus.getDefault().unregister(this);
+	}
+
+	/**
+	 * Invoke by EventBus when {@link dh.newspaper.NavigationDrawerFragment} item selected
+	 */
+	public void onEvent(NavigationDrawerFragment.Event e) {
 		// update the main content by replacing fragments
 		FragmentManager fragmentManager = getFragmentManager();
 		fragmentManager
 				.beginTransaction()
 				.replace(R.id.container,
-						PlaceholderFragment.newInstance(position + 1)).commit();
+						PlaceholderFragment.newInstance(e.intArg + 1)).commit();
 	}
 
-	public void onSectionAttached(int number) {
-		switch (number) {
-		case 1:
-			mTitle = getString(R.string.title_section1);
-			break;
-		case 2:
-			mTitle = getString(R.string.title_section2);
-			break;
-		case 3:
-			mTitle = getString(R.string.title_section3);
-			break;
+	/**
+	 * Invoke by EventBus when {@link dh.newspaper.MainActivity.PlaceholderFragment} attached
+	 */
+	public void onEvent(PlaceholderFragment.Event e) {
+
+		switch (e.intArg) {
+			case 1:
+				mTitle = getString(R.string.title_section1);
+				break;
+			case 2:
+				mTitle = getString(R.string.title_section2);
+				break;
+			case 3:
+				mTitle = getString(R.string.title_section3);
+				break;
 		}
 	}
 
@@ -117,9 +129,10 @@ public class MainActivity extends Activity implements
 	/**
 	 * A placeholder fragment containing a simple view.
 	 */
-	public static class PlaceholderFragment extends Fragment {
+	public static class PlaceholderFragment extends InjectingFragment {
 		static final String TAG = PlaceholderFragment.class.getName();
 		@Inject ContentParser contentParser;
+
 		ArticlePreviewGridAdapter gridViewAdapter;
 		List<RssItem> data = new ArrayList<RssItem>();
 
@@ -145,15 +158,6 @@ public class MainActivity extends Activity implements
 		}
 
 		@Override
-		public void onCreate(Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
-
-			if (this.getActivity()!=null) {
-				((MyApplication) this.getActivity().getApplication()).getObjectGraph().inject(this);
-			}
-		}
-
-		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_main, container,
@@ -162,7 +166,6 @@ public class MainActivity extends Activity implements
 					.findViewById(R.id.section_label);
 
 			int sectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
-
 			textView.setText(Integer.toString(sectionNumber));
 
 			StaggeredGridView gridView = (StaggeredGridView)rootView.findViewById(R.id.articles_gridview);
@@ -209,8 +212,22 @@ public class MainActivity extends Activity implements
 		@Override
 		public void onAttach(Activity activity) {
 			super.onAttach(activity);
-			((MainActivity) activity).onSectionAttached(getArguments().getInt(
-					ARG_SECTION_NUMBER));
+			final int sessionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
+			EventBus.getDefault().post(new Event() {{ intArg=sessionNumber; }});
+		}
+
+		@Override
+		protected List<Object> getModules() {
+			return new ArrayList<Object>() {{ add(new ParserModule()); }};
+		}
+
+		public class Event extends EventOneArg<PlaceholderFragment> {
+			public Event() {
+				super(PlaceholderFragment.this);
+			}
+			public Event(String subject) {
+				super(PlaceholderFragment.this, subject);
+			}
 		}
 	}
 

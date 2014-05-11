@@ -7,14 +7,13 @@ import android.os.StrictMode;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import dagger.ObjectGraph;
+import dh.newspaper.base.InjectingApplication;
 import dh.newspaper.modules.ParserModule;
 import dh.newspaper.view.ErrorDialogFragment;
 
 import java.util.Calendar;
 
-public class MyApplication extends Application {
-
-	ObjectGraph objectGraph;
+public class MyApplication extends InjectingApplication {
 
 	@Override
 	public void onCreate() {
@@ -22,8 +21,6 @@ public class MyApplication extends Application {
 		if (Constants.DEBUG) {
 			StrictMode.enableDefaults();
 		}
-
-		this.objectGraph = ObjectGraph.create(new ParserModule());
 	}
 	
 	public static void showErrorDialog(final FragmentManager fm, final String message, final Throwable ex) {
@@ -61,9 +58,5 @@ public class MyApplication extends Application {
 
 	public static long getNow() {
 		return Calendar.getInstance().getTime().getTime();
-	}
-
-	public ObjectGraph getObjectGraph() {
-		return objectGraph;
 	}
 }
