@@ -5,18 +5,18 @@ import com.google.common.base.Strings;
 /**
  * Created by hiep on 11/05/2014.
  */
-public class EventOneArg<T> extends Event<T> {
+public class BaseEventOneArg<T> extends BaseEvent<T> {
 	public String stringArg;
 	public int intArg;
 	public long longArg;
 	public boolean boolArg;
 	public Object objectArg;
 
-	public EventOneArg(T sender) {
+	public BaseEventOneArg(T sender) {
 		super(sender);
 	}
 
-	public EventOneArg(T sender, String subject) {
+	public BaseEventOneArg(T sender, String subject) {
 		super(sender, subject);
 	}
 

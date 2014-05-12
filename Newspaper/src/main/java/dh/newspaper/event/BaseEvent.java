@@ -5,15 +5,15 @@ import com.google.common.base.Strings;
 /**
  * Created by hiep on 11/05/2014.
  */
-public class Event<T> {
+public class BaseEvent<T> {
 	private T sender;
 	private String subject;
 
-	public Event(T sender) {
+	public BaseEvent(T sender) {
 		this.sender = sender;
 	}
 
-	public Event(T sender, String subject) {
+	public BaseEvent(T sender, String subject) {
 		this.sender = sender;
 		this.subject = subject;
 	}

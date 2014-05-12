@@ -7,7 +7,7 @@
 		android:paddingRight="@dimen/activity_horizontal_margin"
 		android:paddingTop="@dimen/activity_vertical_margin"
 		android:orientation="vertical"
-		tools:context="dh.newspaper.MainActivity$PlaceholderFragment">
+		tools:context="dh.newspaper.view.CardsListFragment">
 
 	<TextView
 			android:id="@+id/section_label"

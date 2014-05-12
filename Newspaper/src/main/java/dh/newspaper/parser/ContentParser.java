@@ -158,7 +158,7 @@ public class ContentParser {
     }
 
 	public List<RssItem> parseRssUrl(String addressUrl, String charSet) throws RssParserException, IOException {
-		InputStream input = NetworkUtils.getStreamFromUrl(addressUrl);
+		InputStream input = NetworkUtils.getStreamFromUrl(addressUrl, NetworkUtils.DESKTOP_USER_AGENT);
 		Document doc = Jsoup.parse(input, charSet, addressUrl, Parser.xmlParser());
 		input.close();
 		return parseRssItems(doc);
@@ -183,7 +183,6 @@ public class ContentParser {
 
 		return resu;
 	}
-
 
 	//<editor-fold desc="Rss Parse Item details">
 
@@ -227,7 +226,11 @@ public class ContentParser {
 	 * @return
 	 */
 	private String parseAuthor(Element elem, int pos) {
-		return elem.select("author").first().text();
+		Elements elemAuthor = elem.select("author");
+		if (elemAuthor != null && !elemAuthor.isEmpty()) {
+			return elemAuthor.first().text();
+		}
+		return null;
 	}
 
 	//</editor-fold>

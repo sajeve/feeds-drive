@@ -1,9 +1,11 @@
 package dh.newspaper.parser;
 
+import java.io.Serializable;
+
 /**
  * Created by hiep on 7/05/2014.
  */
-public class RssItem {
+public class RssItem implements Serializable {
 	private String title;
 	private String publishedDate;
 	private String description;

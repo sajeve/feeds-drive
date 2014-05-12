@@ -1,7 +1,6 @@
-package dh.newspaper;
+package dh.newspaper.view;
 
 import android.app.ActionBar;
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -22,8 +21,7 @@ import android.widget.Toast;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.R;
 import dh.newspaper.base.InjectingFragment;
-import dh.newspaper.base.InjectingFragmentV4;
-import dh.newspaper.event.EventOneArg;
+import dh.newspaper.event.BaseEventOneArg;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -253,7 +251,7 @@ public class NavigationDrawerFragment extends InjectingFragment {
         return getActivity().getActionBar();
     }
 
-	public class Event extends EventOneArg<NavigationDrawerFragment> {
+	public class Event extends BaseEventOneArg<NavigationDrawerFragment> {
 		public Event() {
 			super(NavigationDrawerFragment.this);
 		}

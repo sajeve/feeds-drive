@@ -1,29 +1,20 @@
 package dh.newspaper.test;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
-import dh.newspaper.parser.NetworkUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Entities;
-import org.jsoup.parser.Parser;
-
 import android.content.Context;
-import android.net.http.AndroidHttpClient;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import dh.newspaper.MainActivity;
+import dh.newspaper.parser.ContentParser;
+import dh.newspaper.parser.NetworkUtils;
+import dh.newspaper.parser.RssItem;
+import dh.newspaper.parser.RssParserException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Entities;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<MainActivity> {
 
@@ -44,12 +35,12 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 		Log.i(TAG, "Begin test");
 		String address = "http://kinhdoanh.vnexpress.net/tin-tuc/ebank/sap-nhap-ngan-hang-yeu-co-khien-kho-khan-bi-cong-don-2985213.html";
 		{
-			InputStream input = NetworkUtils.getStreamFromUrl(address);
+			InputStream input = NetworkUtils.getStreamFromUrl(address, NetworkUtils.MOBILE_USER_AGENT);
 			TestUtils.writeToFile(ctx.getExternalFilesDir(null)+"/vnexpress.UrlConnection.html", input, false);
 			input.close();
 		}
 		{
-			InputStream input = NetworkUtils.getStreamFromUrl(address);
+			InputStream input = NetworkUtils.getStreamFromUrl(address, NetworkUtils.MOBILE_USER_AGENT);
 			TestUtils.writeToFile(ctx.getExternalFilesDir(null)+"/vnexpress.HttpGet.html", input, false);
 			input.close();
 		}
@@ -57,7 +48,7 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 	}
 
     public void testEmptyCase() throws IOException {
-		InputStream input = NetworkUtils.getStreamFromUrl("http://kinhdoanh.vnexpress.net/tin-tuc/ebank/sap-nhap-ngan-hang-yeu-co-khien-kho-khan-bi-cong-don-2985213.html");
+		InputStream input = NetworkUtils.getStreamFromUrl("http://kinhdoanh.vnexpress.net/tin-tuc/ebank/sap-nhap-ngan-hang-yeu-co-khien-kho-khan-bi-cong-don-2985213.html", NetworkUtils.MOBILE_USER_AGENT);
 		Document doc=Jsoup.parse(input, "utf-8", "ssd");
 
 		assertNotNull(doc);
@@ -65,5 +56,9 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 		System.out.println(doc.html());
     }
 
-
+	public void testGetRssItem() throws RssParserException, IOException {
+		ContentParser contentParser = new ContentParser();
+		List<RssItem> items = contentParser.parseRssUrl("http://vnexpress.net/rss/thoi-su.rss", "UTF-8");
+		assertTrue(items.size() > 0);
+	}
 }

@@ -30,7 +30,8 @@ package dh.newspaper.base;
 
 import dagger.Module;
 import dagger.Provides;
-import dh.newspaper.NavigationDrawerFragment;
+import dh.newspaper.view.NavigationDrawerFragment;
+import dh.newspaper.view.ReaderFragment;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Documented;
@@ -45,7 +46,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Module(
 		injects = {
-				NavigationDrawerFragment.class
+				NavigationDrawerFragment.class,
+				ReaderFragment.class
 		},
 		library=true
 )
