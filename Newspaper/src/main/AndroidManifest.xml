@@ -26,6 +26,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".CategoryPreviewActivity"
+            android:label="@string/title_readeractivity_list"
+            android:parentActivityName="dh.newspaper.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="MainActivity" />
+        </activity>
+        <activity
+            android:name=".ReaderActivity"
+            android:label="@string/title_readeractivity_detail"
+            android:parentActivityName=".CategoryPreviewActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="dh.newspaper.ReaderActivityListActivity" />
+        </activity>
     </application>
 
 </manifest>

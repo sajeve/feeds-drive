@@ -17,8 +17,10 @@ package dh.newspaper.base;
 import android.content.Context;
 import dagger.Module;
 import dagger.Provides;
+import dh.newspaper.CategoryPreviewActivity;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
+import dh.newspaper.ReaderActivity;
 
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
@@ -34,7 +36,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * and {@link InjectingPreferenceActivity}.
  */
 @Module(
-		injects = MainActivity.class,
+		injects = {
+				MainActivity.class,
+				ReaderActivity.class,
+				CategoryPreviewActivity.class
+		},
 		library = true
 )
 public class InjectingActivityModule {

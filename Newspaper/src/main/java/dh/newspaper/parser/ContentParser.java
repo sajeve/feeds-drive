@@ -3,7 +3,6 @@ package dh.newspaper.parser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +29,9 @@ import javax.inject.Inject;
  * @author hiep
  */
 public class ContentParser {
+
+	public enum FeedFormat {RSS, ATOM};
+
 	@Inject
 	public ContentParser() {
 	}
@@ -165,20 +167,33 @@ public class ContentParser {
 	}
 
 	public List<RssItem> parseRssItems(Document doc) throws RssParserException {
-		Elements itemsElem = doc.select("rss>channel>item");
+		FeedFormat feedFormat;
 
+		Elements itemsElem = doc.select("rss>channel>item");
 		int itemCount = itemsElem.size();
-		List<RssItem> resu = new ArrayList<>(itemCount);
-		for (int i=0; i<itemCount; i++) {
+		if (itemCount > 0) {
+			feedFormat = FeedFormat.RSS;
+		}
+		else {
+			feedFormat = FeedFormat.ATOM;
+			itemsElem = doc.select("feed>entry");
+			itemCount = itemsElem.size();
+		}
+		if (itemCount==0) {
+			throw new RssParserException("Cannot parse '"+doc.baseUri()+"': '"+StrUtils.ellipsize(doc.text(), 50)+"'", 0);
+		}
+
+		List<RssItem>  resu = new ArrayList<>(itemCount);
+		for (int i = 0; i < itemCount; i++) {
 			Element elem = itemsElem.get(i);
-			RssItem rssItem = new RssItem(
-					parseTitle(elem, i),
-					parsePublishDate(elem, i),
-					parseDescription(elem, i),
-					parseUri(elem, i)
-				);
-			rssItem.author = parseAuthor(elem, i);
-			resu.add(rssItem);
+			RssItem item = new RssItem(
+					parseItemTitle(elem, i, feedFormat),
+					parseItemPublishDate(elem, i, feedFormat),
+					parseRssDescription(elem, i, feedFormat),
+					parseItemUri(elem, i, feedFormat)
+			);
+			item.author = parseItemAuthor(elem, i, feedFormat);
+			resu.add(item);
 		}
 
 		return resu;
@@ -186,19 +201,35 @@ public class ContentParser {
 
 	//<editor-fold desc="Rss Parse Item details">
 
-	private String parseUri(Element elem, int pos) throws RssParserException {
-		String uri = elem.select("guid").first().text();
-		if (URLUtil.isValidUrl(uri)) {
-			return uri;
+	private String parseItemUri(Element elem, int pos, FeedFormat feedFormat) throws RssParserException {
+
+		switch (feedFormat) {
+			case RSS: {
+				String uri = elem.select("guid").first().text();
+				if (URLUtil.isValidUrl(uri)) {
+					return uri;
+				}
+				uri = elem.select("link").first().text();
+				if (URLUtil.isValidUrl(uri)) {
+					return uri;
+				}
+			}
+			case ATOM: {
+				String uri = elem.select("id").first().text();
+				if (URLUtil.isValidUrl(uri)) {
+					return uri;
+				}
+				uri = elem.select("link").first().attr("href");
+				if (URLUtil.isValidUrl(uri)) {
+					return uri;
+				}
+			}
 		}
-		uri = elem.select("link").first().text();
-		if (URLUtil.isValidUrl(uri)) {
-			return uri;
-		}
+
 		throw new RssParserException("Unable to find URI in <guid> or <link> tag", pos);
 	}
 
-	private String parseTitle(Element elem, int pos) throws RssParserException {
+	private String parseItemTitle(Element elem, int pos, FeedFormat feedFormat) throws RssParserException {
 		String title = elem.select("title").first().text();
 		if (Strings.isNullOrEmpty(title)) {
 			throw new RssParserException("<title> is empty", pos);
@@ -206,15 +237,37 @@ public class ContentParser {
 		return title;
 	}
 
-	private String parsePublishDate(Element elem, int pos) throws RssParserException {
-		String pubDate = elem.select("pubDate").first().text();
+	private String parseItemPublishDate(Element elem, int pos, FeedFormat feedFormat) throws RssParserException {
+		String pubDate = null;
+		switch (feedFormat) {
+			case RSS: {
+				pubDate = elem.select("pubDate").first().text();
+				break;
+			}
+			case ATOM: {
+				pubDate = elem.select("published").first().text();
+				break;
+			}
+		}
+
 		if (Strings.isNullOrEmpty(pubDate)) {
 			throw new RssParserException("<pubDate> is empty", pos);
 		}
 		return pubDate;
 	}
-	private String parseDescription(Element elem, int pos) throws RssParserException {
-		String description = elem.select("description").first().text();
+	private String parseRssDescription(Element elem, int pos, FeedFormat feedFormat) throws RssParserException {
+		String description = null;
+		switch (feedFormat) {
+			case RSS: {
+				description = elem.select("description").first().text();
+				break;
+			}
+			case ATOM: {
+				description = elem.select("content").first().text();
+				break;
+			}
+		}
+
 		if (Strings.isNullOrEmpty(description)) {
 			throw new RssParserException("<description> is empty", pos);
 		}
@@ -225,10 +278,20 @@ public class ContentParser {
 	 * Optional
 	 * @return
 	 */
-	private String parseAuthor(Element elem, int pos) {
-		Elements elemAuthor = elem.select("author");
-		if (elemAuthor != null && !elemAuthor.isEmpty()) {
-			return elemAuthor.first().text();
+	private String parseItemAuthor(Element elem, int pos, FeedFormat feedFormat) {
+		switch (feedFormat) {
+			case RSS: {
+				Elements elemAuthor = elem.select("author");
+				if (elemAuthor != null && !elemAuthor.isEmpty()) {
+					return elemAuthor.first().text();
+				}
+			}
+			case ATOM: {
+				Elements elemAuthor = elem.select("author>name");
+				if (elemAuthor != null && !elemAuthor.isEmpty()) {
+					return elemAuthor.first().text();
+				}
+			}
 		}
 		return null;
 	}

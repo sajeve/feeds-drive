@@ -21,6 +21,7 @@ import android.widget.Toast;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.R;
 import dh.newspaper.base.InjectingFragment;
+import dh.newspaper.event.BaseEvent;
 import dh.newspaper.event.BaseEventOneArg;
 
 /**
@@ -72,7 +73,7 @@ public class NavigationDrawerFragment extends InjectingFragment {
         }
 
         // Select either the default item (0) or the last selected item.
-        selectItem(mCurrentSelectedPosition);
+        selectCategory(mCurrentSelectedPosition);
     }
 
     @Override
@@ -90,7 +91,7 @@ public class NavigationDrawerFragment extends InjectingFragment {
         mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectItem(position);
+                selectCategory(position);
             }
         });
         mDrawerListView.setAdapter(new ArrayAdapter<String>(
@@ -184,7 +185,7 @@ public class NavigationDrawerFragment extends InjectingFragment {
         mDrawerLayout.setDrawerListener(mDrawerToggle);
     }
 
-    private void selectItem(final int position) {
+    private void selectCategory(final int position) {
         mCurrentSelectedPosition = position;
         if (mDrawerListView != null) {
             mDrawerListView.setItemChecked(position, true);
@@ -193,9 +194,7 @@ public class NavigationDrawerFragment extends InjectingFragment {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
 
-		EventBus.getDefault().post(new Event() {{
-			intArg = position;
-		}});
+		EventBus.getDefault().post(new Event(position));
     }
 
     @Override
@@ -251,12 +250,20 @@ public class NavigationDrawerFragment extends InjectingFragment {
         return getActivity().getActionBar();
     }
 
-	public class Event extends BaseEventOneArg<NavigationDrawerFragment> {
-		public Event() {
+	public class Event extends BaseEvent<NavigationDrawerFragment> {
+		private int mCategoryId;
+
+		public Event(int categoryId) {
 			super(NavigationDrawerFragment.this);
+			mCategoryId = categoryId;
 		}
-		public Event(String subject) {
+
+		public int getCategoryId() {
+			return mCategoryId;
+		}
+
+		/*public Event(String subject) {
 			super(NavigationDrawerFragment.this, subject);
-		}
+		}*/
 	}
 }

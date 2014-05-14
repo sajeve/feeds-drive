@@ -1,10 +1,10 @@
 package dh.newspaper;
 
 import android.app.Application;
+import android.app.FragmentManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
-import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import dagger.ObjectGraph;
 import dh.newspaper.base.InjectingApplication;

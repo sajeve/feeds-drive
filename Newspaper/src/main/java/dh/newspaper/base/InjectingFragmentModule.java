@@ -30,6 +30,7 @@ package dh.newspaper.base;
 
 import dagger.Module;
 import dagger.Provides;
+import dh.newspaper.view.CategoryPreviewFragment;
 import dh.newspaper.view.NavigationDrawerFragment;
 import dh.newspaper.view.ReaderFragment;
 
@@ -46,6 +47,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Module(
 		injects = {
+				CategoryPreviewFragment.class,
 				NavigationDrawerFragment.class,
 				ReaderFragment.class
 		},

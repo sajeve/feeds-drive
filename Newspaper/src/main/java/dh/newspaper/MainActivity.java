@@ -4,18 +4,25 @@ import android.app.ActionBar;
 import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.*;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingActivity;
-import dh.newspaper.view.CardsListFragment;
+import dh.newspaper.view.CategoryPreviewFragment;
 import dh.newspaper.view.NavigationDrawerFragment;
 
+import javax.inject.Inject;
+
 public class MainActivity extends InjectingActivity {
+	private static final String TAG = MainActivity.class.getName();
+
 	/**
 	 * Fragment managing the behaviors, interactions and presentation of the
 	 * navigation drawer.
 	 */
 	private NavigationDrawerFragment mNavigationDrawerFragment;
+
+	@Inject CategoryPreviewFragment mCategoryPreviewFragment;
 
 	/**
 	 * Used to store the last screen title. For use in
@@ -55,29 +62,51 @@ public class MainActivity extends InjectingActivity {
 	 * Invoke by EventBus when {@link dh.newspaper.view.NavigationDrawerFragment} item selected
 	 */
 	public void onEvent(NavigationDrawerFragment.Event e) {
-		// update the main content by replacing fragments
-		FragmentManager fragmentManager = getFragmentManager();
-		fragmentManager
-				.beginTransaction()
-				.replace(R.id.container,
-						CardsListFragment.newInstance(e.intArg + 1)).commit();
+		try {
+			if (mCategoryPreviewFragment == null) {
+				return;
+			}
+
+			// update the main content by replacing fragments
+			FragmentManager fragmentManager = getFragmentManager();
+
+			/*//clear backstack before
+			for(int i = 0; i < fragmentManager.getBackStackEntryCount(); ++i) {
+				fragmentManager.popBackStack();
+			}*/
+
+			fragmentManager
+					.beginTransaction()
+					.replace(R.id.container, mCategoryPreviewFragment)
+					.commit();
+		} catch (Exception ex) {
+			Log.w(TAG, ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), "MainActivity on NavigationDrawerFragment.Event", ex);
+		}
 	}
 
 	/**
-	 * Invoke by EventBus when {@link dh.newspaper.view.CardsListFragment} attached
+	 * Invoke by EventBus when {@link dh.newspaper.view.CategoryPreviewFragment} attached
 	 */
-	public void onEvent(CardsListFragment.Event e) {
-
-		switch (e.intArg) {
-			case 1:
-				mTitle = getString(R.string.title_section1);
-				break;
-			case 2:
-				mTitle = getString(R.string.title_section2);
-				break;
-			case 3:
-				mTitle = getString(R.string.title_section3);
-				break;
+	public void onEvent(CategoryPreviewFragment.Event e) {
+		try {
+			if (!CategoryPreviewFragment.Event.ON_FRAGMENT_ATTACHED.equals(e.getSubject())) {
+				return;
+			}
+			switch (e.intArg) {
+				case 1:
+					mTitle = getString(R.string.title_section1);
+					break;
+				case 2:
+					mTitle = getString(R.string.title_section2);
+					break;
+				case 3:
+					mTitle = getString(R.string.title_section3);
+					break;
+			}
+		}catch (Exception ex) {
+			Log.w(TAG, ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), "MainActivity on CategoryPreviewFragment.Event", ex);
 		}
 	}
 

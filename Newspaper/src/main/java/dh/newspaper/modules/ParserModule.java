@@ -2,8 +2,7 @@ package dh.newspaper.modules;
 
 import dagger.Module;
 import dagger.Provides;
-import dh.newspaper.adapter.ArticlePreviewGridAdapter;
-import dh.newspaper.view.CardsListFragment;
+import dh.newspaper.view.CategoryPreviewFragment;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.view.ReaderFragment;
 
@@ -14,7 +13,7 @@ import javax.inject.Singleton;
  */
 @Module (
 	injects = {
-			CardsListFragment.class,
+			CategoryPreviewFragment.class,
 			ReaderFragment.class
 	})
 public class ParserModule {

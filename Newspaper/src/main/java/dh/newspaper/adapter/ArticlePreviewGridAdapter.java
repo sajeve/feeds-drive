@@ -11,13 +11,10 @@ import android.widget.TextView;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.R;
-import dh.newspaper.base.InjectingActivityModule;
 import dh.newspaper.event.BaseEvent;
-import dh.newspaper.event.BaseEventOneArg;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.RssItem;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,7 +36,7 @@ public class ArticlePreviewGridAdapter extends ArrayAdapter<RssItem> {
 	}
 
 	public ArticlePreviewGridAdapter(Context context, ContentParser contentParser) {
-		this(context, R.layout.article_preview);
+		this(context, R.layout.item_article_preview);
 		mContentParser = contentParser;
 	}
 
@@ -54,6 +51,10 @@ public class ArticlePreviewGridAdapter extends ArrayAdapter<RssItem> {
 		}
 	}
 
+	public String getSourceAddress() {
+		return mSourceAddress;
+	}
+
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		try {
@@ -66,7 +67,7 @@ public class ArticlePreviewGridAdapter extends ArrayAdapter<RssItem> {
 
 			if (convertView == null) {
 				// create new view
-				v = mInflater.inflate(R.layout.article_preview, parent, false);
+				v = mInflater.inflate(R.layout.item_article_preview, parent, false);
 				imageView = (ImageView) v.findViewById(R.id.article_image);
 				titleLabel = (TextView) v.findViewById(R.id.article_title);
 				dateLabel = (TextView) v.findViewById(R.id.article_date);
