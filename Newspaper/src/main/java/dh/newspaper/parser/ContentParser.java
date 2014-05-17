@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.webkit.URLUtil;
+import dh.newspaper.model.FeedItem;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
@@ -159,14 +160,14 @@ public class ContentParser {
         }
     }
 
-	public List<RssItem> parseRssUrl(String addressUrl, String charSet) throws RssParserException, IOException {
+	public List<FeedItem> parseRssUrl(String addressUrl, String charSet) throws FeedParserException, IOException {
 		InputStream input = NetworkUtils.getStreamFromUrl(addressUrl, NetworkUtils.DESKTOP_USER_AGENT);
 		Document doc = Jsoup.parse(input, charSet, addressUrl, Parser.xmlParser());
 		input.close();
 		return parseRssItems(doc);
 	}
 
-	public List<RssItem> parseRssItems(Document doc) throws RssParserException {
+	public List<FeedItem> parseRssItems(Document doc) throws FeedParserException {
 		FeedFormat feedFormat;
 
 		Elements itemsElem = doc.select("rss>channel>item");
@@ -180,13 +181,13 @@ public class ContentParser {
 			itemCount = itemsElem.size();
 		}
 		if (itemCount==0) {
-			throw new RssParserException("Cannot parse '"+doc.baseUri()+"': '"+StrUtils.ellipsize(doc.text(), 50)+"'", 0);
+			throw new FeedParserException("Cannot parse '"+doc.baseUri()+"': '"+StrUtils.ellipsize(doc.text(), 50)+"'", 0);
 		}
 
-		List<RssItem>  resu = new ArrayList<>(itemCount);
+		List<FeedItem>  resu = new ArrayList<>(itemCount);
 		for (int i = 0; i < itemCount; i++) {
 			Element elem = itemsElem.get(i);
-			RssItem item = new RssItem(
+			FeedItem item = new FeedItem(
 					parseItemTitle(elem, i, feedFormat),
 					parseItemPublishDate(elem, i, feedFormat),
 					parseRssDescription(elem, i, feedFormat),
@@ -201,7 +202,7 @@ public class ContentParser {
 
 	//<editor-fold desc="Rss Parse Item details">
 
-	private String parseItemUri(Element elem, int pos, FeedFormat feedFormat) throws RssParserException {
+	private String parseItemUri(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
 
 		switch (feedFormat) {
 			case RSS: {
@@ -226,18 +227,18 @@ public class ContentParser {
 			}
 		}
 
-		throw new RssParserException("Unable to find URI in <guid> or <link> tag", pos);
+		throw new FeedParserException("Unable to find URI in <guid> or <link> tag", pos);
 	}
 
-	private String parseItemTitle(Element elem, int pos, FeedFormat feedFormat) throws RssParserException {
+	private String parseItemTitle(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
 		String title = elem.select("title").first().text();
 		if (Strings.isNullOrEmpty(title)) {
-			throw new RssParserException("<title> is empty", pos);
+			throw new FeedParserException("<title> is empty", pos);
 		}
 		return title;
 	}
 
-	private String parseItemPublishDate(Element elem, int pos, FeedFormat feedFormat) throws RssParserException {
+	private String parseItemPublishDate(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
 		String pubDate = null;
 		switch (feedFormat) {
 			case RSS: {
@@ -251,11 +252,11 @@ public class ContentParser {
 		}
 
 		if (Strings.isNullOrEmpty(pubDate)) {
-			throw new RssParserException("<pubDate> is empty", pos);
+			throw new FeedParserException("<pubDate> is empty", pos);
 		}
 		return pubDate;
 	}
-	private String parseRssDescription(Element elem, int pos, FeedFormat feedFormat) throws RssParserException {
+	private String parseRssDescription(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
 		String description = null;
 		switch (feedFormat) {
 			case RSS: {
@@ -269,7 +270,7 @@ public class ContentParser {
 		}
 
 		if (Strings.isNullOrEmpty(description)) {
-			throw new RssParserException("<description> is empty", pos);
+			throw new FeedParserException("<description> is empty", pos);
 		}
 		return description;
 	}

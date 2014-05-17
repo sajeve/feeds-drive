@@ -27,21 +27,21 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".CategoryPreviewActivity"
-            android:label="@string/title_readeractivity_list"
-            android:parentActivityName="dh.newspaper.MainActivity" >
+            android:name=".DetailActivity"
+            android:label="Detail"
+            android:parentActivityName="dh.newspaper.DetailActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="MainActivity" />
         </activity>
-        <activity
+       <!-- <activity
             android:name=".ReaderActivity"
             android:label="@string/title_readeractivity_detail"
-            android:parentActivityName=".CategoryPreviewActivity" >
+            android:parentActivityName=".DetailActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="dh.newspaper.ReaderActivityListActivity" />
-        </activity>
+        </activity>-->
     </application>
 
 </manifest>

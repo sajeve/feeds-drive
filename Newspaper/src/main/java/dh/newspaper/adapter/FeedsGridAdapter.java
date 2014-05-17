@@ -13,7 +13,7 @@ import de.greenrobot.event.EventBus;
 import dh.newspaper.R;
 import dh.newspaper.event.BaseEvent;
 import dh.newspaper.parser.ContentParser;
-import dh.newspaper.parser.RssItem;
+import dh.newspaper.model.FeedItem;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -22,21 +22,21 @@ import java.util.concurrent.Executors;
 /**
  * Created by hiep on 8/05/2014.
  */
-public class ArticlePreviewGridAdapter extends ArrayAdapter<RssItem> {
-	private static final String TAG = ArticlePreviewGridAdapter.class.getName();
+public class FeedsGridAdapter extends ArrayAdapter<FeedItem> {
+	private static final String TAG = FeedsGridAdapter.class.getName();
 	private ExecutorService mExecutor;
 
 	private final LayoutInflater mInflater;
 	private ContentParser mContentParser;
 	private String mSourceAddress;
 
-	private ArticlePreviewGridAdapter(Context context, int resource) {
+	private FeedsGridAdapter(Context context, int resource) {
 		super(context, resource);
 		mInflater = LayoutInflater.from(context);
 	}
 
-	public ArticlePreviewGridAdapter(Context context, ContentParser contentParser) {
-		this(context, R.layout.item_article_preview);
+	public FeedsGridAdapter(Context context, ContentParser contentParser) {
+		this(context, R.layout.item_feed);
 		mContentParser = contentParser;
 	}
 
@@ -67,7 +67,7 @@ public class ArticlePreviewGridAdapter extends ArrayAdapter<RssItem> {
 
 			if (convertView == null) {
 				// create new view
-				v = mInflater.inflate(R.layout.item_article_preview, parent, false);
+				v = mInflater.inflate(R.layout.item_feed, parent, false);
 				imageView = (ImageView) v.findViewById(R.id.article_image);
 				titleLabel = (TextView) v.findViewById(R.id.article_title);
 				dateLabel = (TextView) v.findViewById(R.id.article_date);
@@ -82,7 +82,7 @@ public class ArticlePreviewGridAdapter extends ArrayAdapter<RssItem> {
 
 			/* bind value to view */
 
-			RssItem item = this.getItem(position);
+			FeedItem item = this.getItem(position);
 			if (item != null) {
 				titleLabel.setText(item.getTitle());
 				dateLabel.setText(item.getPublishedDate());
@@ -104,7 +104,7 @@ public class ArticlePreviewGridAdapter extends ArrayAdapter<RssItem> {
 			try {
 				try {
 					//connect to the URL and fetch rss items
-					final List<RssItem> rssItems = mContentParser.parseRssUrl(mSourceAddress, "UTF-8");
+					final List<FeedItem> rssItems = mContentParser.parseRssUrl(mSourceAddress, "UTF-8");
 
 					//notify GUI
 					EventBus.getDefault().post(new Event() {{ data = rssItems; }});
@@ -118,13 +118,13 @@ public class ArticlePreviewGridAdapter extends ArrayAdapter<RssItem> {
 		}
 	};
 
-	public class Event extends BaseEvent<ArticlePreviewGridAdapter> {
-		public List<RssItem> data;
+	public class Event extends BaseEvent<FeedsGridAdapter> {
+		public List<FeedItem> data;
 		public Event() {
-			super(ArticlePreviewGridAdapter.this);
+			super(FeedsGridAdapter.this);
 		}
 		public Event(String subject) {
-			super(ArticlePreviewGridAdapter.this, subject);
+			super(FeedsGridAdapter.this, subject);
 		}
 	}
 }

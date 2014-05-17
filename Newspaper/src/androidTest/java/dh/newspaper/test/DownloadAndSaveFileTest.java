@@ -5,9 +5,9 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import dh.newspaper.MainActivity;
 import dh.newspaper.parser.ContentParser;
+import dh.newspaper.model.FeedItem;
+import dh.newspaper.parser.FeedParserException;
 import dh.newspaper.parser.NetworkUtils;
-import dh.newspaper.parser.RssItem;
-import dh.newspaper.parser.RssParserException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Entities;
@@ -56,9 +56,9 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 		System.out.println(doc.html());
     }
 
-	public void testGetRssItem() throws RssParserException, IOException {
+	public void testGetRssItem() throws FeedParserException, IOException {
 		ContentParser contentParser = new ContentParser();
-		List<RssItem> items = contentParser.parseRssUrl("http://vnexpress.net/rss/thoi-su.rss", "UTF-8");
+		List<FeedItem> items = contentParser.parseRssUrl("http://vnexpress.net/rss/thoi-su.rss", "UTF-8");
 		assertTrue(items.size() > 0);
 	}
 }

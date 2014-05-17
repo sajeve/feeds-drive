@@ -2,6 +2,7 @@ package dh.newspaper.view;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,31 +15,32 @@ import android.widget.ListView;
 import android.widget.TextView;
 import com.etsy.android.grid.StaggeredGridView;
 import de.greenrobot.event.EventBus;
-import dh.newspaper.CategoryPreviewActivity;
+import dh.newspaper.DetailActivity;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
 import dh.newspaper.R;
-import dh.newspaper.adapter.ArticlePreviewGridAdapter;
-import dh.newspaper.base.InjectingFragment;
+import dh.newspaper.adapter.FeedsGridAdapter;
+import dh.newspaper.base.Injector;
 import dh.newspaper.event.BaseEventOneArg;
-import dh.newspaper.modules.ParserModule;
+import dh.newspaper.model.FakeDataProvider;
+import dh.newspaper.modules.AppBundle;
 import dh.newspaper.parser.ContentParser;
-import dh.newspaper.parser.RssItem;
+import dh.newspaper.model.FeedItem;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class CategoryPreviewFragment extends InjectingFragment {
-	static final String TAG = CategoryPreviewFragment.class.getName();
+public class FeedsFragment extends Fragment {
+	static final String TAG = FeedsFragment.class.getName();
 
 	private StaggeredGridView mGridView;
-	private ArticlePreviewGridAdapter mGridViewAdapter;
-	private int mCategoryId = -1;
+	private FeedsGridAdapter mGridViewAdapter;
+	private int mCategoryId = 0;
+
+	@Inject
+	AppBundle mAppBundle;
 
 	@Inject
 	ContentParser mContentParser;
@@ -49,41 +51,28 @@ public class CategoryPreviewFragment extends InjectingFragment {
 	 */
 	private static final String ARG_SECTION_NUMBER = "section_number";
 
-//	/**
-//	 * Returns a new instance of this fragment for the given section number.
-//	 */
-//	public static CategoryPreviewFragment newInstance(int sectionNumber) {
-//		CategoryPreviewFragment fragment = new CategoryPreviewFragment();
-//		Bundle args = new Bundle();
-//		args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-//		fragment.setArguments(args);
-//
-//		return fragment;
-//	}
-
-	@Inject
-	public CategoryPreviewFragment() {
+	public FeedsFragment() {
 		setRetainInstance(true);
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 							 Bundle savedInstanceState) {
-		View rootView = inflater.inflate(R.layout.fragment_category_preview, container,
+		View rootView = inflater.inflate(R.layout.fragment_feeds, container,
 				false);
 		TextView textView = (TextView) rootView
 				.findViewById(R.id.section_label);
 
 		final Activity currentActivity = this.getActivity();
 
-		if (currentActivity != null) {
+		if (isAdded()) {
 			if (currentActivity instanceof MainActivity && getArguments()!=null) {
 				int sectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
 				textView.setText(Integer.toString(sectionNumber));
 			}
 
-			mGridViewAdapter = new ArticlePreviewGridAdapter(this.getActivity(), mContentParser);
-			mGridViewAdapter.fetchAddress("http://vnexpress.net/rss/thoi-su.rss");
+			mGridViewAdapter = new FeedsGridAdapter(this.getActivity(), mContentParser);
+			refreshContent();
 
 			mGridView = (StaggeredGridView) rootView.findViewById(R.id.articles_gridview);
 			mGridView.setAdapter(mGridViewAdapter);
@@ -96,33 +85,16 @@ public class CategoryPreviewFragment extends InjectingFragment {
 							return;
 						}
 
-						final RssItem rssItem = (RssItem) parent.getItemAtPosition(position);
+						final FeedItem feedItem = (FeedItem) parent.getItemAtPosition(position);
 
 						if (currentActivity instanceof MainActivity) {
-							Intent detailIntent = new Intent(currentActivity, CategoryPreviewActivity.class);
-							detailIntent.putExtra("RssItem", rssItem);
+							Intent detailIntent = new Intent(currentActivity, DetailActivity.class);
+							//detailIntent.putExtra("FeedItem", feedItem);
 							startActivity(detailIntent);
 						}
-						/*else if (currentActivity instanceof CategoryPreviewActivity) {
-						}
-						else {
-							throw new IllegalStateException("CategoryFragment should be attached to MainActivity or CategoryPreviewActivity");
-						}*/
-
-						//display reader
-						/*
-						String stackName = mGridViewAdapter.getSourceAddress();
-						FragmentManager fragmentManager = getFragmentManager();
-						fragmentManager
-								.beginTransaction()
-								.replace(R.id.container,
-										ReaderFragment.newInstance(rssItem))
-								.addToBackStack(stackName)
-								.commit();*/
-
 
 						mGridView.setItemChecked(position, true);
-						EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, rssItem));
+						EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, feedItem));
 					}
 					catch (Exception ex) {
 						Log.w(TAG, ex);
@@ -130,7 +102,7 @@ public class CategoryPreviewFragment extends InjectingFragment {
 				}
 			});
 
-			refreshCategoryPreview();
+
 		}
 		//URL feedUrl = new URL("http://vnexpress.net/rss/thoi-su.rss");
 		//String feedUrl = "http://www.huffingtonpost.com/feeds/verticals/education/news.xml
@@ -138,9 +110,18 @@ public class CategoryPreviewFragment extends InjectingFragment {
 		return rootView;
 	}
 
+	private boolean mFirstAttach = true;
+
 	@Override
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
+
+		// make sure it's the first time through; we don't want to re-inject a retained fragment that is going
+		// through a detach/attach sequence.
+		if (mFirstAttach) {
+			((Injector) activity.getApplication()).inject(this);
+			mFirstAttach = false;
+		}
 
 		if (activity instanceof MainActivity && getArguments()!=null) {
 			final int sessionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
@@ -148,13 +129,7 @@ public class CategoryPreviewFragment extends InjectingFragment {
 				intArg = sessionNumber;
 			}});
 		}
-	}
-
-	@Override
-	protected List<Object> getModules() {
-		return new ArrayList<Object>() {{
-			add(new ParserModule());
-		}};
+		mCategoryId = mAppBundle.getCurrentCategoryId();
 	}
 
 	@Override
@@ -183,67 +158,58 @@ public class CategoryPreviewFragment extends InjectingFragment {
 			return;
 		}
 		mCategoryId = savedInstanceState.getInt(ARG_SECTION_NUMBER);
-		refreshCategoryPreview();
+		refreshContent();
 	}
 
-	public void onEventMainThread(ArticlePreviewGridAdapter.Event e) {
+	public void onEventMainThread(FeedsGridAdapter.Event e) {
 		try {
 			//update the Adapter data + refresh GUI
 			mGridViewAdapter.clear();
 			mGridViewAdapter.addAll(e.data);
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
-			MyApplication.showErrorDialog(this.getFragmentManager(), "CategoryPreviewFragment on ArticlePreviewGridAdapter.Event", ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), "OnFeedsDownloadFinished", ex);
 		}
 	}
 
-	public void onEventMainThread(NavigationDrawerFragment.Event e) {
+	public void onEventMainThread(CategoriesFragment.Event e) {
 		try {
-			setAndRefreshCategoryPreview(e.getCategoryId());
+			loadCategory(e.getCategoryId());
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
-			MyApplication.showErrorDialog(this.getFragmentManager(), "CategoryPreviewFragment on NavigationDrawerFragment.Event", ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), "OnLoadCategory", ex);
 		}
 	}
 
 	/**
 	 * refresh the categoryPreview base on the current mCategoryId
 	 */
-	private void refreshCategoryPreview() {
+	private void refreshContent() {
 		if (mGridViewAdapter != null) {
-			mGridViewAdapter.fetchAddress(getCategorySource(mCategoryId));
+			mGridViewAdapter.fetchAddress(FakeDataProvider.getCategorySource(mCategoryId));
 		}
 	}
-	private void setAndRefreshCategoryPreview(int categoryId) {
+	private void loadCategory(int categoryId) {
 		mCategoryId = categoryId;
 		if (mGridViewAdapter != null) {
-			mGridViewAdapter.fetchAddress(getCategorySource(mCategoryId));
+			mGridViewAdapter.fetchAddress(FakeDataProvider.getCategorySource(mCategoryId));
 		}
 	}
 
-	private String getCategorySource(int categoryId) {
-		switch (categoryId) {
-			case 0: return "http://vnexpress.net/rss/tin-moi-nhat.rss";
-			case 1: return "http://www.nytimes.com/services/xml/rss/nyt/AsiaPacific.xml";
-			case 2: return "http://www.huffingtonpost.com/tag/asian-americans/feed";
-			default: return null;
-		}
-	}
-
-	public class Event extends BaseEventOneArg<CategoryPreviewFragment> {
+	public class Event extends BaseEventOneArg<FeedsFragment> {
 		public static final String ON_FRAGMENT_ATTACHED = "OnFragmentAttached";
 		public static final String ON_ITEM_SELECTED = "OnItemSelected";
 
-		private RssItem mRssItem;
+		private FeedItem mRssItem;
 
 		public Event(String subject) {
-			super(CategoryPreviewFragment.this, subject);
+			super(FeedsFragment.this, subject);
 		}
-		public Event(String subject, RssItem rssItem) {
+		public Event(String subject, FeedItem rssItem) {
 			this(subject);
 			mRssItem = rssItem;
 		}
-		public RssItem getRssItem() {
+		public FeedItem getFeedItem() {
 			return mRssItem;
 		}
 	}

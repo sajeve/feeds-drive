@@ -1,4 +1,4 @@
-package dh.newspaper.view;
+package dh.newspaper.view.utils;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

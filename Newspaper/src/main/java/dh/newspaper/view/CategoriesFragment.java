@@ -1,6 +1,8 @@
 package dh.newspaper.view;
 
 import android.app.ActionBar;
+import android.app.Activity;
+import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -21,15 +23,22 @@ import android.widget.Toast;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.R;
 import dh.newspaper.base.InjectingFragment;
+import dh.newspaper.base.Injector;
 import dh.newspaper.event.BaseEvent;
-import dh.newspaper.event.BaseEventOneArg;
+import dh.newspaper.model.FakeDataProvider;
+import dh.newspaper.modules.AppBundle;
+
+import javax.inject.Inject;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
-public class NavigationDrawerFragment extends InjectingFragment {
+public class CategoriesFragment extends Fragment {
+
+	@Inject
+	AppBundle mAppBundle;
 
     /**
      * Remember the position of the selected item.
@@ -55,7 +64,9 @@ public class NavigationDrawerFragment extends InjectingFragment {
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
 
-    public NavigationDrawerFragment() {
+	@Inject
+    public CategoriesFragment() {
+		setRetainInstance(true);
     }
 
     @Override
@@ -71,10 +82,27 @@ public class NavigationDrawerFragment extends InjectingFragment {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
             mFromSavedInstanceState = true;
         }
+		else {
+			mCurrentSelectedPosition = mAppBundle.getCurrentCategoryId();
+		}
 
         // Select either the default item (0) or the last selected item.
         selectCategory(mCurrentSelectedPosition);
     }
+
+	private boolean mFirstAttach = true;
+
+	@Override
+	public void onAttach(final Activity activity) {
+		super.onAttach(activity);
+		// make sure it's the first time through; we don't want to re-inject a retained fragment that is going
+		// through a detach/attach sequence.
+		if (mFirstAttach) {
+			((Injector) activity.getApplication()).inject(this);
+			mFirstAttach = false;
+			//mCurrentSelectedPosition = mAppBundle.getCurrentCategoryId();
+		}
+	}
 
     @Override
     public void onActivityCreated (Bundle savedInstanceState) {
@@ -87,7 +115,7 @@ public class NavigationDrawerFragment extends InjectingFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         mDrawerListView = (ListView) inflater.inflate(
-                R.layout.fragment_navigation_drawer, container, false);
+                R.layout.fragment_categories, container, false);
         mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -98,11 +126,7 @@ public class NavigationDrawerFragment extends InjectingFragment {
                 getActionBar().getThemedContext(),
                 android.R.layout.simple_list_item_activated_1,
                 android.R.id.text1,
-                new String[]{
-                        getString(R.string.title_section1),
-                        getString(R.string.title_section2),
-                        getString(R.string.title_section3),
-                }));
+				FakeDataProvider.getCategories()));
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         return mDrawerListView;
     }
@@ -117,22 +141,22 @@ public class NavigationDrawerFragment extends InjectingFragment {
      * @param fragmentId   The android:id of this fragment in its activity's layout.
      * @param drawerLayout The DrawerLayout containing this fragment's UI.
      */
-    public void setUp(int fragmentId, DrawerLayout drawerLayout) {
-        mFragmentContainerView = getActivity().findViewById(fragmentId);
+    public void setUpAsNavigationDrawer(final Activity activity, int fragmentId, DrawerLayout drawerLayout) {
+        mFragmentContainerView = activity.findViewById(fragmentId);
         mDrawerLayout = drawerLayout;
 
         // set a custom shadow that overlays the main content when the drawer opens
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
         // set up the drawer's list view with items and click listener
 
-        ActionBar actionBar = getActionBar();
+        ActionBar actionBar = activity.getActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setHomeButtonEnabled(true);
 
         // ActionBarDrawerToggle ties together the the proper interactions
         // between the navigation drawer and the action bar app icon.
         mDrawerToggle = new ActionBarDrawerToggle(
-                getActivity(),                    /* host Activity */
+                activity,                    /* host Activity */
                 mDrawerLayout,                    /* DrawerLayout object */
                 R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
                 R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
@@ -145,7 +169,7 @@ public class NavigationDrawerFragment extends InjectingFragment {
                     return;
                 }
 
-                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+				activity.invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
 
             @Override
@@ -160,11 +184,11 @@ public class NavigationDrawerFragment extends InjectingFragment {
                     // the navigation drawer automatically in the future.
                     mUserLearnedDrawer = true;
                     SharedPreferences sp = PreferenceManager
-                            .getDefaultSharedPreferences(getActivity());
+                            .getDefaultSharedPreferences(activity);
                     sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
                 }
 
-                getActivity().invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                activity.invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
         };
 
@@ -223,16 +247,17 @@ public class NavigationDrawerFragment extends InjectingFragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (mDrawerToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
+		if (mDrawerLayout != null && isDrawerOpen()) {
+			if (mDrawerToggle.onOptionsItemSelected(item)) {
+				return true;
+			}
 
-        if (item.getItemId() == R.id.action_example) {
-            Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+			if (item.getItemId() == R.id.action_example) {
+				Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
+				return true;
+			}
+		}
+		return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -250,11 +275,11 @@ public class NavigationDrawerFragment extends InjectingFragment {
         return getActivity().getActionBar();
     }
 
-	public class Event extends BaseEvent<NavigationDrawerFragment> {
+	public class Event extends BaseEvent<CategoriesFragment> {
 		private int mCategoryId;
 
 		public Event(int categoryId) {
-			super(NavigationDrawerFragment.this);
+			super(CategoriesFragment.this);
 			mCategoryId = categoryId;
 		}
 

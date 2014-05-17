@@ -30,9 +30,9 @@ package dh.newspaper.base;
 
 import dagger.Module;
 import dagger.Provides;
-import dh.newspaper.view.CategoryPreviewFragment;
-import dh.newspaper.view.NavigationDrawerFragment;
-import dh.newspaper.view.ReaderFragment;
+import dh.newspaper.view.ArticleFragment;
+import dh.newspaper.view.CategoriesFragment;
+import dh.newspaper.view.FeedsFragment;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Documented;
@@ -46,11 +46,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * The dagger module associated with {@link dh.newspaper.base.InjectingFragmentV4} and {@link dh.newspaper.base.InjectingListFragmentV4}.
  */
 @Module(
-		injects = {
-				CategoryPreviewFragment.class,
-				NavigationDrawerFragment.class,
-				ReaderFragment.class
-		},
 		library=true
 )
 public class InjectingFragmentModule {
