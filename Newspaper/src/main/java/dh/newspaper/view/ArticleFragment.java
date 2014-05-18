@@ -76,7 +76,7 @@ public class ArticleFragment extends Fragment {
 			((Injector) activity.getApplication()).inject(this);
 			mFirstAttach = false;
 		}
-		//mFeedItem = mAppBundle.getCurrentFeedItem();
+		mFeedItem = mAppBundle.getCurrentFeedItem();
 	}
 
 	public void onEvent(FeedsFragment.Event e) {
