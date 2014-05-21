@@ -2,11 +2,13 @@ package dh.newspaper;
 
 import android.app.FragmentManager;
 import android.content.Context;
+import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
+import com.google.common.io.Files;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingApplication;
 import dh.newspaper.model.generated.Article;
@@ -65,15 +67,26 @@ public class MyApplication extends InjectingApplication {
 
 	@Override
 	public File getDatabasePath(String name) {
-		if (Constants.DATABASE_NAME.equals(name)) {
-			if (Constants.DEBUG) {
-				return new File("/mnt/shared/bridge/newspaper.db");
-			}
-			else {
-				return new File(getExternalCacheDir(), "newspaper.db");
-			}
+		return new File(getDatabasePathString(name));
+	}
+
+	public String getDatabasePathString(String name) {
+		if (Constants.DEBUG) {
+			return "/mnt/shared/bridge/"+name+".db";
 		}
-		return super.getDatabasePath(name);
+		else {
+			return getExternalCacheDir()+ "/" + name+".db";
+		}
+	}
+
+	@Override
+	public SQLiteDatabase openOrCreateDatabase(String name, int mode, SQLiteDatabase.CursorFactory factory) {
+		return super.openOrCreateDatabase(getDatabasePathString(name), mode, factory);
+	}
+
+	@Override
+	public SQLiteDatabase openOrCreateDatabase(String name, int mode, SQLiteDatabase.CursorFactory factory, DatabaseErrorHandler errorHandler) {
+		return super.openOrCreateDatabase(getDatabasePathString(name), mode, factory, errorHandler);
 	}
 
 	@Override
