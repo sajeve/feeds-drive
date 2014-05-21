@@ -10,7 +10,9 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/EtsyStaggeredGrid" />
+            <option value="$PROJECT_DIR$/Generator" />
             <option value="$PROJECT_DIR$/Newspaper" />
+            <option value="$PROJECT_DIR$/PatternSample4" />
           </set>
         </option>
       </GradleProjectSettings>

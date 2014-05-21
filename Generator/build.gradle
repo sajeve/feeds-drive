@@ -1,0 +1,11 @@
+apply plugin: 'java'
+apply plugin:'application'
+
+group = 'dh.newspaper'
+version = '1.0.0-SNAPSHOT'
+mainClassName = "dh.newspaper.model.generator.SchemaBuilder"
+
+dependencies {
+	compile fileTree(dir: 'libs', include: ['*.jar'])
+	compile ('org.freemarker:freemarker:2.3.20')
+}

@@ -63,9 +63,9 @@ public class FeedsFragment extends Fragment {
 		TextView textView = (TextView) rootView
 				.findViewById(R.id.section_label);
 
-		final Activity currentActivity = this.getActivity();
-
 		if (isAdded()) {
+			final Activity currentActivity = this.getActivity();
+
 			if (currentActivity instanceof MainActivity && getArguments()!=null) {
 				int sectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
 				textView.setText(Integer.toString(sectionNumber));
