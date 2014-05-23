@@ -28,18 +28,24 @@
 		<item name="android:background">?android:attr/listDivider</item>
 	</style>
 
-	<style name="ArticlePreviewText">
+	<style name="Feed">
 		<item name="android:textSize">14sp</item>
 		<item name="android:textColor">@android:color/primary_text_light</item>
 	</style>
 
-	<style name="ArticlePreviewText.Date">
-		<item name="android:textSize">10sp</item>
+	<style name="Feed.Title">
+		<item name="android:textSize">14sp</item>
+		<item name="android:textStyle">bold</item>
 		<item name="android:textColor">@android:color/primary_text_light</item>
 	</style>
 
-	<style name="ArticlePreviewText.Content">
-		<item name="android:textSize">10sp</item>
+	<style name="Feed.Date">
+		<item name="android:textSize">12sp</item>
+		<item name="android:textColor">@android:color/primary_text_light</item>
+	</style>
+
+	<style name="Feed.Content">
+		<item name="android:textSize">12sp</item>
 		<item name="android:textColor">@android:color/secondary_text_light</item>
 	</style>
 

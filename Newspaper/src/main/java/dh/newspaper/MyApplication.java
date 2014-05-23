@@ -1,18 +1,19 @@
 package dh.newspaper;
 
+import android.app.ActivityManager;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
-import com.google.common.io.Files;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingApplication;
+import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.Article;
-import dh.newspaper.model.generated.ArticleDao;
 import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.modules.AppBundle;
@@ -29,9 +30,9 @@ public class MyApplication extends InjectingApplication {
 	@Inject
 	AppBundle mAppBundle;
 
-	SQLiteDatabase db;
-	DaoMaster daoMaster;
-	DaoSession daoSession;
+	SQLiteDatabase mDb;
+	DaoMaster mDaoMaster;
+	DaoSession mDaoSession;
 
 	@Override
 	public void onCreate() {
@@ -41,16 +42,17 @@ public class MyApplication extends InjectingApplication {
 			StrictMode.enableDefaults();
 		}
 
-		DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper((Context)this, Constants.DATABASE_NAME, null); //TODO debug only (because drops all tables)
-		db = helper.getWritableDatabase();
-		daoMaster = new DaoMaster(db);
-		daoSession = daoMaster.newSession();
+		SQLiteOpenHelper helper = new DaoMaster.DevOpenHelper((Context)this, Constants.DATABASE_NAME, null); //debug only (because drops all tables)
+		//SQLiteOpenHelper helper = new DatabaseHelper(this); //upgrade with the database in assets
+		mDb = helper.getWritableDatabase();
 
-		Log.i(TAG,"Database Path = " + db.getPath());
+		mDaoMaster = new DaoMaster(mDb);
+		mDaoSession = mDaoMaster.newSession();
+		Log.i(TAG, "Database Path = " + mDb.getPath());
 
 		try {
-			Article article = new Article(null, "articleUrl", "parentUrl", "imageUrl", "title", "author", "excerpt", "content", "vn", new Date(), null, null, new Date());
-			daoSession.getArticleDao().insert(article);
+			Article article = new Article(null, "articleUrl1", "parentUrl1", "imageUrl1", "title1", "author1", "excerpt1", "content1", "en", new Date(), null, null, new Date());
+			mDaoSession.getArticleDao().insert(article);
 		} catch (Exception ex) {
 			Log.w(TAG, ex.getMessage());
 		}
@@ -62,7 +64,7 @@ public class MyApplication extends InjectingApplication {
 	public void onTerminate() {
 		super.onTerminate();
 		EventBus.getDefault().unregister(mAppBundle);
-		db.close();
+		mDb.close();
 	}
 
 	@Override
@@ -72,10 +74,10 @@ public class MyApplication extends InjectingApplication {
 
 	public String getDatabasePathString(String name) {
 		if (Constants.DEBUG) {
-			return "/mnt/shared/bridge/"+name+".db";
+			return "/mnt/shared/bridge/"+name+".mDb";
 		}
 		else {
-			return getExternalCacheDir()+ "/" + name+".db";
+			return getExternalCacheDir().getAbsolutePath()+ "/" + name+".mDb";
 		}
 	}
 
@@ -87,11 +89,6 @@ public class MyApplication extends InjectingApplication {
 	@Override
 	public SQLiteDatabase openOrCreateDatabase(String name, int mode, SQLiteDatabase.CursorFactory factory, DatabaseErrorHandler errorHandler) {
 		return super.openOrCreateDatabase(getDatabasePathString(name), mode, factory, errorHandler);
-	}
-
-	@Override
-	public String[] databaseList() {
-		return new String[]{Constants.DATABASE_NAME};
 	}
 
 	public static void showErrorDialog(final FragmentManager fm, final String message, final Throwable ex) {

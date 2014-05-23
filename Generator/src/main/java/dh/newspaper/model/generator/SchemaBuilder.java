@@ -22,6 +22,7 @@ public class SchemaBuilder {
 		entity.addStringProperty("urlPattern").notNull().unique();
 		entity.addStringProperty("xpath");
 		entity.addStringProperty("language");
+		entity.addBooleanProperty("enable");
 		entity.addDateProperty("lastUpdate");
 	}
 

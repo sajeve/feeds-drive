@@ -11,6 +11,7 @@ public class PathToContent {
     private String urlPattern;
     private String xpath;
     private String language;
+    private Boolean enable;
     private java.util.Date lastUpdate;
 
     public PathToContent() {
@@ -20,11 +21,12 @@ public class PathToContent {
         this.id = id;
     }
 
-    public PathToContent(Long id, String urlPattern, String xpath, String language, java.util.Date lastUpdate) {
+    public PathToContent(Long id, String urlPattern, String xpath, String language, Boolean enable, java.util.Date lastUpdate) {
         this.id = id;
         this.urlPattern = urlPattern;
         this.xpath = xpath;
         this.language = language;
+        this.enable = enable;
         this.lastUpdate = lastUpdate;
     }
 
@@ -60,6 +62,14 @@ public class PathToContent {
 
     public void setLanguage(String language) {
         this.language = language;
+    }
+
+    public Boolean getEnable() {
+        return enable;
+    }
+
+    public void setEnable(Boolean enable) {
+        this.enable = enable;
     }
 
     public java.util.Date getLastUpdate() {

@@ -4,7 +4,6 @@
     android:name="dh.newspaper.view.ArticleFragment"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
+    android:layout_margin="16dp"
     tools:context="dh.newspaper.DetailActivity"
 	tools:layout="@layout/fragment_article"/>

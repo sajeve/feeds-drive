@@ -66,7 +66,6 @@ public class MainActivity extends Activity {
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
 		if (isSinglePane()) {
-
 			// Read in the flag indicating whether or not the user has demonstrated awareness of the
 			// drawer. See PREF_USER_LEARNED_DRAWER for details.
 			mUserLearnedDrawer = mSharedPreferences.getBoolean(Constants.PREF_USER_LEARNED_DRAWER, false);

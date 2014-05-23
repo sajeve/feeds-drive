@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/EtsyStaggeredGrid/EtsyStaggeredGrid.iml" filepath="$PROJECT_DIR$/EtsyStaggeredGrid/EtsyStaggeredGrid.iml" />
       <module fileurl="file://$PROJECT_DIR$/Generator/Generator.iml" filepath="$PROJECT_DIR$/Generator/Generator.iml" />
       <module fileurl="file://$PROJECT_DIR$/Newspaper/Newspaper.iml" filepath="$PROJECT_DIR$/Newspaper/Newspaper.iml" />
       <module fileurl="file://$PROJECT_DIR$/PatternSample4/PatternSample4.iml" filepath="$PROJECT_DIR$/PatternSample4/PatternSample4.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SqliteAssetHelper/SqliteAssetHelper.iml" filepath="$PROJECT_DIR$/SqliteAssetHelper/SqliteAssetHelper.iml" />
       <module fileurl="file://$PROJECT_DIR$/work-andstd.iml" filepath="$PROJECT_DIR$/work-andstd.iml" />
     </modules>
   </component>

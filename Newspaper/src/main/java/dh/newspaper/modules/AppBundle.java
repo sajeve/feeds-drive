@@ -1,9 +1,6 @@
 package dh.newspaper.modules;
 
 import android.util.Log;
-import de.greenrobot.event.EventBus;
-import dh.newspaper.MyApplication;
-import dh.newspaper.model.Category;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.view.CategoriesFragment;
 import dh.newspaper.view.FeedsFragment;

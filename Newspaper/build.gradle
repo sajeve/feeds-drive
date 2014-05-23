@@ -30,6 +30,13 @@ android {
 	lintOptions {
 		abortOnError false
 	}
+	packagingOptions { /*work-around for  duplicate files during packaging of APK*/
+		exclude 'LICENSE.txt'
+		exclude 'META-INF/LICENSE'
+		exclude 'META-INF/LICENSE.txt'
+		exclude 'META-INF/NOTICE'
+	}
+
 /*  sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -39,12 +46,7 @@ android {
             setRoot('src/test')
         }
     }
-    packagingOptions {
-        exclude 'LICENSE.txt'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE'
-    }
+
 */
 }
 
@@ -52,7 +54,8 @@ dependencies {
 	compile fileTree(dir: 'libs', include: ['*.jar'])
 	//compile 'com.android.support:appcompat-v7:19.1.+'
 	//compile 'com.google.code.android-rome-feed-reader:android-rome-feed-reader:1.0.0-r2'
-	compile project(':EtsyStaggeredGrid')
+	//compile project(':EtsyStaggeredGrid')
+	compile project(':SqliteAssetHelper')
 	compile 'com.android.support:support-v4:19.+'
 	compile 'org.jsoup:jsoup:1.7.3'
 	compile 'com.google.guava:guava:15.0'
@@ -61,5 +64,8 @@ dependencies {
 	compile 'com.jakewharton.timber:timber:2.2.+'
 	compile 'de.greenrobot:eventbus:2.2.+'
 	compile 'com.squareup.okhttp:okhttp:1.5.+'
-	compile('de.greenrobot:greendao:1.3.+')
+	compile 'de.greenrobot:greendao:1.3.+'
+	compile 'com.fasterxml.jackson.core:jackson-databind:2.3.+'
+	/*compile 'com.fasterxml.jackson.core:jackson-annotations:2.3.+'
+	compile 'com.fasterxml.jackson.core:jackson-core:2.3.+'*/
 }

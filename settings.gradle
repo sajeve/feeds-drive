@@ -1,1 +1,1 @@
-include ':Newspaper', ':EtsyStaggeredGrid', ':PatternSample4', ':Generator'
+include ':Newspaper', ':PatternSample4', ':Generator', ':SqliteAssetHelper'

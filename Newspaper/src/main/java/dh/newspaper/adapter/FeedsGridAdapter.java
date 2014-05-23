@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
+import dh.newspaper.DetailActivity;
 import dh.newspaper.R;
 import dh.newspaper.event.BaseEvent;
 import dh.newspaper.parser.ContentParser;
@@ -29,15 +30,17 @@ public class FeedsGridAdapter extends ArrayAdapter<FeedItem> {
 	private final LayoutInflater mInflater;
 	private ContentParser mContentParser;
 	private String mSourceAddress;
+	private int mNumberOfColumns;
 
 	private FeedsGridAdapter(Context context, int resource) {
 		super(context, resource);
 		mInflater = LayoutInflater.from(context);
 	}
 
-	public FeedsGridAdapter(Context context, ContentParser contentParser) {
-		this(context, R.layout.item_feed);
+	public FeedsGridAdapter(Context context, ContentParser contentParser, int numberOfColumns) {
+		this(context, R.layout.item_feed_grid);
 		mContentParser = contentParser;
+		mNumberOfColumns = numberOfColumns;
 	}
 
 	public void fetchAddress(String url) {
@@ -55,6 +58,20 @@ public class FeedsGridAdapter extends ArrayAdapter<FeedItem> {
 		return mSourceAddress;
 	}
 
+	/*private int getNumberOfColumn() {
+		if (this.getContext() instanceof DetailActivity) {
+			return 1;
+		}
+		return getContext().getResources().getInteger(R.integer.grid_columns_count);
+	}*/
+
+	private int getItemResource() {
+		if (mNumberOfColumns == 1) {
+			return R.layout.item_feed_list;
+		}
+		return R.layout.item_feed_grid;
+	}
+
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		try {
@@ -64,20 +81,23 @@ public class FeedsGridAdapter extends ArrayAdapter<FeedItem> {
 			ImageView imageView;
 			TextView titleLabel;
 			TextView dateLabel;
+			TextView excerptLabel;
 
 			if (convertView == null) {
 				// create new view
-				v = mInflater.inflate(R.layout.item_feed, parent, false);
+				v = mInflater.inflate(getItemResource(), parent, false);
 				imageView = (ImageView) v.findViewById(R.id.article_image);
 				titleLabel = (TextView) v.findViewById(R.id.article_title);
 				dateLabel = (TextView) v.findViewById(R.id.article_date);
-				v.setTag(new View[]{imageView, titleLabel, dateLabel});
+				excerptLabel = (TextView) v.findViewById(R.id.article_excerpt);
+				v.setTag(new View[]{imageView, titleLabel, dateLabel, excerptLabel});
 			} else {
 				v = convertView;
 				View[] viewsHolder = (View[]) v.getTag();
 				imageView = (ImageView) viewsHolder[0];
 				titleLabel = (TextView) viewsHolder[1];
 				dateLabel = (TextView) viewsHolder[2];
+				excerptLabel = (TextView) viewsHolder[3];
 			}
 
 			/* bind value to view */
@@ -86,6 +106,7 @@ public class FeedsGridAdapter extends ArrayAdapter<FeedItem> {
 			if (item != null) {
 				titleLabel.setText(item.getTitle());
 				dateLabel.setText(item.getPublishedDate());
+				excerptLabel.setText(item.getDescription());
 			}
 
 			return v;

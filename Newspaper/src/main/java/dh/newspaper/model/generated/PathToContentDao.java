@@ -27,7 +27,8 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
         public final static Property UrlPattern = new Property(1, String.class, "urlPattern", false, "URL_PATTERN");
         public final static Property Xpath = new Property(2, String.class, "xpath", false, "XPATH");
         public final static Property Language = new Property(3, String.class, "language", false, "LANGUAGE");
-        public final static Property LastUpdate = new Property(4, java.util.Date.class, "lastUpdate", false, "LAST_UPDATE");
+        public final static Property Enable = new Property(4, Boolean.class, "enable", false, "ENABLE");
+        public final static Property LastUpdate = new Property(5, java.util.Date.class, "lastUpdate", false, "LAST_UPDATE");
     };
 
 
@@ -47,7 +48,8 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
                 "'URL_PATTERN' TEXT NOT NULL UNIQUE ," + // 1: urlPattern
                 "'XPATH' TEXT," + // 2: xpath
                 "'LANGUAGE' TEXT," + // 3: language
-                "'LAST_UPDATE' INTEGER);"); // 4: lastUpdate
+                "'ENABLE' INTEGER," + // 4: enable
+                "'LAST_UPDATE' INTEGER);"); // 5: lastUpdate
     }
 
     /** Drops the underlying database table. */
@@ -77,9 +79,14 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
             stmt.bindString(4, language);
         }
  
+        Boolean enable = entity.getEnable();
+        if (enable != null) {
+            stmt.bindLong(5, enable ? 1l: 0l);
+        }
+ 
         java.util.Date lastUpdate = entity.getLastUpdate();
         if (lastUpdate != null) {
-            stmt.bindLong(5, lastUpdate.getTime());
+            stmt.bindLong(6, lastUpdate.getTime());
         }
     }
 
@@ -97,7 +104,8 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
             cursor.getString(offset + 1), // urlPattern
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // xpath
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // language
-            cursor.isNull(offset + 4) ? null : new java.util.Date(cursor.getLong(offset + 4)) // lastUpdate
+            cursor.isNull(offset + 4) ? null : cursor.getShort(offset + 4) != 0, // enable
+            cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)) // lastUpdate
         );
         return entity;
     }
@@ -109,7 +117,8 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
         entity.setUrlPattern(cursor.getString(offset + 1));
         entity.setXpath(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setLanguage(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
-        entity.setLastUpdate(cursor.isNull(offset + 4) ? null : new java.util.Date(cursor.getLong(offset + 4)));
+        entity.setEnable(cursor.isNull(offset + 4) ? null : cursor.getShort(offset + 4) != 0);
+        entity.setLastUpdate(cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)));
      }
     
     /** @inheritdoc */

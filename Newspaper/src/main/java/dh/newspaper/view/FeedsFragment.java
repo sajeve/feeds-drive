@@ -11,9 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.GridView;
 import android.widget.ListView;
-import android.widget.TextView;
-import com.etsy.android.grid.StaggeredGridView;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.DetailActivity;
 import dh.newspaper.MainActivity;
@@ -23,9 +22,9 @@ import dh.newspaper.adapter.FeedsGridAdapter;
 import dh.newspaper.base.Injector;
 import dh.newspaper.event.BaseEventOneArg;
 import dh.newspaper.model.FakeDataProvider;
+import dh.newspaper.model.FeedItem;
 import dh.newspaper.modules.AppBundle;
 import dh.newspaper.parser.ContentParser;
-import dh.newspaper.model.FeedItem;
 
 import javax.inject.Inject;
 
@@ -35,7 +34,7 @@ import javax.inject.Inject;
 public class FeedsFragment extends Fragment {
 	static final String TAG = FeedsFragment.class.getName();
 
-	private StaggeredGridView mGridView;
+	private GridView mGridView;
 	private FeedsGridAdapter mGridViewAdapter;
 	private int mCategoryId = 0;
 
@@ -60,52 +59,27 @@ public class FeedsFragment extends Fragment {
 							 Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_feeds, container,
 				false);
-		TextView textView = (TextView) rootView
-				.findViewById(R.id.section_label);
 
 		if (isAdded()) {
 			final Activity currentActivity = this.getActivity();
-
-			if (currentActivity instanceof MainActivity && getArguments()!=null) {
+			/*if (currentActivity instanceof MainActivity && getArguments()!=null) {
 				int sectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
 				textView.setText(Integer.toString(sectionNumber));
-			}
+			}*/
+			int numberOfColumns = (currentActivity instanceof DetailActivity) ? 1
+					: getResources().getInteger(R.integer.grid_columns_count);
 
-			mGridViewAdapter = new FeedsGridAdapter(this.getActivity(), mContentParser);
+			mGridViewAdapter = new FeedsGridAdapter(currentActivity, mContentParser, numberOfColumns);
 			refreshContent();
 
-			mGridView = (StaggeredGridView) rootView.findViewById(R.id.articles_gridview);
+			//mGridView = (StaggeredGridView) rootView.findViewById(R.id.articles_gridview);
+			mGridView = (GridView) rootView.findViewById(R.id.articles_gridview);
+			//mGridView.setColumnCount(numberOfColumns);
+			mGridView.setNumColumns(numberOfColumns);
+			//rootView.forceLayout();
 			mGridView.setAdapter(mGridViewAdapter);
-
-			mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-				@Override
-				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-					try {
-						if (position == ListView.INVALID_POSITION) {
-							return;
-						}
-
-						final FeedItem feedItem = (FeedItem) parent.getItemAtPosition(position);
-
-						if (currentActivity instanceof MainActivity) {
-							Intent detailIntent = new Intent(currentActivity, DetailActivity.class);
-							//detailIntent.putExtra("FeedItem", feedItem);
-							startActivity(detailIntent);
-						}
-
-						mGridView.setItemChecked(position, true);
-						EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, feedItem));
-					}
-					catch (Exception ex) {
-						Log.w(TAG, ex);
-					}
-				}
-			});
-
-
+			mGridView.setOnItemClickListener(onFeedClickListener);
 		}
-		//URL feedUrl = new URL("http://vnexpress.net/rss/thoi-su.rss");
-		//String feedUrl = "http://www.huffingtonpost.com/feeds/verticals/education/news.xml
 
 		return rootView;
 	}
@@ -160,6 +134,32 @@ public class FeedsFragment extends Fragment {
 		mCategoryId = savedInstanceState.getInt(ARG_SECTION_NUMBER);
 		refreshContent();
 	}
+
+	AdapterView.OnItemClickListener onFeedClickListener = new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			try {
+				if (position == ListView.INVALID_POSITION || !FeedsFragment.this.isAdded()) {
+					return;
+				}
+
+				final FeedItem feedItem = (FeedItem) parent.getItemAtPosition(position);
+				final Activity currentActivity = FeedsFragment.this.getActivity();
+
+				if (currentActivity instanceof MainActivity) {
+					Intent detailIntent = new Intent(currentActivity, DetailActivity.class);
+					//detailIntent.putExtra("FeedItem", feedItem);
+					startActivity(detailIntent);
+				}
+
+				mGridView.setItemChecked(position, true);
+				EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, feedItem));
+			}
+			catch (Exception ex) {
+				Log.w(TAG, ex);
+			}
+		}
+	};
 
 	public void onEventMainThread(FeedsGridAdapter.Event e) {
 		try {
