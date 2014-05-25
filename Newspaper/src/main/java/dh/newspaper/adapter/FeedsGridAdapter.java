@@ -10,11 +10,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
-import dh.newspaper.DetailActivity;
 import dh.newspaper.R;
 import dh.newspaper.event.BaseEvent;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.model.FeedItem;
+import dh.newspaper.parser.StrUtils;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -105,7 +105,7 @@ public class FeedsGridAdapter extends ArrayAdapter<FeedItem> {
 			FeedItem item = this.getItem(position);
 			if (item != null) {
 				titleLabel.setText(item.getTitle());
-				dateLabel.setText(item.getPublishedDate());
+				dateLabel.setText(StrUtils.getTimeAgo(this.getContext(), item.getPublishedDate()));
 				excerptLabel.setText(item.getDescription());
 			}
 
@@ -125,7 +125,7 @@ public class FeedsGridAdapter extends ArrayAdapter<FeedItem> {
 			try {
 				try {
 					//connect to the URL and fetch rss items
-					final List<FeedItem> rssItems = mContentParser.parseRssUrl(mSourceAddress, "UTF-8");
+					final List<FeedItem> rssItems = mContentParser.parseFeeds(mSourceAddress, "UTF-8");
 
 					//notify GUI
 					EventBus.getDefault().post(new Event() {{ data = rssItems; }});

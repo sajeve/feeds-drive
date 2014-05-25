@@ -1,0 +1,13 @@
+[
+	{"id":1, "name":"First Page"},
+	{"id":0, "name":"General"},
+	{"id":2, "name":"Art"},
+	{"id":3, "name":"Business"},
+	{"id":4, "name":"Law"},
+	{"id":5, "name":"Politics"},
+	{"id":6, "name":"Sport"},
+	{"id":7, "name":"Star"},
+	{"id":8, "name":"Sciences"},
+	{"id":9, "name":"Technology"},
+	{"id":10, "name":"Travel"}
+]

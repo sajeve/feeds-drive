@@ -3,11 +3,13 @@ package dh.newspaper.parser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
 
+import android.util.Log;
 import android.webkit.URLUtil;
 import dh.newspaper.model.FeedItem;
+import dh.newspaper.model.Feeds;
+import org.joda.time.DateTime;
+import org.joda.time.format.*;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
@@ -30,6 +32,7 @@ import javax.inject.Inject;
  * @author hiep
  */
 public class ContentParser {
+	private static final String TAG = ContentParser.class.getName();
 
 	public enum FeedFormat {RSS, ATOM};
 
@@ -160,38 +163,48 @@ public class ContentParser {
         }
     }
 
-	public List<FeedItem> parseRssUrl(String addressUrl, String charSet) throws FeedParserException, IOException {
+	//<editor-fold desc="Feed Parse">
+
+	public Feeds parseFeeds(String addressUrl, String charSet) throws FeedParserException, IOException {
 		InputStream input = NetworkUtils.getStreamFromUrl(addressUrl, NetworkUtils.DESKTOP_USER_AGENT);
 		Document doc = Jsoup.parse(input, charSet, addressUrl, Parser.xmlParser());
 		input.close();
-		return parseRssItems(doc);
+		return parseFeeds(doc);
 	}
 
-	public List<FeedItem> parseRssItems(Document doc) throws FeedParserException {
+	public Feeds parseFeeds(Document doc) throws FeedParserException {
 		FeedFormat feedFormat;
 
 		Elements itemsElem = doc.select("rss>channel>item");
-		int itemCount = itemsElem.size();
+		int itemCount = itemsElem==null ? 0 :  itemsElem.size();
 		if (itemCount > 0) {
 			feedFormat = FeedFormat.RSS;
 		}
 		else {
 			feedFormat = FeedFormat.ATOM;
 			itemsElem = doc.select("feed>entry");
-			itemCount = itemsElem.size();
+			itemCount = itemsElem==null ? 0 : itemsElem.size();
 		}
 		if (itemCount==0) {
-			throw new FeedParserException("Cannot parse '"+doc.baseUri()+"': '"+StrUtils.ellipsize(doc.text(), 50)+"'", 0);
+			throw new FeedParserException(doc.baseUri(), "Cannot parse: '"+StrUtils.ellipsize(doc.text(), 50)+"'", 0);
 		}
 
-		List<FeedItem>  resu = new ArrayList<>(itemCount);
+		String feedsLanguage = parseFeedsLanguage(feedFormat, doc);
+
+		Feeds  resu = new Feeds(itemCount,
+					doc.baseUri(),
+					feedsLanguage,
+					parseFeedsDescription(feedFormat, doc),
+					parseFeedsPublishedDate(feedFormat, doc)
+				);
 		for (int i = 0; i < itemCount; i++) {
 			Element elem = itemsElem.get(i);
 			FeedItem item = new FeedItem(
 					parseItemTitle(elem, i, feedFormat),
 					parseItemPublishDate(elem, i, feedFormat),
-					parseRssDescription(elem, i, feedFormat),
-					parseItemUri(elem, i, feedFormat)
+					parseFeedDescription(elem, i, feedFormat),
+					parseItemUri(elem, i, feedFormat),
+					parseItemLanguage(elem, feedFormat, feedsLanguage)
 			);
 			item.author = parseItemAuthor(elem, i, feedFormat);
 			resu.add(item);
@@ -200,78 +213,131 @@ public class ContentParser {
 		return resu;
 	}
 
+	//</editor-fold>
+
 	//<editor-fold desc="Rss Parse Item details">
 
-	private String parseItemUri(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
-
+	private String parseFeedsLanguage(FeedFormat feedFormat, Document doc) {
 		switch (feedFormat) {
 			case RSS: {
-				String uri = elem.select("guid").first().text();
-				if (URLUtil.isValidUrl(uri)) {
-					return uri;
-				}
-				uri = elem.select("link").first().text();
-				if (URLUtil.isValidUrl(uri)) {
-					return uri;
-				}
+				return getFirstText(doc, "rss>channel>language");
 			}
 			case ATOM: {
-				String uri = elem.select("id").first().text();
-				if (URLUtil.isValidUrl(uri)) {
-					return uri;
+				return null;
+			}
+		}
+		return null;
+	}
+	private String parseFeedsDescription(FeedFormat feedFormat, Document doc) throws FeedParserException {
+		String feedsDescription = null;
+		switch (feedFormat) {
+			case RSS: {
+				feedsDescription = getFirstText(doc, "rss>channel>description");
+				if (Strings.isNullOrEmpty(feedsDescription)) {
+					feedsDescription = getFirstText(doc, "rss>channel>title");
 				}
-				uri = elem.select("link").first().attr("href");
-				if (URLUtil.isValidUrl(uri)) {
-					return uri;
-				}
+				break;
+			}
+			case ATOM: {
+				feedsDescription = getFirstText(doc, "feed>title");
+				break;
 			}
 		}
 
-		throw new FeedParserException("Unable to find URI in <guid> or <link> tag", pos);
+		if (Strings.isNullOrEmpty(feedsDescription)) {
+			throw new FeedParserException(doc.baseUri(), "Description is empty 'rss>channel>description' or 'feed>title'", 0);
+		}
+
+		return feedsDescription;
+	}
+	private String parseFeedsPublishedDate(FeedFormat feedFormat, Document doc) throws FeedParserException {
+		switch (feedFormat) {
+			case RSS: {
+				return getFirstText(doc, "rss>channel>pubDate");
+			}
+			case ATOM: {
+				return getFirstText(doc, "feed>updated");
+			}
+		}
+
+		/*
+			throw new FeedParserException("Unable to find published Date from 'rss>channel>pubDate' or 'feed>updated'", 0);
+		}*/
+
+		return null;
+	}
+
+	private String parseItemUri(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
+		String uri = null;
+		switch (feedFormat) {
+			case RSS: {
+				uri = getFirstText(elem, "guid");
+				if (URLUtil.isValidUrl(uri)) {
+					return uri;
+				}
+				uri = getFirstText(elem, "link");
+				if (URLUtil.isValidUrl(uri)) {
+					return uri;
+				}
+				break;
+			}
+			case ATOM: {
+				uri = getFirstText(elem, "id");
+				if (URLUtil.isValidUrl(uri)) {
+					return uri;
+				}
+				uri = getFirstAttr(elem, "link", "href");
+				if (URLUtil.isValidUrl(uri)) {
+					return uri;
+				}
+				break;
+			}
+		}
+
+		throw new FeedParserException(elem.baseUri(), "Unable to find URI in <guid> or <link> tag '"+uri+"'", pos);
 	}
 
 	private String parseItemTitle(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
-		String title = elem.select("title").first().text();
+		String title = getFirstText(elem, "title");
 		if (Strings.isNullOrEmpty(title)) {
-			throw new FeedParserException("<title> is empty", pos);
+			throw new FeedParserException(elem.baseUri(), "<title> is empty", pos);
 		}
 		return title;
 	}
 
-	private String parseItemPublishDate(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
-		String pubDate = null;
+	private String parseItemPublishDate(Element elem, int pos, FeedFormat feedFormat){
+		String pubDateStr = null;
 		switch (feedFormat) {
 			case RSS: {
-				pubDate = elem.select("pubDate").first().text();
-				break;
+				return getFirstText(elem, "pubDate");
 			}
 			case ATOM: {
-				pubDate = elem.select("published").first().text();
-				break;
+				return getFirstText(elem, "published");
 			}
 		}
 
-		if (Strings.isNullOrEmpty(pubDate)) {
-			throw new FeedParserException("<pubDate> is empty", pos);
-		}
-		return pubDate;
+		/*if (Strings.isNullOrEmpty(pubDateStr)) {
+			throw new FeedParserException(elem.baseUri(), "<pubDate> is empty", pos);
+		}*/
+		return null;
 	}
-	private String parseRssDescription(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
+
+	private String parseFeedDescription(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
 		String description = null;
 		switch (feedFormat) {
 			case RSS: {
-				description = elem.select("description").first().text();
+				description = getFirstText(elem, "description");
 				break;
 			}
 			case ATOM: {
-				description = elem.select("content").first().text();
+				description = getFirstText(elem, "content");
 				break;
 			}
 		}
 
-		if (Strings.isNullOrEmpty(description)) {
-			throw new FeedParserException("<description> is empty", pos);
-		}
+		/*if (Strings.isNullOrEmpty(description)) {
+			throw new FeedParserException(elem.baseUri(), "<description> is empty", pos);
+		}*/
 		return description;
 	}
 
@@ -282,21 +348,72 @@ public class ContentParser {
 	private String parseItemAuthor(Element elem, int pos, FeedFormat feedFormat) {
 		switch (feedFormat) {
 			case RSS: {
-				Elements elemAuthor = elem.select("author");
-				if (elemAuthor != null && !elemAuthor.isEmpty()) {
-					return elemAuthor.first().text();
-				}
+				return getFirstText(elem, "author");
 			}
 			case ATOM: {
-				Elements elemAuthor = elem.select("author>name");
-				if (elemAuthor != null && !elemAuthor.isEmpty()) {
-					return elemAuthor.first().text();
-				}
+				return getFirstText(elem, "author>name");
 			}
 		}
 		return null;
 	}
 
+	private String parseItemLanguage(Element elem, FeedFormat feedFormat, String feedsLang) {
+		String lang = null;
+		switch (feedFormat) {
+			case RSS: {
+				//lang = getFirstText(elem, "language");
+				lang = null;
+				break;
+			}
+			case ATOM: {
+				lang = elem.attr("xml:lang");
+				break;
+			}
+		}
+
+		return Strings.isNullOrEmpty(lang) ? feedsLang : lang;
+	}
+
 	//</editor-fold>
 
+	private String getFirstText(Document doc, String xpath) {
+		String textValue;
+		Elements elems = doc.select(xpath);
+		if (elems == null) {
+			return null;
+		}
+		Element elem = elems.first();
+		if (elem == null) {
+			return null;
+		}
+		return elem.text();
+	}
+
+	private String getFirstText(Element e, String xpath) {
+		String textValue;
+		Elements elems = e.select(xpath);
+		if (elems == null) {
+			return null;
+		}
+		Element elem = elems.first();
+		if (elem == null) {
+			return null;
+		}
+		return elem.text();
+	}
+
+	private String getFirstAttr(Element e, String xpath, String attr) {
+		Elements elems = e.select(xpath);
+		if (elems == null) {
+			return null;
+		}
+		if (elems == null) {
+			return null;
+		}
+		Element elem = elems.first();
+		if (elem == null) {
+			return null;
+		}
+		return elem.attr(attr);
+	}
 }

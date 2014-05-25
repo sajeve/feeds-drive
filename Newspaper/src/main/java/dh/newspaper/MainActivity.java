@@ -13,20 +13,18 @@ import android.util.Log;
 import android.view.*;
 import dagger.Lazy;
 import de.greenrobot.event.EventBus;
-import dh.newspaper.base.InjectingActivity;
 import dh.newspaper.base.Injector;
 import dh.newspaper.model.FakeDataProvider;
-import dh.newspaper.view.CategoriesFragment;
+import dh.newspaper.view.TagsFragment;
 import dh.newspaper.view.FeedsFragment;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 public class MainActivity extends Activity {
 	private static final String TAG = MainActivity.class.getName();
 
 	@Inject
-	Lazy<CategoriesFragment> mCategoriesFragment;
+	Lazy<TagsFragment> mCategoriesFragment;
 
 	@Inject
 	Lazy<FeedsFragment> mFeedsFragment;
@@ -187,7 +185,7 @@ public class MainActivity extends Activity {
 	 * Set up the navigation drawer interactions.
 	 */
 	public void setUpAsNavigationDrawer() {
-		mFragmentContainerView = findViewById(R.id.categories_drawer);
+		mFragmentContainerView = findViewById(R.id.tags_drawer);
 
 		// set a custom shadow that overlays the main content when the drawer opens
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);

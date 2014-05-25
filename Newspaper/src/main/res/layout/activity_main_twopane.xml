@@ -10,12 +10,12 @@
 		tools:context="dh.newspaper.MainActivity">
 
 	<fragment
-			android:id="@+id/fragment_categories"
-			android:name="dh.newspaper.view.CategoriesFragment"
+			android:id="@+id/fragment_tags"
+			android:name="dh.newspaper.view.TagsFragment"
 			android:layout_width="0dp"
 			android:layout_height="match_parent"
 			android:layout_weight="1"
-			tools:layout="@layout/fragment_categories"/>
+			tools:layout="@layout/fragment_tags"/>
 
 	<fragment
 			android:id="@+id/fragment_feeds"

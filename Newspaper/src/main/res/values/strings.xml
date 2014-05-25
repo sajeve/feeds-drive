@@ -6,4 +6,16 @@
     <string name="action_example">Example action</string>
     <string name="action_settings">Settings</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+	<string name="PERIOD_YEAR_AGO">%s years ago</string>
+	<string name="PERIOD_LAST_YEAR">Last year</string>
+	<string name="PERIOD_MONTH_AGO">%s months ago</string>
+	<string name="PERIOD_LAST_MONTH">Last month</string>
+	<string name="PERIOD_WEEK_AGO">%s weeks ago</string>
+	<string name="PERIOD_LAST_WEEK">Last week</string>
+	<string name="PERIOD_DAY_AGO">%s days ago</string>
+	<string name="PERIOD_YESTERDAY">Yesterday</string>
+	<string name="PERIOD_HOURS_AGO">%s hours ago</string>
+	<string name="PERIOD_MINUTE_AGO">%s minutes ago</string>
+	<string name="PERIOD_JUST_NOW">Just now</string>
 </resources>

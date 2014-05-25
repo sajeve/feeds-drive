@@ -36,7 +36,7 @@ public class FeedsFragment extends Fragment {
 
 	private GridView mGridView;
 	private FeedsGridAdapter mGridViewAdapter;
-	private int mCategoryId = 0;
+	private int mTagPos = 0;
 
 	@Inject
 	AppBundle mAppBundle;
@@ -103,7 +103,7 @@ public class FeedsFragment extends Fragment {
 				intArg = sessionNumber;
 			}});
 		}
-		mCategoryId = mAppBundle.getCurrentCategoryId();
+		mTagPos = mAppBundle.getCurrentTagPos();
 	}
 
 	@Override
@@ -121,7 +121,7 @@ public class FeedsFragment extends Fragment {
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putInt(ARG_SECTION_NUMBER, mCategoryId);
+		outState.putInt(ARG_SECTION_NUMBER, mTagPos);
 	}
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -131,7 +131,7 @@ public class FeedsFragment extends Fragment {
 		if (savedInstanceState == null) {
 			return;
 		}
-		mCategoryId = savedInstanceState.getInt(ARG_SECTION_NUMBER);
+		mTagPos = savedInstanceState.getInt(ARG_SECTION_NUMBER);
 		refreshContent();
 	}
 
@@ -172,27 +172,27 @@ public class FeedsFragment extends Fragment {
 		}
 	}
 
-	public void onEventMainThread(CategoriesFragment.Event e) {
+	public void onEventMainThread(TagsFragment.Event e) {
 		try {
-			loadCategory(e.getCategoryId());
+			loadCategory(e.getTagPos());
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
-			MyApplication.showErrorDialog(this.getFragmentManager(), "OnLoadCategory", ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), "OnLoadTag", ex);
 		}
 	}
 
 	/**
-	 * refresh the categoryPreview base on the current mCategoryId
+	 * refresh the categoryPreview base on the current mTagPos
 	 */
 	private void refreshContent() {
 		if (mGridViewAdapter != null) {
-			mGridViewAdapter.fetchAddress(FakeDataProvider.getCategorySource(mCategoryId));
+			mGridViewAdapter.fetchAddress(FakeDataProvider.getCategorySource(mTagPos));
 		}
 	}
 	private void loadCategory(int categoryId) {
-		mCategoryId = categoryId;
+		mTagPos = categoryId;
 		if (mGridViewAdapter != null) {
-			mGridViewAdapter.fetchAddress(FakeDataProvider.getCategorySource(mCategoryId));
+			mGridViewAdapter.fetchAddress(FakeDataProvider.getCategorySource(mTagPos));
 		}
 	}
 

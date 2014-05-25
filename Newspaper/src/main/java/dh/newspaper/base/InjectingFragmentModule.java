@@ -30,9 +30,6 @@ package dh.newspaper.base;
 
 import dagger.Module;
 import dagger.Provides;
-import dh.newspaper.view.ArticleFragment;
-import dh.newspaper.view.CategoriesFragment;
-import dh.newspaper.view.FeedsFragment;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Documented;

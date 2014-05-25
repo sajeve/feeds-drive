@@ -10,17 +10,19 @@ public class FeedItem implements Serializable {
 	private String publishedDate;
 	private String description;
 	private String uri;
+	private String language;
 
 	/**
 	 * optional, can be null
 	 */
 	public String author;
 
-	public FeedItem(String title, String publishedDate, String description, String uri) {
+	public FeedItem(String title, String publishedDate, String description, String uri, String language) {
 		this.title = title;
 		this.publishedDate = publishedDate;
 		this.description = description;
 		this.uri = uri;
+		this.language = language;
 	}
 
 	public String getTitle() {
@@ -37,5 +39,9 @@ public class FeedItem implements Serializable {
 
 	public String getUri() {
 		return uri;
+	}
+
+	public String getLanguage() {
+		return language;
 	}
 }

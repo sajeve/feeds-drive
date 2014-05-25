@@ -58,7 +58,7 @@ public class DownloadAndSaveFileTest extends ActivityInstrumentationTestCase2<Ma
 
 	public void testGetRssItem() throws FeedParserException, IOException {
 		ContentParser contentParser = new ContentParser();
-		List<FeedItem> items = contentParser.parseRssUrl("http://vnexpress.net/rss/thoi-su.rss", "UTF-8");
+		List<FeedItem> items = contentParser.parseFeeds("http://vnexpress.net/rss/thoi-su.rss", "UTF-8");
 		assertTrue(items.size() > 0);
 	}
 }

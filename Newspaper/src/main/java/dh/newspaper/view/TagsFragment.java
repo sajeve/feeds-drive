@@ -3,13 +3,9 @@ package dh.newspaper.view;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,10 +17,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 import de.greenrobot.event.EventBus;
-import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.R;
-import dh.newspaper.base.InjectingFragment;
 import dh.newspaper.base.Injector;
 import dh.newspaper.event.BaseEvent;
 import dh.newspaper.model.FakeDataProvider;
@@ -37,7 +31,7 @@ import javax.inject.Inject;
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
-public class CategoriesFragment extends Fragment {
+public class TagsFragment extends Fragment {
 
 	@Inject
 	AppBundle mAppBundle;
@@ -55,7 +49,7 @@ public class CategoriesFragment extends Fragment {
     private int mCurrentSelectedPosition = 0;
 
 	@Inject
-    public CategoriesFragment() {
+    public TagsFragment() {
 		setRetainInstance(true);
     }
 
@@ -67,11 +61,11 @@ public class CategoriesFragment extends Fragment {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
         }
 		else {
-			mCurrentSelectedPosition = mAppBundle.getCurrentCategoryId();
+			mCurrentSelectedPosition = mAppBundle.getCurrentTagPos();
 		}
 
         // Select either the default item (0) or the last selected item.
-        selectCategory(mCurrentSelectedPosition);
+        selectTag(mCurrentSelectedPosition);
     }
 
 	private boolean mFirstAttach = true;
@@ -84,7 +78,7 @@ public class CategoriesFragment extends Fragment {
 		if (mFirstAttach) {
 			((Injector) activity.getApplication()).inject(this);
 			mFirstAttach = false;
-			mCurrentSelectedPosition = mAppBundle.getCurrentCategoryId();
+			mCurrentSelectedPosition = mAppBundle.getCurrentTagPos();
 		}
 	}
 
@@ -99,11 +93,11 @@ public class CategoriesFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         mDrawerListView = (ListView) inflater.inflate(
-                R.layout.fragment_categories, container, false);
+                R.layout.fragment_tags, container, false);
         mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectCategory(position);
+                selectTag(position);
             }
         });
         mDrawerListView.setAdapter(new ArrayAdapter<String>(
@@ -115,7 +109,7 @@ public class CategoriesFragment extends Fragment {
         return mDrawerListView;
     }
 
-    private void selectCategory(final int position) {
+    private void selectTag(final int position) {
         mCurrentSelectedPosition = position;
         if (mDrawerListView != null) {
             mDrawerListView.setItemChecked(position, true);
@@ -200,16 +194,16 @@ public class CategoriesFragment extends Fragment {
         return getActivity().getActionBar();
     }
 
-	public class Event extends BaseEvent<CategoriesFragment> {
-		private int mCategoryId;
+	public class Event extends BaseEvent<TagsFragment> {
+		private int mTagPos;
 
-		public Event(int categoryId) {
-			super(CategoriesFragment.this);
-			mCategoryId = categoryId;
+		public Event(int tagPos) {
+			super(TagsFragment.this);
+			mTagPos = tagPos;
 		}
 
-		public int getCategoryId() {
-			return mCategoryId;
+		public int getTagPos() {
+			return mTagPos;
 		}
 
 		/*public Event(String subject) {

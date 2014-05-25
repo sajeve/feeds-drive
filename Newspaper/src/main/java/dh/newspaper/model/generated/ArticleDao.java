@@ -31,14 +31,15 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         public final static Property Author = new Property(5, String.class, "author", false, "AUTHOR");
         public final static Property Excerpt = new Property(6, String.class, "excerpt", false, "EXCERPT");
         public final static Property Content = new Property(7, String.class, "content", false, "CONTENT");
-        public final static Property Language = new Property(8, String.class, "language", false, "LANGUAGE");
-        public final static Property Published = new Property(9, java.util.Date.class, "published", false, "PUBLISHED");
-        public final static Property Archived = new Property(10, java.util.Date.class, "archived", false, "ARCHIVED");
-        public final static Property LastRead = new Property(11, java.util.Date.class, "lastRead", false, "LAST_READ");
-        public final static Property LastUpdated = new Property(12, java.util.Date.class, "lastUpdated", false, "LAST_UPDATED");
+        public final static Property Checksum = new Property(8, String.class, "checksum", false, "CHECKSUM");
+        public final static Property Language = new Property(9, String.class, "language", false, "LANGUAGE");
+        public final static Property OpenedCount = new Property(10, Long.class, "openedCount", false, "OPENED_COUNT");
+        public final static Property Published = new Property(11, java.util.Date.class, "published", false, "PUBLISHED");
+        public final static Property PublishedDateString = new Property(12, java.util.Date.class, "publishedDateString", false, "PUBLISHED_DATE_STRING");
+        public final static Property Archived = new Property(13, java.util.Date.class, "archived", false, "ARCHIVED");
+        public final static Property LastOpened = new Property(14, java.util.Date.class, "lastOpened", false, "LAST_OPENED");
+        public final static Property LastUpdated = new Property(15, java.util.Date.class, "lastUpdated", false, "LAST_UPDATED");
     };
-
-    private DaoSession daoSession;
 
 
     public ArticleDao(DaoConfig config) {
@@ -47,26 +48,28 @@ public class ArticleDao extends AbstractDao<Article, Long> {
     
     public ArticleDao(DaoConfig config, DaoSession daoSession) {
         super(config, daoSession);
-        this.daoSession = daoSession;
     }
 
     /** Creates the underlying database table. */
     public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "'ARTICLE' (" + //
-                "'_id' INTEGER PRIMARY KEY ," + // 0: id
+                "'_id' INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "'ARTICLE_URL' TEXT NOT NULL UNIQUE ," + // 1: articleUrl
                 "'PARENT_URL' TEXT," + // 2: parentUrl
                 "'IMAGE_URL' TEXT," + // 3: imageUrl
                 "'TITLE' TEXT NOT NULL ," + // 4: title
                 "'AUTHOR' TEXT," + // 5: author
-                "'EXCERPT' TEXT NOT NULL ," + // 6: excerpt
+                "'EXCERPT' TEXT," + // 6: excerpt
                 "'CONTENT' TEXT," + // 7: content
-                "'LANGUAGE' TEXT," + // 8: language
-                "'PUBLISHED' INTEGER NOT NULL ," + // 9: published
-                "'ARCHIVED' INTEGER," + // 10: archived
-                "'LAST_READ' INTEGER," + // 11: lastRead
-                "'LAST_UPDATED' INTEGER);"); // 12: lastUpdated
+                "'CHECKSUM' TEXT," + // 8: checksum
+                "'LANGUAGE' TEXT," + // 9: language
+                "'OPENED_COUNT' INTEGER," + // 10: openedCount
+                "'PUBLISHED' INTEGER," + // 11: published
+                "'PUBLISHED_DATE_STRING' INTEGER," + // 12: publishedDateString
+                "'ARCHIVED' INTEGER," + // 13: archived
+                "'LAST_OPENED' INTEGER," + // 14: lastOpened
+                "'LAST_UPDATED' INTEGER);"); // 15: lastUpdated
     }
 
     /** Drops the underlying database table. */
@@ -101,39 +104,56 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         if (author != null) {
             stmt.bindString(6, author);
         }
-        stmt.bindString(7, entity.getExcerpt());
+ 
+        String excerpt = entity.getExcerpt();
+        if (excerpt != null) {
+            stmt.bindString(7, excerpt);
+        }
  
         String content = entity.getContent();
         if (content != null) {
             stmt.bindString(8, content);
         }
  
+        String checksum = entity.getChecksum();
+        if (checksum != null) {
+            stmt.bindString(9, checksum);
+        }
+ 
         String language = entity.getLanguage();
         if (language != null) {
-            stmt.bindString(9, language);
+            stmt.bindString(10, language);
         }
-        stmt.bindLong(10, entity.getPublished().getTime());
+ 
+        Long openedCount = entity.getOpenedCount();
+        if (openedCount != null) {
+            stmt.bindLong(11, openedCount);
+        }
+ 
+        java.util.Date published = entity.getPublished();
+        if (published != null) {
+            stmt.bindLong(12, published.getTime());
+        }
+ 
+        java.util.Date publishedDateString = entity.getPublishedDateString();
+        if (publishedDateString != null) {
+            stmt.bindLong(13, publishedDateString.getTime());
+        }
  
         java.util.Date archived = entity.getArchived();
         if (archived != null) {
-            stmt.bindLong(11, archived.getTime());
+            stmt.bindLong(14, archived.getTime());
         }
  
-        java.util.Date lastRead = entity.getLastRead();
-        if (lastRead != null) {
-            stmt.bindLong(12, lastRead.getTime());
+        java.util.Date lastOpened = entity.getLastOpened();
+        if (lastOpened != null) {
+            stmt.bindLong(15, lastOpened.getTime());
         }
  
         java.util.Date lastUpdated = entity.getLastUpdated();
         if (lastUpdated != null) {
-            stmt.bindLong(13, lastUpdated.getTime());
+            stmt.bindLong(16, lastUpdated.getTime());
         }
-    }
-
-    @Override
-    protected void attachEntity(Article entity) {
-        super.attachEntity(entity);
-        entity.__setDaoSession(daoSession);
     }
 
     /** @inheritdoc */
@@ -152,13 +172,16 @@ public class ArticleDao extends AbstractDao<Article, Long> {
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // imageUrl
             cursor.getString(offset + 4), // title
             cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5), // author
-            cursor.getString(offset + 6), // excerpt
+            cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6), // excerpt
             cursor.isNull(offset + 7) ? null : cursor.getString(offset + 7), // content
-            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // language
-            new java.util.Date(cursor.getLong(offset + 9)), // published
-            cursor.isNull(offset + 10) ? null : new java.util.Date(cursor.getLong(offset + 10)), // archived
-            cursor.isNull(offset + 11) ? null : new java.util.Date(cursor.getLong(offset + 11)), // lastRead
-            cursor.isNull(offset + 12) ? null : new java.util.Date(cursor.getLong(offset + 12)) // lastUpdated
+            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // checksum
+            cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9), // language
+            cursor.isNull(offset + 10) ? null : cursor.getLong(offset + 10), // openedCount
+            cursor.isNull(offset + 11) ? null : new java.util.Date(cursor.getLong(offset + 11)), // published
+            cursor.isNull(offset + 12) ? null : new java.util.Date(cursor.getLong(offset + 12)), // publishedDateString
+            cursor.isNull(offset + 13) ? null : new java.util.Date(cursor.getLong(offset + 13)), // archived
+            cursor.isNull(offset + 14) ? null : new java.util.Date(cursor.getLong(offset + 14)), // lastOpened
+            cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)) // lastUpdated
         );
         return entity;
     }
@@ -172,13 +195,16 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         entity.setImageUrl(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setTitle(cursor.getString(offset + 4));
         entity.setAuthor(cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5));
-        entity.setExcerpt(cursor.getString(offset + 6));
+        entity.setExcerpt(cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6));
         entity.setContent(cursor.isNull(offset + 7) ? null : cursor.getString(offset + 7));
-        entity.setLanguage(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
-        entity.setPublished(new java.util.Date(cursor.getLong(offset + 9)));
-        entity.setArchived(cursor.isNull(offset + 10) ? null : new java.util.Date(cursor.getLong(offset + 10)));
-        entity.setLastRead(cursor.isNull(offset + 11) ? null : new java.util.Date(cursor.getLong(offset + 11)));
-        entity.setLastUpdated(cursor.isNull(offset + 12) ? null : new java.util.Date(cursor.getLong(offset + 12)));
+        entity.setChecksum(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
+        entity.setLanguage(cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9));
+        entity.setOpenedCount(cursor.isNull(offset + 10) ? null : cursor.getLong(offset + 10));
+        entity.setPublished(cursor.isNull(offset + 11) ? null : new java.util.Date(cursor.getLong(offset + 11)));
+        entity.setPublishedDateString(cursor.isNull(offset + 12) ? null : new java.util.Date(cursor.getLong(offset + 12)));
+        entity.setArchived(cursor.isNull(offset + 13) ? null : new java.util.Date(cursor.getLong(offset + 13)));
+        entity.setLastOpened(cursor.isNull(offset + 14) ? null : new java.util.Date(cursor.getLong(offset + 14)));
+        entity.setLastUpdated(cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)));
      }
     
     /** @inheritdoc */

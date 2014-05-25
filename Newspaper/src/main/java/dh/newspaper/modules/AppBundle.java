@@ -2,7 +2,7 @@ package dh.newspaper.modules;
 
 import android.util.Log;
 import dh.newspaper.model.FeedItem;
-import dh.newspaper.view.CategoriesFragment;
+import dh.newspaper.view.TagsFragment;
 import dh.newspaper.view.FeedsFragment;
 
 import javax.inject.Inject;
@@ -16,7 +16,7 @@ public class AppBundle {
 	private static final String TAG = AppBundle.class.getName();
 
 	private FeedItem currentFeedItem;
-	private int currentCategoryId;
+	private int currentTagPos;
 
 	@Inject
 	public AppBundle() {}
@@ -32,9 +32,9 @@ public class AppBundle {
 		}
 	}
 
-	public void onEvent(CategoriesFragment.Event e) {
+	public void onEvent(TagsFragment.Event e) {
 		try {
-			currentCategoryId = e.getCategoryId();
+			currentTagPos = e.getTagPos();
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
 		}
@@ -44,7 +44,7 @@ public class AppBundle {
 		return currentFeedItem;
 	}
 
-	public int getCurrentCategoryId() {
-		return currentCategoryId;
+	public int getCurrentTagPos() {
+		return currentTagPos;
 	}
 }

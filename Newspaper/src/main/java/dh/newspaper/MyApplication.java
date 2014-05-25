@@ -19,6 +19,8 @@ import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.modules.AppBundle;
 import dh.newspaper.modules.GlobalModule;
 import dh.newspaper.view.utils.ErrorDialogFragment;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeComparator;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -51,7 +53,7 @@ public class MyApplication extends InjectingApplication {
 		Log.i(TAG, "Database Path = " + mDb.getPath());
 
 		try {
-			Article article = new Article(null, "articleUrl1", "parentUrl1", "imageUrl1", "title1", "author1", "excerpt1", "content1", "en", new Date(), null, null, new Date());
+			Article article = new Article(null, "articleUrl1", "parentUrl1", "imageUrl1", "title1", "author1", "excerpt1", "content1", "fa1256", "en", 0L, null, null, null, null, new Date());
 			mDaoSession.getArticleDao().insert(article);
 		} catch (Exception ex) {
 			Log.w(TAG, ex.getMessage());
@@ -121,7 +123,7 @@ public class MyApplication extends InjectingApplication {
 			final String message, final Throwable ex)
 	{
 		ErrorDialogFragment dialog = ErrorDialogFragment.newInstance(message, ex);
-		dialog.show(fm, "ReportErrorDialog "+getNow());
+		dialog.show(fm, "ReportErrorDialog "+ DateTime.now());
 	}
 
 	@Override
@@ -129,7 +131,4 @@ public class MyApplication extends InjectingApplication {
 		return new ArrayList<Object>(){{add(new GlobalModule());}};
 	}
 
-	public static long getNow() {
-		return Calendar.getInstance().getTime().getTime();
-	}
 }

@@ -31,8 +31,8 @@
 	-->
 
 	<fragment
-			android:id="@+id/categories_drawer"
-			android:name="dh.newspaper.view.CategoriesFragment"
+			android:id="@+id/tags_drawer"
+			android:name="dh.newspaper.view.TagsFragment"
 			android:layout_width="@dimen/navigation_drawer_width"
 			android:layout_height="match_parent"
 			android:layout_gravity="start"

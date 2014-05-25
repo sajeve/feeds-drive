@@ -2,7 +2,6 @@ package dh.newspaper.model.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,36 +10,28 @@ import java.util.List;
  */
 public class JsonSubscription {
 	private String feedsUrl;
-	private List<Long> categories = Arrays.asList(0L);
+	private List<String> tags;
 	private boolean enable = true;
 	private String language;
+	private String encoding = "utf-8";
 
 	public JsonSubscription() {
 	}
 
-	public JsonSubscription(String feedsUrl, List<Long> categories, boolean enable, String language) {
+	public JsonSubscription(String feedsUrl, List<String> tags, boolean enable, String language, String encoding) {
 		this.feedsUrl = feedsUrl;
-		this.categories = categories;
+		this.tags = tags;
 		this.enable = enable;
 		this.language = language;
-	}
-	public JsonSubscription(String feedsUrl, List<Long> categories, String language) {
-		this(feedsUrl, categories, true, language);
-	}
-	public JsonSubscription(String feedsUrl, List<Long> categories) {
-		this(feedsUrl, categories, true, null);
-	}
-	public JsonSubscription(String feedsUrl) {
-		this(feedsUrl, Arrays.asList(0L));
+		this.encoding = encoding;
 	}
 
-	@JsonProperty(required = true)
 	public String getFeedsUrl() {
 		return feedsUrl;
 	}
 
-	public List<Long> getCategories() {
-		return categories;
+	public List<String> getTags() {
+		return tags;
 	}
 
 	public boolean isEnable() {
@@ -51,12 +42,16 @@ public class JsonSubscription {
 		return language;
 	}
 
+	public String getEncoding() {
+		return encoding;
+	}
+
 	public void setFeedsUrl(String feedsUrl) {
 		this.feedsUrl = feedsUrl;
 	}
 
-	public void setCategories(List<Long> categories) {
-		this.categories = categories;
+	public void setTags(List<String> tags) {
+		this.tags = tags;
 	}
 
 	public void setEnable(boolean enable) {
@@ -65,5 +60,9 @@ public class JsonSubscription {
 
 	public void setLanguage(String language) {
 		this.language = language;
+	}
+
+	public void setEncoding(String encoding) {
+		this.encoding = encoding;
 	}
 }

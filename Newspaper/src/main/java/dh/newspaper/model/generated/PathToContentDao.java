@@ -44,7 +44,7 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
     public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "'PATH_TO_CONTENT' (" + //
-                "'_id' INTEGER PRIMARY KEY ," + // 0: id
+                "'_id' INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "'URL_PATTERN' TEXT NOT NULL UNIQUE ," + // 1: urlPattern
                 "'XPATH' TEXT," + // 2: xpath
                 "'LANGUAGE' TEXT," + // 3: language

@@ -7,5 +7,5 @@ mainClassName = "dh.newspaper.model.generator.SchemaBuilder"
 
 dependencies {
 	compile fileTree(dir: 'libs', include: ['*.jar'])
-	compile ('org.freemarker:freemarker:2.3.20')
+	compile ('org.freemarker:freemarker:2.3.+')
 }

@@ -13,7 +13,7 @@ public class FeedParserException extends ParseException {
 	 * @param detailMessage the detail message for this exception.
 	 * @param location
 	 */
-	public FeedParserException(String detailMessage, int location) {
-		super(detailMessage, location);
+	public FeedParserException(String url, String detailMessage, int location) {
+		super(detailMessage + " ("+url+")", location);
 	}
 }
