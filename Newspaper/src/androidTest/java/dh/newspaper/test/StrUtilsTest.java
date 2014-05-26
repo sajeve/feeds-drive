@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.common.collect.Sets;
 import dh.newspaper.MainActivity;
 import dh.newspaper.parser.StrUtils;
+import net.danlew.android.joda.ResourceZoneInfoProvider;
 import org.joda.time.Chronology;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -69,9 +70,16 @@ public class StrUtilsTest extends ActivityInstrumentationTestCase2<MainActivity>
 	}
 
 	public void testParseDateTime() {
-
 		Log.i("StrUtilsTest", Arrays.toString(DateTimeZone.getAvailableIDs().toArray()));
 
+		{
+			DateTime d = DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzz").parseDateTime("Sun, 25 May 2014 14:09:29 EDT");
+			assertEquals(2014, d.getYear());
+		}
+		{
+			DateTime d = DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzz").parseDateTime("Sun, 25 May 2014 14:09:29 GMT");
+			assertEquals(2014, d.getYear());
+		}
 		{
 			DateTimeParser[] parsers = {
 					DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss Z").getParser() //Mon, 26 May 2014 00:08:43 +0700
@@ -89,7 +97,7 @@ public class StrUtilsTest extends ActivityInstrumentationTestCase2<MainActivity>
 			DateTime d = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").parseDateTime("2014-05-25T05:39:45Z");
 			assertEquals(2014, d.getYear());
 		}
-		{
+		/*{
 			DateTimeParser parser = ISODateTimeFormat.dateTimeParser().getParser();
 			DateTimeParserBucket dateTimeParserBucket = null;
 
@@ -98,15 +106,8 @@ public class StrUtilsTest extends ActivityInstrumentationTestCase2<MainActivity>
 
 			DateTime d = ISODateTimeFormat.dateTimeParser().parseDateTime("2014-05-25T05:39:45Z");
 			assertEquals(2014, d.getYear());
-		}
-		{
-			DateTime d = DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzz").parseDateTime("Sun, 25 May 2014 14:09:29 EDT");
-			assertEquals(2014, d.getYear());
-		}
-		{
-			DateTime d = DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzz").parseDateTime("Sun, 25 May 2014 14:09:29 GMT");
-			assertEquals(2014, d.getYear());
-		}
+		}*/
+
 
 	}
 
