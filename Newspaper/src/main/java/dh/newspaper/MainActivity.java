@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.*;
 import dagger.Lazy;
 import de.greenrobot.event.EventBus;
+import dh.newspaper.base.DatabaseActivity;
 import dh.newspaper.base.Injector;
 import dh.newspaper.model.FakeDataProvider;
 import dh.newspaper.view.TagsFragment;
@@ -20,7 +21,7 @@ import dh.newspaper.view.FeedsFragment;
 
 import javax.inject.Inject;
 
-public class MainActivity extends Activity {
+public class MainActivity extends DatabaseActivity {
 	private static final String TAG = MainActivity.class.getName();
 
 	@Inject

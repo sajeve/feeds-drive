@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 
 /**
+ * Download the feeds page, fill possible info
  * Created by hiep on 25/05/2014.
  */
 public class SubscriptionFactory {

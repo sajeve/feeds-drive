@@ -1,16 +1,15 @@
 package dh.newspaper.test;
 
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.test.ActivityInstrumentationTestCase2;
+import de.greenrobot.dao.query.LazyList;
+import de.greenrobot.dao.query.Query;
 import de.greenrobot.dao.query.QueryBuilder;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.FeedParserException;
-import dh.newspaper.parser.StrUtils;
 import dh.newspaper.parser.SubscriptionFactory;
 import org.joda.time.DateTime;
 
@@ -24,18 +23,32 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 		super(MainActivity.class);
 	}
 
-	public void testGenerateDatabase() throws IOException, FeedParserException {
+	DaoMaster mDaoMaster;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+
 		QueryBuilder.LOG_SQL = true;
 		QueryBuilder.LOG_VALUES = true;
 
-		SQLiteOpenHelper helper = new DaoMaster.DevOpenHelper(this.getActivity(), "/mnt/shared/bridge/test/"+Constants.DATABASE_NAME+".db", null); //debug only (because drops all tables)
-		SQLiteDatabase db = helper.getWritableDatabase();
+		SQLiteOpenHelper helper = new DaoMaster.DevOpenHelper(this.getActivity(), "/mnt/shared/bridge/test/"+Constants.DATABASE_NAME+".mDb", null); //debug only (because drops all tables)
+		mDaoMaster = new DaoMaster(helper.getReadableDatabase());
+		assertNotNull(mDaoMaster.getDatabase());
+	}
 
-		DaoMaster daoMaster = new DaoMaster(db);
-		DaoMaster.dropAllTables(db, false);
-		DaoMaster.createAllTables(db, false);
+	@Override
+	protected void tearDown() throws Exception {
+		mDaoMaster.getDatabase().close();
+		super.tearDown();
+	}
 
-		DaoSession daoSession = daoMaster.newSession();
+	public void testGenerateDatabase() throws IOException, FeedParserException {
+
+		mDaoMaster.dropAllTables(mDaoMaster.getDatabase(), false);
+		mDaoMaster.createAllTables(mDaoMaster.getDatabase(), false);
+		DaoSession daoSession = mDaoMaster.newSession();
+
 		daoSession.getPathToContentDao().insert(new PathToContent(null,".+vnexpress.net/.+", "div.short_intro, div.relative_new, div.fck_detail", "vn", true, DateTime.now().toDate()));
 		daoSession.getPathToContentDao().insert(new PathToContent(null,".+nytimes.com/.+", "div.article-body", "en-US", true, DateTime.now().toDate()));
 		daoSession.getPathToContentDao().insert(new PathToContent(null,".+huffingtonpost.com/.+", "div.article>p", "en-US", true, DateTime.now().toDate()));
@@ -55,8 +68,78 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 
 		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.huffingtonpost.com/tag/asian-americans/feed", new String[] {"Asian Americans"}, "vn"));
 		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://rss.cnn.com/rss/edition.rss", new String[]{"Top Stories"}, "vn"));
-
-		db.close();
 	}
 
+	public void testQueryDatabase() {
+		String tag="Business";
+
+		// Query to find all subscription with tag Business
+		DaoSession daoSession = mDaoMaster.newSession();
+		QueryBuilder<Subscription> subscriptionByTagQueryBuilder = daoSession.getSubscriptionDao().queryBuilder()
+				.where(SubscriptionDao.Properties.Tags.like("%|" + tag.toUpperCase() + "|%")
+						, SubscriptionDao.Properties.Enable.eq(Boolean.TRUE));
+		Query<Subscription> subscriptionByTagQuery = subscriptionByTagQueryBuilder.build();
+
+		{
+			LazyList<Subscription> subscriptions = subscriptionByTagQuery.listLazy();
+			for (Subscription sub : subscriptions) {
+				assertTrue(sub.getTags().contains("|" + tag.toUpperCase() + "|"));
+				System.out.println(sub.getFeedsUrl());
+			}
+			subscriptions.close();
+		}
+
+		String tag2 = "Technology";
+		subscriptionByTagQuery.setParameter(0, tag2);
+		{
+			LazyList<Subscription> subscriptions = subscriptionByTagQuery.listLazy();
+			for (Subscription sub : subscriptions) {
+				assertTrue(sub.getTags().contains("|" + tag2.toUpperCase() + "|"));
+				System.out.println(sub.getFeedsUrl());
+			}
+			subscriptions.close();
+		}
+
+		/*
+		//To delete query
+		subscriptionByTagQueryBuilder.buildDelete().executeDeleteWithoutDetachingEntities();
+		daoSession.clear();
+		*/
+	}
+
+	public void testUpdateDatabase() {
+		String tag="Business";
+
+		DaoSession daoSession = mDaoMaster.newSession();
+
+		// before update: find all subscription with tag = "Business"
+		QueryBuilder<Subscription> subscriptionByTagQueryBuilder = daoSession.getSubscriptionDao().queryBuilder()
+				.where(SubscriptionDao.Properties.Tags.like("%|" + tag.toUpperCase() + "|%")
+						, SubscriptionDao.Properties.Enable.eq(Boolean.TRUE));
+		Query<Subscription> subscriptionByTagQuery = subscriptionByTagQueryBuilder.build();
+
+		Subscription firstSubscriptionFound = subscriptionByTagQuery.list().get(0);
+		assertTrue(firstSubscriptionFound.getEnable());
+
+		//update 1: disable all subscription with tag Business
+
+		String updateQuery = "update "+SubscriptionDao.TABLENAME
+				+ " set "+SubscriptionDao.Properties.Enable.columnName + "=?"
+				+" where " + SubscriptionDao.Properties.Tags.columnName + " like ?";
+
+		mDaoMaster.getDatabase().execSQL(updateQuery, new Object[] {Boolean.FALSE, "%|" + tag.toUpperCase() + "|%"});
+
+		//after update: we still got the same value in cache
+		assertTrue(firstSubscriptionFound.getEnable());
+
+		//now we'll update the entity in cache:
+		daoSession.getSubscriptionDao().refresh(firstSubscriptionFound);
+		assertFalse(firstSubscriptionFound.getEnable());
+
+		//update 2: disable the subscription again! this time, with GreenDAO (not with the native query)
+		firstSubscriptionFound.setEnable(true);
+		daoSession.update(firstSubscriptionFound);
+		daoSession.getSubscriptionDao().refresh(firstSubscriptionFound);
+		assertTrue(firstSubscriptionFound.getEnable());
+	}
 }

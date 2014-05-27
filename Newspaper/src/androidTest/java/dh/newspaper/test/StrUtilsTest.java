@@ -114,18 +114,22 @@ public class StrUtilsTest extends ActivityInstrumentationTestCase2<MainActivity>
 	public void testParseDateTimeFinal() {
 		{
 			DateTime d = StrUtils.parseDateTime("Mon, 26 May 2014 00:08:43 +0700");
+			System.out.print(d.getZone().getID());
 			assertEquals(2014, d.getYear());
 		}
 		{
 			DateTime d = StrUtils.parseDateTime("2014-05-25T05:39:45Z");
+			System.out.print(d.getZone().getID());
 			assertEquals(2014, d.getYear());
 		}
 		{
 			DateTime d = StrUtils.parseDateTime("Sun, 25 May 2014 14:09:29 GMT");
+			System.out.print(d.getZone().getID());
 			assertEquals(2014, d.getYear());
 		}
 		{
 			DateTime d = StrUtils.parseDateTime("Sun, 25 May 2014 14:09:29 EDT");
+			System.out.print(d.getZone().getID());
 			assertEquals(2014, d.getYear());
 		}
 	}

@@ -13,7 +13,7 @@ public class JsonSubscription {
 	private List<String> tags;
 	private boolean enable = true;
 	private String language;
-	private String encoding = "utf-8";
+	private String encoding = "UTF-8";
 
 	public JsonSubscription() {
 	}

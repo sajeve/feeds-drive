@@ -28,7 +28,8 @@ public class StrUtils {
 	private static final DateTimeParser[] jodaDateTimeParsers = {
 			ISODateTimeFormat.dateTimeParser().getParser(), //2014-05-25T05:39:45Z same as "YYYY-MM-dd'T'HH:mm:ss'Z'"
 			DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss Z").getParser(), //Mon, 26 May 2014 00:08:43 +0700
-			DateTimeFormat.forPattern( "EEE, dd MMM YYYY HH:mm:ss zzz" ).getParser() //Sun, 25 May 2014 17:15:22 UTC
+			DateTimeFormat.forPattern( "EEE, dd MMM YYYY HH:mm:ss zzz" ).getParser(), //Sun, 25 May 2014 17:15:22 UTC
+			DateTimeFormat.forPattern( "EEE, dd MMM YYYY HH:mm:ss zzzz" ).getParser() //Sun, 25 May 2014 17:15:22 African
 	};
 	private static final SimpleDateFormat[] javaDateTimeFormatter = new SimpleDateFormat[] {
 			new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz"), //Sun, 25 May 2014 14:09:29 EDT or Sun, 25 May 2014 17:15:22 GMT
@@ -36,13 +37,11 @@ public class StrUtils {
 	};
 	private static final DateTimeFormatter jodaDateTimeFormatter = new DateTimeFormatterBuilder().append( null, jodaDateTimeParsers).toFormatter();
 
-
 	private static int textWidth(String str) {
 		return (int) (str.length() - str.replaceAll(NON_THIN, "").length() / 2);
 	}
 
 	public static String ellipsize(String text, int max) {
-
 		if (textWidth(text) <= max)
 			return text;
 
@@ -181,13 +180,14 @@ public class StrUtils {
 			resu = jodaDateTimeFormatter.parseDateTime(dateTimeStr);
 		}
 		catch (IllegalArgumentException iae) {
-			//Log.d(TAG, "Failed joda DateTime parse '"+dateTimeStr+"'. Try java DateTime parse");
+			Log.w(TAG, "Failed joda DateTime parse '"+dateTimeStr+"': "+iae.getMessage()+". Try java DateTime parse");
 			for (SimpleDateFormat sdf : javaDateTimeFormatter) {
 				try {
 					Date d = sdf.parse(dateTimeStr);
 					resu = new DateTime(d);
 				}
 				catch (ParseException pe) {
+					Log.w(TAG, "Failed parse DateTime '"+dateTimeStr+"' (tried both java and joda parser). Add template in StrUtils.java");
 				}
 			}
 		}

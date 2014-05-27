@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="smoothie-0.1.0">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/build/exploded-aar/org.lucasr.smoothie/smoothie/0.1.0/res" />
+      <root url="jar://$PROJECT_DIR$/build/exploded-aar/org.lucasr.smoothie/smoothie/0.1.0/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

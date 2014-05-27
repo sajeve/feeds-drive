@@ -1,8 +1,6 @@
 package dh.newspaper;
 
-import android.app.ActivityManager;
 import android.app.FragmentManager;
-import android.content.Context;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -13,14 +11,11 @@ import android.util.Log;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingApplication;
 import dh.newspaper.model.DatabaseHelper;
-import dh.newspaper.model.generated.Article;
-import dh.newspaper.model.generated.DaoMaster;
-import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.modules.AppBundle;
 import dh.newspaper.modules.GlobalModule;
 import dh.newspaper.view.utils.ErrorDialogFragment;
+import net.danlew.android.joda.ResourceZoneInfoProvider;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeComparator;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -32,9 +27,12 @@ public class MyApplication extends InjectingApplication {
 	@Inject
 	AppBundle mAppBundle;
 
+	SQLiteOpenHelper mDbHelper;
+/*
 	SQLiteDatabase mDb;
 	DaoMaster mDaoMaster;
 	DaoSession mDaoSession;
+*/
 
 	@Override
 	public void onCreate() {
@@ -44,9 +42,12 @@ public class MyApplication extends InjectingApplication {
 			StrictMode.enableDefaults();
 		}
 
-		SQLiteOpenHelper helper = new DaoMaster.DevOpenHelper((Context)this, Constants.DATABASE_NAME, null); //debug only (because drops all tables)
-		//SQLiteOpenHelper helper = new DatabaseHelper(this); //upgrade with the database in assets
-		mDb = helper.getWritableDatabase();
+		//SQLiteOpenHelper mDbHelper = new DaoMaster.DevOpenHelper((Context)this, Constants.DATABASE_NAME, null); //debug only (because drops all tables)
+		mDbHelper = new DatabaseHelper(this); //upgrade with the database in assets
+
+		ResourceZoneInfoProvider.init(this);
+/*
+		mDb = mDbHelper.getWritableDatabase();
 
 		mDaoMaster = new DaoMaster(mDb);
 		mDaoSession = mDaoMaster.newSession();
@@ -58,7 +59,7 @@ public class MyApplication extends InjectingApplication {
 		} catch (Exception ex) {
 			Log.w(TAG, ex.getMessage());
 		}
-
+*/
 		EventBus.getDefault().register(mAppBundle, 100);
 	}
 
@@ -66,7 +67,7 @@ public class MyApplication extends InjectingApplication {
 	public void onTerminate() {
 		super.onTerminate();
 		EventBus.getDefault().unregister(mAppBundle);
-		mDb.close();
+		//mDb.close();
 	}
 
 	@Override
@@ -91,6 +92,10 @@ public class MyApplication extends InjectingApplication {
 	@Override
 	public SQLiteDatabase openOrCreateDatabase(String name, int mode, SQLiteDatabase.CursorFactory factory, DatabaseErrorHandler errorHandler) {
 		return super.openOrCreateDatabase(getDatabasePathString(name), mode, factory, errorHandler);
+	}
+
+	public SQLiteOpenHelper getDbHelper() {
+		return mDbHelper;
 	}
 
 	public static void showErrorDialog(final FragmentManager fm, final String message, final Throwable ex) {
@@ -130,5 +135,4 @@ public class MyApplication extends InjectingApplication {
 	protected List<Object> getModules() {
 		return new ArrayList<Object>(){{add(new GlobalModule());}};
 	}
-
 }

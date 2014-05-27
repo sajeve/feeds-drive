@@ -18,13 +18,17 @@ import dh.newspaper.DetailActivity;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
 import dh.newspaper.R;
+import dh.newspaper.adapter.FeedItemLoader;
 import dh.newspaper.adapter.FeedsGridAdapter;
+import dh.newspaper.base.DatabaseActivity;
 import dh.newspaper.base.Injector;
 import dh.newspaper.event.BaseEventOneArg;
 import dh.newspaper.model.FakeDataProvider;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.modules.AppBundle;
 import dh.newspaper.parser.ContentParser;
+import org.lucasr.smoothie.AsyncGridView;
+import org.lucasr.smoothie.ItemManager;
 
 import javax.inject.Inject;
 
@@ -34,7 +38,7 @@ import javax.inject.Inject;
 public class FeedsFragment extends Fragment {
 	static final String TAG = FeedsFragment.class.getName();
 
-	private GridView mGridView;
+	private AsyncGridView mGridView;
 	private FeedsGridAdapter mGridViewAdapter;
 	private int mTagPos = 0;
 
@@ -62,23 +66,36 @@ public class FeedsFragment extends Fragment {
 
 		if (isAdded()) {
 			final Activity currentActivity = this.getActivity();
-			/*if (currentActivity instanceof MainActivity && getArguments()!=null) {
-				int sectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
-				textView.setText(Integer.toString(sectionNumber));
-			}*/
+
 			int numberOfColumns = (currentActivity instanceof DetailActivity) ? 1
 					: getResources().getInteger(R.integer.grid_columns_count);
+
+//			mGridViewAdapter = new FeedsGridAdapter(currentActivity, mContentParser, numberOfColumns);
+//			refreshContent();
+//
+//			//mGridView = (StaggeredGridView) rootView.findViewById(R.id.articles_gridview);
+//			mGridView = (GridView) rootView.findViewById(R.id.articles_gridview);
+//			//mGridView.setColumnCount(numberOfColumns);
+//			mGridView.setNumColumns(numberOfColumns);
+//			//rootView.forceLayout();
+//			mGridView.setAdapter(mGridViewAdapter);
+//			mGridView.setOnItemClickListener(onFeedClickListener);
+//
+
+			FeedItemLoader feedItemLoader = new FeedItemLoader((DatabaseActivity)currentActivity);
+			ItemManager.Builder builder = new ItemManager.Builder(feedItemLoader);
+			builder.setPreloadItemsEnabled(true).setPreloadItemsCount(5);
+			builder.setThreadPoolSize(4);
+			ItemManager itemManager = builder.build();
 
 			mGridViewAdapter = new FeedsGridAdapter(currentActivity, mContentParser, numberOfColumns);
 			refreshContent();
 
-			//mGridView = (StaggeredGridView) rootView.findViewById(R.id.articles_gridview);
-			mGridView = (GridView) rootView.findViewById(R.id.articles_gridview);
-			//mGridView.setColumnCount(numberOfColumns);
+			mGridView = (AsyncGridView) rootView.findViewById(R.id.articles_gridview);
 			mGridView.setNumColumns(numberOfColumns);
-			//rootView.forceLayout();
 			mGridView.setAdapter(mGridViewAdapter);
 			mGridView.setOnItemClickListener(onFeedClickListener);
+			mGridView.setItemManager(itemManager);
 		}
 
 		return rootView;
