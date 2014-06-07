@@ -5,7 +5,9 @@
       <module fileurl="file://$PROJECT_DIR$/Generator/Generator.iml" filepath="$PROJECT_DIR$/Generator/Generator.iml" />
       <module fileurl="file://$PROJECT_DIR$/Newspaper/Newspaper.iml" filepath="$PROJECT_DIR$/Newspaper/Newspaper.iml" />
       <module fileurl="file://$PROJECT_DIR$/PatternSample4/PatternSample4.iml" filepath="$PROJECT_DIR$/PatternSample4/PatternSample4.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SimpleServiceDemo/SimpleServiceDemo.iml" filepath="$PROJECT_DIR$/SimpleServiceDemo/SimpleServiceDemo.iml" />
       <module fileurl="file://$PROJECT_DIR$/SqliteAssetHelper/SqliteAssetHelper.iml" filepath="$PROJECT_DIR$/SqliteAssetHelper/SqliteAssetHelper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Volley/Volley.iml" filepath="$PROJECT_DIR$/Volley/Volley.iml" />
       <module fileurl="file://$PROJECT_DIR$/work-andstd.iml" filepath="$PROJECT_DIR$/work-andstd.iml" />
     </modules>
   </component>

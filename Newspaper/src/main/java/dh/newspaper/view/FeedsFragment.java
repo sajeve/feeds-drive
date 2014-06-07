@@ -186,7 +186,7 @@ public class FeedsFragment extends Fragment {
 				}
 
 				mGridView.setItemChecked(position, true);
-				EventBus.getDefault().postSticky(new Event(Event.ON_ITEM_SELECTED, article));
+				EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, article));
 			}
 			catch (Exception ex) {
 				Log.w(TAG, ex);

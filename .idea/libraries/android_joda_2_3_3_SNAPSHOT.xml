@@ -5,18 +5,6 @@
       <root url="file://$PROJECT_DIR$/build/exploded-aar/android.joda-2.3.3-SNAPSHOT/res" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/sample/src/main/java" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/sample/build/source/r/debug" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/sample/build/source/r/release" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/sample/build/source/buildConfig/debug" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/sample/build/source/buildConfig/release" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/library/src" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/library/build/source/r/debug" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/library/build/source/r/release" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/library/build/source/buildConfig/debug" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/library/build/source/buildConfig/release" />
-      <root url="file://D:/dev-lib/joda-time-android/joda-time-android/library/tests/java" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

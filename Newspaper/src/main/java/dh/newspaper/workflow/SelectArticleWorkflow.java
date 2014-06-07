@@ -322,7 +322,7 @@ public class SelectArticleWorkflow {
 		log("First matching Path To Content is "+mPathToContent);
 	}
 
-	private PathToContent findFirstMatchingPathToContent(String feedUri) {
+	PathToContent findFirstMatchingPathToContent(String feedUri) {
 		for(PathToContent ptc : refData.pathToContentList()) {
 			if (feedUri.matches(ptc.getUrlPattern())) {
 				return ptc;

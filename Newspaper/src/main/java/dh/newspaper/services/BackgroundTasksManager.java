@@ -141,7 +141,7 @@ public class BackgroundTasksManager implements Closeable {
 		}
 
 		if (mActiveArticleLoader!=null) {
-			mArticlesLoader.shutdownNow();
+			mActiveArticleLoader.shutdownNow();
 		}
 		mActiveArticleLoader = Executors.newSingleThreadExecutor(ThreadFactoryHigherPriority);
 

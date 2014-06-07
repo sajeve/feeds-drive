@@ -1,1 +1,1 @@
-include ':Newspaper', ':PatternSample4', ':Generator', ':SqliteAssetHelper'
+include ':Newspaper', ':PatternSample4', ':Generator', ':SqliteAssetHelper', ':Volley', ':SimpleServiceDemo'

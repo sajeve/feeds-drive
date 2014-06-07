@@ -38,7 +38,7 @@ public class SelectArticleWorkflowTest extends ActivityInstrumentationTestCase2<
 		assertTrue(feeds.size() > 0);
 		FeedItem feedItem = feeds.get(0);
 
-		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), feedItem, Constants.ARTICLE_TTL, null);
+		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), feedItem, Constants.ARTICLE_TTL, true, null);
 
 		PathToContent pathToContent = saw.findFirstMatchingPathToContent("http://vnexpress.net/tin-tuc/thoi-su/ha-noi-don-dep-day-dien-cap-chang-chit-tren-pho-2998401.html");
 		assertNotNull(pathToContent);

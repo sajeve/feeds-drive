@@ -3,7 +3,7 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="distributionType" value="LOCAL" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleHome" value="D:/prg/Developper/gradle-1.12" />
         <option name="modules">
@@ -12,7 +12,9 @@
             <option value="$PROJECT_DIR$/Generator" />
             <option value="$PROJECT_DIR$/Newspaper" />
             <option value="$PROJECT_DIR$/PatternSample4" />
+            <option value="$PROJECT_DIR$/SimpleServiceDemo" />
             <option value="$PROJECT_DIR$/SqliteAssetHelper" />
+            <option value="$PROJECT_DIR$/Volley" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -1,5 +1,6 @@
 package dh.newspaper.test;
 
+import android.content.res.Resources;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import dh.newspaper.MainActivity;
@@ -23,34 +24,36 @@ public class StrUtilsTest extends ActivityInstrumentationTestCase2<MainActivity>
 	public void testTimeAgo() {
 		DateTime now = DateTime.now();
 
+		Resources resources = this.getActivity().getResources();
+		
 		DateTime seconds2ago = now.minusSeconds(1);
-		assertEquals("Just now", StrUtils.getTimeAgo(this.getActivity(), seconds2ago));
+		assertEquals("Just now", StrUtils.getTimeAgo(resources, seconds2ago));
 
 		DateTime minutes2ago = now.minusMinutes(2);
-		assertEquals("2 minutes ago", StrUtils.getTimeAgo(this.getActivity(), minutes2ago));
+		assertEquals("2 minutes ago", StrUtils.getTimeAgo(resources, minutes2ago));
 
 		DateTime hours2ago = now.minusHours(2);
-		assertEquals("2 hours ago", StrUtils.getTimeAgo(this.getActivity(), hours2ago));
+		assertEquals("2 hours ago", StrUtils.getTimeAgo(resources, hours2ago));
 
 		DateTime yesterday = now.minusDays(1);
-		assertEquals("Yesterday", StrUtils.getTimeAgo(this.getActivity(), yesterday));
+		assertEquals("Yesterday", StrUtils.getTimeAgo(resources, yesterday));
 		DateTime days2ago = now.minusDays(2);
-		assertEquals("2 days ago", StrUtils.getTimeAgo(this.getActivity(), days2ago));
+		assertEquals("2 days ago", StrUtils.getTimeAgo(resources, days2ago));
 
 		DateTime lastWeek = now.minusWeeks(1);
-		assertEquals("Last week", StrUtils.getTimeAgo(this.getActivity(), lastWeek));
+		assertEquals("Last week", StrUtils.getTimeAgo(resources, lastWeek));
 		DateTime weeks2ago = now.minusWeeks(2);
-		assertEquals("2 weeks ago", StrUtils.getTimeAgo(this.getActivity(), weeks2ago));
+		assertEquals("2 weeks ago", StrUtils.getTimeAgo(resources, weeks2ago));
 
 		DateTime lastMonth = now.minusMonths(1);
-		assertEquals("Last month", StrUtils.getTimeAgo(this.getActivity(), lastMonth));
+		assertEquals("Last month", StrUtils.getTimeAgo(resources, lastMonth));
 		DateTime months2ago = now.minusMonths(2);
-		assertEquals("2 months ago", StrUtils.getTimeAgo(this.getActivity(), months2ago));
+		assertEquals("2 months ago", StrUtils.getTimeAgo(resources, months2ago));
 
 		DateTime lastYear = now.minusYears(1);
-		assertEquals("Last year", StrUtils.getTimeAgo(this.getActivity(), lastYear));
+		assertEquals("Last year", StrUtils.getTimeAgo(resources, lastYear));
 		DateTime years2ago = now.minusYears(2);
-		assertEquals("2 years ago", StrUtils.getTimeAgo(this.getActivity(), years2ago));
+		assertEquals("2 years ago", StrUtils.getTimeAgo(resources, years2ago));
 	}
 
 	public void testParseDateTimeClassic() throws ParseException {
