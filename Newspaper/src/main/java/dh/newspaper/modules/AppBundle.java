@@ -2,6 +2,7 @@ package dh.newspaper.modules;
 
 import android.util.Log;
 import dh.newspaper.model.FeedItem;
+import dh.newspaper.model.generated.Article;
 import dh.newspaper.view.TagsFragment;
 import dh.newspaper.view.FeedsFragment;
 
@@ -15,8 +16,8 @@ import javax.inject.Inject;
 public class AppBundle {
 	private static final String TAG = AppBundle.class.getName();
 
-	private FeedItem currentFeedItem;
-	private int currentTagPos;
+	private Article currentArticle;
+	private String currentTag;
 
 	@Inject
 	public AppBundle() {}
@@ -26,7 +27,7 @@ public class AppBundle {
 			if (!FeedsFragment.Event.ON_ITEM_SELECTED.equals(e.getSubject())) {
 				return;
 			}
-			currentFeedItem = e.getFeedItem();
+			currentArticle = e.getArticle();
 		}catch (Exception ex) {
 			Log.w(TAG, ex);
 		}
@@ -34,17 +35,17 @@ public class AppBundle {
 
 	public void onEvent(TagsFragment.Event e) {
 		try {
-			currentTagPos = e.getTagPos();
+			currentTag = e.getTag();
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
 		}
 	}
 
-	public FeedItem getCurrentFeedItem() {
-		return currentFeedItem;
+	public Article getCurrentArticle() {
+		return currentArticle;
 	}
 
-	public int getCurrentTagPos() {
-		return currentTagPos;
+	public String getCurrentTag() {
+		return currentTag;
 	}
 }

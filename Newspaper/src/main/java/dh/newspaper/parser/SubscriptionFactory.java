@@ -4,8 +4,8 @@ import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.Subscription;
+import dh.newspaper.tools.StrUtils;
 import org.joda.time.DateTime;
-import org.joda.time.format.ISODateTimeFormat;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -15,15 +15,15 @@ import java.io.IOException;
  * Created by hiep on 25/05/2014.
  */
 public class SubscriptionFactory {
-	ContentParser contentParser;
+	private ContentParser mContentParser;
 
 	@Inject
 	public SubscriptionFactory(ContentParser contentParser) {
-		this.contentParser = contentParser;
+		this.mContentParser = contentParser;
 	}
 
 	public Subscription createSubscription(String feedsUrl, String[] tags, boolean enable, String language, String encoding) throws IOException, FeedParserException {
-		Feeds feeds = contentParser.parseFeeds(feedsUrl, encoding);
+		Feeds feeds = mContentParser.parseFeeds(feedsUrl, encoding);
 		String feedsLang =  feeds.getLanguage();
 		if (Strings.isNullOrEmpty(feedsLang)) {
 			feedsLang = language;
@@ -54,7 +54,7 @@ public class SubscriptionFactory {
 		}
 		StringBuilder sb = new StringBuilder("|");
 		for (String tag : tags) {
-			sb.append(tag.toUpperCase()+"|");
+			sb.append(StrUtils.normalizeUpper(tag)+"|");
 		}
 		return sb.toString();
 	}

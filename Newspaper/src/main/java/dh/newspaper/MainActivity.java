@@ -10,18 +10,18 @@ import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
-import android.view.*;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import dagger.Lazy;
 import de.greenrobot.event.EventBus;
-import dh.newspaper.base.DatabaseActivity;
 import dh.newspaper.base.Injector;
-import dh.newspaper.model.FakeDataProvider;
-import dh.newspaper.view.TagsFragment;
 import dh.newspaper.view.FeedsFragment;
+import dh.newspaper.view.TagsFragment;
 
 import javax.inject.Inject;
 
-public class MainActivity extends DatabaseActivity {
+public class MainActivity extends Activity {
 	private static final String TAG = MainActivity.class.getName();
 
 	@Inject
@@ -152,7 +152,7 @@ public class MainActivity extends DatabaseActivity {
 			if (!FeedsFragment.Event.ON_FRAGMENT_ATTACHED.equals(e.getSubject())) {
 				return;
 			}
-			mTitle = FakeDataProvider.getCategories()[e.intArg-1];
+			mTitle = e.stringArg;
 		}catch (Exception ex) {
 			Log.w(TAG, ex);
 			MyApplication.showErrorDialog(this.getFragmentManager(), "MainActivity FeedsFragment.Event.ON_FRAGMENT_ATTACHED", ex);

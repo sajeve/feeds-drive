@@ -17,8 +17,6 @@ package dh.newspaper.base;
 import android.content.Context;
 import dagger.Module;
 import dagger.Provides;
-import dh.newspaper.DetailActivity;
-import dh.newspaper.MainActivity;
 
 import javax.inject.Qualifier;
 import javax.inject.Singleton;

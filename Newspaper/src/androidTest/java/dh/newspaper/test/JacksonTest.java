@@ -40,8 +40,8 @@
 //			JsonSubscription[] data = new JsonSubscription[]{
 //					new JsonSubscription("http://www.huffingtonpost.com/feeds/verticals/chicago/news.xml", Arrays.asList(1L, 3L), "en-US"),
 //					new JsonSubscription("http://vnexpress.net/rss/thoi-su.rss", Arrays.asList(1L), "vn"),
-//					new JsonSubscription("http://rss.nytimes.com/services/xml/rss/nyt/AsiaPacific.xml", Arrays.asList(3L), "vn"),
-//					new JsonSubscription("http://rss.nytimes.com/services/xml/rss/nyt/Travel.xml", Arrays.asList(2L), "en-US"),
+//					new JsonSubscription("http://rss.nytimes.com/dh.newspaper.services/xml/rss/nyt/AsiaPacific.xml", Arrays.asList(3L), "vn"),
+//					new JsonSubscription("http://rss.nytimes.com/dh.newspaper.services/xml/rss/nyt/Travel.xml", Arrays.asList(2L), "en-US"),
 //					new JsonSubscription("http://vnexpress.net/rss/tin-moi-nhat.rss"),
 //					new JsonSubscription("http://rss.cnn.com/rss/edition_world.rss", Arrays.asList(3L)) {{setEnable(false);}}
 //			};

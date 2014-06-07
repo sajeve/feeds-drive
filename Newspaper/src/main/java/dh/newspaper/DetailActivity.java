@@ -7,14 +7,13 @@ import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import de.greenrobot.event.EventBus;
-import dh.newspaper.base.DatabaseActivity;
 import dh.newspaper.base.InjectingActivity;
 import dh.newspaper.view.ArticleFragment;
 import dh.newspaper.view.FeedsFragment;
 
 import javax.inject.Inject;
 
-public class DetailActivity extends DatabaseActivity {
+public class DetailActivity extends Activity {
 	private static final String TAG = DetailActivity.class.getName();
 
     @Override

@@ -6,25 +6,29 @@ import android.app.Fragment;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.Log;
+import android.view.*;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 import de.greenrobot.event.EventBus;
+import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
+import dh.newspaper.MyApplication;
 import dh.newspaper.R;
 import dh.newspaper.base.Injector;
+import dh.newspaper.cache.RefData;
 import dh.newspaper.event.BaseEvent;
-import dh.newspaper.model.FakeDataProvider;
+import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.modules.AppBundle;
+import dh.newspaper.services.BackgroundTasksManager;
+import dh.newspaper.tools.ArrayAdapterCompat;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.TreeSet;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -32,9 +36,18 @@ import javax.inject.Inject;
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
 public class TagsFragment extends Fragment {
+	static final String TAG = TagsFragment.class.getName();
 
 	@Inject
 	AppBundle mAppBundle;
+
+	@Inject
+	RefData mRefData;
+
+	@Inject
+	BackgroundTasksManager mBackgroundTasksManager;
+
+	ArrayAdapterCompat<String> mDrawerListViewAdapter;
 
     /**
      * Remember the position of the selected item.
@@ -45,8 +58,9 @@ public class TagsFragment extends Fragment {
      * Helper component that ties the action bar to the navigation drawer.
      */
     private ListView mDrawerListView;
+	private SwipeRefreshLayout mSwipeRefreshLayout;
 
-    private int mCurrentSelectedPosition = 0;
+    private String mCurrentTag;
 
 	@Inject
     public TagsFragment() {
@@ -58,14 +72,15 @@ public class TagsFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         if (savedInstanceState != null) {
-            mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+            mCurrentTag = savedInstanceState.getString(STATE_SELECTED_POSITION);
         }
 		else {
-			mCurrentSelectedPosition = mAppBundle.getCurrentTagPos();
+			mCurrentTag = mAppBundle.getCurrentTag();
 		}
 
         // Select either the default item (0) or the last selected item.
-        selectTag(mCurrentSelectedPosition);
+        selectTag(mCurrentTag);
+
     }
 
 	private boolean mFirstAttach = true;
@@ -78,7 +93,7 @@ public class TagsFragment extends Fragment {
 		if (mFirstAttach) {
 			((Injector) activity.getApplication()).inject(this);
 			mFirstAttach = false;
-			mCurrentSelectedPosition = mAppBundle.getCurrentTagPos();
+			mCurrentTag = mAppBundle.getCurrentTag();
 		}
 	}
 
@@ -92,38 +107,62 @@ public class TagsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        mDrawerListView = (ListView) inflater.inflate(
-                R.layout.fragment_tags, container, false);
+		mSwipeRefreshLayout = (SwipeRefreshLayout) inflater.inflate(
+				R.layout.fragment_tags, container, false);
+        mDrawerListView = (ListView) mSwipeRefreshLayout.findViewById(R.id.list_tags);
         mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectTag(position);
+                selectTag(mDrawerListViewAdapter.getItem(position));
             }
         });
-        mDrawerListView.setAdapter(new ArrayAdapter<String>(
-                getActionBar().getThemedContext(),
-                android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-				FakeDataProvider.getCategories()));
-        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
-        return mDrawerListView;
+
+		mDrawerListViewAdapter = new ArrayAdapterCompat<String>(
+				getActionBar().getThemedContext(),
+				android.R.layout.simple_list_item_activated_1,
+				android.R.id.text1,
+				new ArrayList<String>());
+
+		mDrawerListView.setAdapter(mDrawerListViewAdapter);
+
+		int currentPosition = mDrawerListViewAdapter.getPosition(mCurrentTag);
+        mDrawerListView.setItemChecked(currentPosition, true);
+
+		mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				mBackgroundTasksManager.loadTagsList();
+			}
+		});
+
+		refreshTagsList();
+        return mSwipeRefreshLayout;
     }
 
-    private void selectTag(final int position) {
-        mCurrentSelectedPosition = position;
+    private void selectTag(String tag) {
+        mCurrentTag = tag;
         if (mDrawerListView != null) {
-            mDrawerListView.setItemChecked(position, true);
+			int currentPosition = mDrawerListViewAdapter.getPosition(tag);
+            mDrawerListView.setItemChecked(currentPosition, true);
         }
 
 		closeDrawer();
 
-		EventBus.getDefault().post(new Event(position));
+		EventBus.getDefault().post(new Event(tag));
     }
+
+	private void refreshTagsList() {
+		if (mRefData.getTags() != null) {
+			mDrawerListViewAdapter.clear();
+			mDrawerListViewAdapter.addAll(mRefData.getTags());
+			//mDrawerListViewAdapter.notifyDataSetChanged();
+		}
+	}
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+        outState.putString(STATE_SELECTED_POSITION, mCurrentTag);
     }
 
     @Override
@@ -143,6 +182,39 @@ public class TagsFragment extends Fragment {
         }
         super.onCreateOptionsMenu(menu, inflater);
     }
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		EventBus.getDefault().register(this);
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		EventBus.getDefault().unregister(this);
+	}
+
+	public void onEventMainThread(RefreshTagsListEvent event) {
+		try {
+			if (!isAdded()) {
+				return;
+			}
+			switch (event.getSubject()) {
+				case Constants.SUBJECT_TAGS_START_LOADING:
+					mSwipeRefreshLayout.setRefreshing(true);
+					return;
+				case Constants.SUBJECT_TAGS_REFRESH:
+					refreshTagsList();
+					mSwipeRefreshLayout.setRefreshing(false);
+					return;
+			}
+		}
+		catch (Exception ex) {
+			Log.w(TAG, ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
+		}
+	}
 
 	private boolean isDrawerOpen() {
 		if (isAdded()) {
@@ -195,15 +267,15 @@ public class TagsFragment extends Fragment {
     }
 
 	public class Event extends BaseEvent<TagsFragment> {
-		private int mTagPos;
+		private String mTag;
 
-		public Event(int tagPos) {
+		public Event(String tag) {
 			super(TagsFragment.this);
-			mTagPos = tagPos;
+			mTag = tag;
 		}
 
-		public int getTagPos() {
-			return mTagPos;
+		public String getTag() {
+			return mTag;
 		}
 
 		/*public Event(String subject) {

@@ -1,20 +1,16 @@
 package dh.newspaper.test;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
-import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
 import dh.newspaper.MainActivity;
-import dh.newspaper.parser.NetworkUtils;
+import dh.newspaper.tools.NetworkUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Entities.EscapeMode;
 
 import dh.newspaper.parser.ContentParser;
-import junit.framework.TestCase;
 
 public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActivity> {
 

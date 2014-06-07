@@ -42,6 +42,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="dh.newspaper.ReaderActivityListActivity" />
         </activity>-->
+	    
+	    <service android:name=".services.MyLocalService"></service>
     </application>
 
 </manifest>

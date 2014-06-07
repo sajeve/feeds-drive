@@ -2,11 +2,8 @@ package dh.newspaper.test;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
-import com.google.common.collect.Sets;
 import dh.newspaper.MainActivity;
-import dh.newspaper.parser.StrUtils;
-import net.danlew.android.joda.ResourceZoneInfoProvider;
-import org.joda.time.Chronology;
+import dh.newspaper.tools.StrUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.*;

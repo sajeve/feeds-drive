@@ -18,4 +18,6 @@
 	<string name="PERIOD_HOURS_AGO">%s hours ago</string>
 	<string name="PERIOD_MINUTE_AGO">%s minutes ago</string>
 	<string name="PERIOD_JUST_NOW">Just now</string>
+	<string name="PERIOD_UNKNOWN">Unknown time</string>
+	<string name="SOURCE_UNKNOWN">Unknown source</string>
 </resources>

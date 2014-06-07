@@ -1,18 +1,79 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		xmlns:tools="http://schemas.android.com/tools"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-		tools:context="dh.newspaper.view.ArticleFragment">
-
-	<TextView
-			android:id="@+id/fa_content"
+<android.support.v4.widget.SwipeRefreshLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
+	<ScrollView
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:text="@string/hello_blank_fragment"
-			android:textIsSelectable="true"
-			/>
+			android:layout_height="match_parent">
 
-</FrameLayout>
+		<LinearLayout
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:orientation="vertical">
+
+			<TextView
+					android:id="@+id/txt_title"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="This is article title"
+					android:textIsSelectable="true"
+					android:paddingBottom="8dp"
+					style="@style/Article.Title"
+					/>
+
+			<TextView
+					android:id="@+id/txt_date_source"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:autoLink="web"
+					android:text="2 hours ago | Vnexpress > Duong Phu Hiep"
+					android:textIsSelectable="true"
+					style="@style/Article.Info"
+					android:singleLine="true"
+					/>
+
+			<TextView
+					android:id="@+id/txt_tags"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="home, world us, thoi su"
+					android:textIsSelectable="true"
+					style="@style/Article.Info.Gray"
+					android:singleLine="true"
+					android:paddingBottom="8dp"
+					/>
+
+			<WebView
+					android:layout_width="fill_parent"
+					android:layout_height="fill_parent"
+					android:id="@+id/webview_article"
+					android:paddingBottom="16dp"
+					/>
+
+			<LinearLayout
+					android:id="@+id/panel_notice"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal">
+				<ImageView
+						android:layout_width="32dp"
+						android:layout_height="32dp"
+						android:src="@drawable/ic_action_warning"
+						/>
+				<TextView
+						android:id="@+id/txt_notice"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="status"
+						android:textIsSelectable="true"
+						style="@style/Article.Info"
+						/>
+			</LinearLayout>
+
+
+		</LinearLayout>
+	</ScrollView>
+</android.support.v4.widget.SwipeRefreshLayout>
 
 		<!--
 		<TextView xmlns:android="http://schemas.android.com/apk/res/android"

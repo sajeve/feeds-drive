@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 
-import android.util.Log;
 import android.webkit.URLUtil;
+import dh.newspaper.Constants;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
-import org.joda.time.DateTime;
-import org.joda.time.format.*;
+import dh.newspaper.tools.NetworkUtils;
+import dh.newspaper.tools.StrUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
@@ -26,6 +26,7 @@ import org.jsoup.select.Elements;
 import com.google.common.base.Strings;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Clean a HTML, extractContent the main content
@@ -71,7 +72,7 @@ public class ContentParser {
 	 */
 	public Elements extractContent(InputStream input, String charSet, String mainContentQuery, String baseURI) throws IOException {
 		if (Strings.isNullOrEmpty(charSet)) {
-			charSet = "UTF-8";
+			charSet = Constants.DEFAULT_ENCODING;
 		}
 		Document doc = Jsoup.parse(input, charSet, baseURI);
 		doc.outputSettings().escapeMode(EscapeMode.xhtml);
@@ -186,7 +187,7 @@ public class ContentParser {
 			itemCount = itemsElem==null ? 0 : itemsElem.size();
 		}
 		if (itemCount==0) {
-			throw new FeedParserException(doc.baseUri(), "Cannot parse: '"+StrUtils.ellipsize(doc.text(), 50)+"'", 0);
+			throw new FeedParserException(doc.baseUri(), "Cannot parse: '"+ StrUtils.ellipsize(doc.text(), 50)+"'");
 		}
 
 		String feedsLanguage = parseFeedsLanguage(feedFormat, doc);
@@ -200,19 +201,20 @@ public class ContentParser {
 		for (int i = 0; i < itemCount; i++) {
 			Element elem = itemsElem.get(i);
 			FeedItem item = new FeedItem(
+					doc.baseUri(),
 					parseItemTitle(elem, i, feedFormat),
 					parseItemPublishDate(elem, i, feedFormat),
-					parseFeedDescription(elem, i, feedFormat),
+					parseItemDescription(elem, i, feedFormat),
 					parseItemUri(elem, i, feedFormat),
-					parseItemLanguage(elem, feedFormat, feedsLanguage)
+					parseItemLanguage(elem, feedFormat, feedsLanguage),
+					parseItemAuthor(elem, i, feedFormat)
 			);
-			item.author = parseItemAuthor(elem, i, feedFormat);
+			item.initImageAndExcerpt();
 			resu.add(item);
 		}
 
 		return resu;
 	}
-
 	//</editor-fold>
 
 	//<editor-fold desc="Rss Parse Item details">
@@ -245,7 +247,7 @@ public class ContentParser {
 		}
 
 		if (Strings.isNullOrEmpty(feedsDescription)) {
-			throw new FeedParserException(doc.baseUri(), "Description is empty 'rss>channel>description' or 'feed>title'", 0);
+			throw new FeedParserException(doc.baseUri(), "Description is empty 'rss>channel>description' or 'feed>title'");
 		}
 
 		return feedsDescription;
@@ -322,7 +324,7 @@ public class ContentParser {
 		return null;
 	}
 
-	private String parseFeedDescription(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
+	private String parseItemDescription(Element elem, int pos, FeedFormat feedFormat) throws FeedParserException {
 		String description = null;
 		switch (feedFormat) {
 			case RSS: {

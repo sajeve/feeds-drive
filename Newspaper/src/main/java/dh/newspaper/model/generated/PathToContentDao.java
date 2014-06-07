@@ -27,8 +27,9 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
         public final static Property UrlPattern = new Property(1, String.class, "urlPattern", false, "URL_PATTERN");
         public final static Property Xpath = new Property(2, String.class, "xpath", false, "XPATH");
         public final static Property Language = new Property(3, String.class, "language", false, "LANGUAGE");
-        public final static Property Enable = new Property(4, Boolean.class, "enable", false, "ENABLE");
-        public final static Property LastUpdate = new Property(5, java.util.Date.class, "lastUpdate", false, "LAST_UPDATE");
+        public final static Property Priority = new Property(4, Integer.class, "priority", false, "PRIORITY");
+        public final static Property Enable = new Property(5, Boolean.class, "enable", false, "ENABLE");
+        public final static Property LastUpdate = new Property(6, java.util.Date.class, "lastUpdate", false, "LAST_UPDATE");
     };
 
 
@@ -46,10 +47,11 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
         db.execSQL("CREATE TABLE " + constraint + "'PATH_TO_CONTENT' (" + //
                 "'_id' INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "'URL_PATTERN' TEXT NOT NULL UNIQUE ," + // 1: urlPattern
-                "'XPATH' TEXT," + // 2: xpath
+                "'XPATH' TEXT NOT NULL ," + // 2: xpath
                 "'LANGUAGE' TEXT," + // 3: language
-                "'ENABLE' INTEGER," + // 4: enable
-                "'LAST_UPDATE' INTEGER);"); // 5: lastUpdate
+                "'PRIORITY' INTEGER," + // 4: priority
+                "'ENABLE' INTEGER," + // 5: enable
+                "'LAST_UPDATE' INTEGER);"); // 6: lastUpdate
     }
 
     /** Drops the underlying database table. */
@@ -68,25 +70,26 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
             stmt.bindLong(1, id);
         }
         stmt.bindString(2, entity.getUrlPattern());
- 
-        String xpath = entity.getXpath();
-        if (xpath != null) {
-            stmt.bindString(3, xpath);
-        }
+        stmt.bindString(3, entity.getXpath());
  
         String language = entity.getLanguage();
         if (language != null) {
             stmt.bindString(4, language);
         }
  
+        Integer priority = entity.getPriority();
+        if (priority != null) {
+            stmt.bindLong(5, priority);
+        }
+ 
         Boolean enable = entity.getEnable();
         if (enable != null) {
-            stmt.bindLong(5, enable ? 1l: 0l);
+            stmt.bindLong(6, enable ? 1l: 0l);
         }
  
         java.util.Date lastUpdate = entity.getLastUpdate();
         if (lastUpdate != null) {
-            stmt.bindLong(6, lastUpdate.getTime());
+            stmt.bindLong(7, lastUpdate.getTime());
         }
     }
 
@@ -102,10 +105,11 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
         PathToContent entity = new PathToContent( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.getString(offset + 1), // urlPattern
-            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // xpath
+            cursor.getString(offset + 2), // xpath
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // language
-            cursor.isNull(offset + 4) ? null : cursor.getShort(offset + 4) != 0, // enable
-            cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)) // lastUpdate
+            cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4), // priority
+            cursor.isNull(offset + 5) ? null : cursor.getShort(offset + 5) != 0, // enable
+            cursor.isNull(offset + 6) ? null : new java.util.Date(cursor.getLong(offset + 6)) // lastUpdate
         );
         return entity;
     }
@@ -115,10 +119,11 @@ public class PathToContentDao extends AbstractDao<PathToContent, Long> {
     public void readEntity(Cursor cursor, PathToContent entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setUrlPattern(cursor.getString(offset + 1));
-        entity.setXpath(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
+        entity.setXpath(cursor.getString(offset + 2));
         entity.setLanguage(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
-        entity.setEnable(cursor.isNull(offset + 4) ? null : cursor.getShort(offset + 4) != 0);
-        entity.setLastUpdate(cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)));
+        entity.setPriority(cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4));
+        entity.setEnable(cursor.isNull(offset + 5) ? null : cursor.getShort(offset + 5) != 0);
+        entity.setLastUpdate(cursor.isNull(offset + 6) ? null : new java.util.Date(cursor.getLong(offset + 6)));
      }
     
     /** @inheritdoc */

@@ -16,7 +16,6 @@ package dh.newspaper.base;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import dagger.Module;
 import dagger.ObjectGraph;
 import dagger.Provides;

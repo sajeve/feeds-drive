@@ -14,6 +14,7 @@ import dh.newspaper.parser.SubscriptionFactory;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
+import java.util.Date;
 
 /**
  * Created by hiep on 25/05/2014.
@@ -32,7 +33,7 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 		QueryBuilder.LOG_SQL = true;
 		QueryBuilder.LOG_VALUES = true;
 
-		SQLiteOpenHelper helper = new DaoMaster.DevOpenHelper(this.getActivity(), "/mnt/shared/bridge/test/"+Constants.DATABASE_NAME+".mDb", null); //debug only (because drops all tables)
+		SQLiteOpenHelper helper = new DaoMaster.DevOpenHelper(this.getActivity(), "/mnt/shared/bridge/test/"+Constants.DATABASE_NAME+".db", null); //debug only (because drops all tables)
 		mDaoMaster = new DaoMaster(helper.getReadableDatabase());
 		assertNotNull(mDaoMaster.getDatabase());
 	}
@@ -45,14 +46,17 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 
 	public void testGenerateDatabase() throws IOException, FeedParserException {
 
+		Date now = DateTime.now().toDate();
+
 		mDaoMaster.dropAllTables(mDaoMaster.getDatabase(), false);
 		mDaoMaster.createAllTables(mDaoMaster.getDatabase(), false);
 		DaoSession daoSession = mDaoMaster.newSession();
 
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+vnexpress.net/.+", "div.short_intro, div.relative_new, div.fck_detail", "vn", true, DateTime.now().toDate()));
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+nytimes.com/.+", "div.article-body", "en-US", true, DateTime.now().toDate()));
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+huffingtonpost.com/.+", "div.article>p", "en-US", true, DateTime.now().toDate()));
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+cnn.com/.+", "div.articleContent", "en-US", true, DateTime.now().toDate()));
+		daoSession.getPathToContentDao().insert(new PathToContent(null,".+vnexpress.net/.+", "div.short_intro, div.relative_new, div.fck_detail", "vn", 0, true, now));
+		daoSession.getPathToContentDao().insert(new PathToContent(null,".+nytimes.com/.+", "div.article-body", "en-US", 0, true, now));
+		daoSession.getPathToContentDao().insert(new PathToContent(null,".+huffingtonpost.com/.+", "div.article>p", "en-US", 0, true, now));
+		daoSession.getPathToContentDao().insert(new PathToContent(null,".+cnn.com/.+", "div.articleContent", "en-US", 0, true, now));
+		daoSession.getPathToContentDao().insert(new PathToContent(null,".+vnexpress.net/interactive/.+", "div.block_main_menu", "vn", 1, true, now));
 
 		SubscriptionFactory subFactory = ((MyApplication)this.getActivity().getApplication()).getObjectGraph().get(SubscriptionFactory.class);
 
@@ -60,9 +64,9 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://vnexpress.net/rss/doi-song.rss", new String[] {"Đời sống"}, "vn"));
 		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://vnexpress.net/rss/the-gioi.rss", new String[] {"Thế giới"}, "vn"));
 
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/services/xml/rss/nyt/HomePage.xml", new String[] {"Home US"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/services/xml/rss/nyt/InternationalHome.xml", new String[] {"Home World"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/services/xml/rss/nyt/World.xml", new String[] {"World"}, "vn"));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/dh.newspaper.services/xml/rss/nyt/HomePage.xml", new String[] {"Home US"}, "vn"));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/dh.newspaper.services/xml/rss/nyt/InternationalHome.xml", new String[] {"Home World"}, "vn"));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/dh.newspaper.services/xml/rss/nyt/World.xml", new String[] {"World"}, "vn"));
 		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://feeds.nytimes.com/nyt/rss/Business", new String[] {"Business"}, "vn"));
 		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://feeds.nytimes.com/nyt/rss/Technology", new String[] {"Technology"}, "vn"));
 

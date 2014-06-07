@@ -23,9 +23,9 @@
 				android:id="@+id/article_title"
 				android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
-				android:fontFamily="sans-serif-condensed"
 				android:text="This is a Title text"
-				style="@style/Feed"
+				android:singleLine="true"
+				style="@style/Feed.TitleSmall"
 				/>
 
 		<TextView
@@ -33,6 +33,7 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:text="2 hours ago"
+				android:singleLine="true"
 				style="@style/Feed.Date" />
 
 		<TextView
@@ -41,7 +42,7 @@
 				android:layout_height="fill_parent"
 				style="@style/Feed.Content"
 				android:text="Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
-				android:visibility="invisible"
+				android:singleLine="true"
 				/>
 	</LinearLayout>
 	<View style="@style/Divider"/>

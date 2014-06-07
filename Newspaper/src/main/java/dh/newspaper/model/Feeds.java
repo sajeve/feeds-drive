@@ -50,4 +50,9 @@ public class Feeds extends ArrayList<FeedItem> {
 	public String getUrl() {
 		return url;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("[Feeds %s / %d items / %s / %s / %s]", url, size(), language, description, pubDate);
+	}
 }

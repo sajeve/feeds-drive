@@ -11,9 +11,8 @@
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginTop="8dp"
-			android:fontFamily="sans-serif-condensed"
 			android:text="Lorem ipsum dolor sit amet"
-			style="@style/Feed"
+			style="@style/Feed.Title"
 			/>
 	<TextView
 			android:id="@+id/article_date"

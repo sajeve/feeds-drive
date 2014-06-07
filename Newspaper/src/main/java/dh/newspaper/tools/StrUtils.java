@@ -1,18 +1,16 @@
-package dh.newspaper.parser;
+package dh.newspaper.tools;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.Log;
-import android.webkit.JavascriptInterface;
 import com.google.common.base.Strings;
 import dh.newspaper.R;
 import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.joda.time.Period;
 import org.joda.time.format.*;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,7 +20,7 @@ import java.util.Date;
  */
 public class StrUtils {
 	private static final String TAG = StrUtils.class.getName();
-
+	private final static int GLIMPSE_SIZE = 60;
 	private final static String NON_THIN = "[^iIl1\\.,']";
 	private final static char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 	private static final DateTimeParser[] jodaDateTimeParsers = {
@@ -41,17 +39,27 @@ public class StrUtils {
 		return (int) (str.length() - str.replaceAll(NON_THIN, "").length() / 2);
 	}
 
-	public static String ellipsize(String text, int max) {
+	private static String cut(String text, int max, String trail, boolean includeSize) {
+		if (text == null) {
+			return "null";
+		}
+
+		String suffix = trail;
+		if (includeSize) {
+			suffix = suffix + " (length="+text.length()+")";
+		}
+		int suffixLength = suffix.length();
+
 		if (textWidth(text) <= max)
 			return text;
 
 		// Start by chopping off at the word before max
 		// This is an over-approximation due to thin-characters...
-		int end = text.lastIndexOf(' ', max - 3);
+		int end = text.lastIndexOf(' ', max-suffixLength);
 
 		// Just one long word. Chop it off.
 		if (end == -1)
-			return text.substring(0, max-3) + "...";
+			return text.substring(0, max-suffixLength) + suffix;
 
 		// Step forward as long as textWidth allows.
 		int newEnd = end;
@@ -63,37 +71,30 @@ public class StrUtils {
 			if (newEnd == -1)
 				newEnd = text.length();
 
-		} while (textWidth(text.substring(0, newEnd) + "...") < max);
+		} while (textWidth(text.substring(0, newEnd) + suffix) < max);
 
-		return text.substring(0, end) + "...";
+		return text.substring(0, end) + suffix;
+	}
+
+	/**
+	 * Use to log a long string, give a quick glimpse at the first 60 characters
+	 */
+	public static String glimpse(String text) {
+		if (text == null) {
+			return "null";
+		}
+		if (text.length()<GLIMPSE_SIZE) {
+			return text;
+		}
+		return text.substring(0, GLIMPSE_SIZE)+".. (length="+text.length()+")";
+	}
+
+	public static String ellipsize(String text, int max) {
+		return cut(text, max, "...", false);
 	}
 
 	public static String cut(String text, int max) {
-
-		if (textWidth(text) <= max)
-			return text;
-
-		// Start by chopping off at the word before max
-		// This is an over-approximation due to thin-characters...
-		int end = text.lastIndexOf(' ', max);
-
-		// Just one long word. Chop it off.
-		if (end == -1)
-			return text.substring(0, max);
-
-		// Step forward as long as textWidth allows.
-		int newEnd = end;
-		do {
-			end = newEnd;
-			newEnd = text.indexOf(' ', end + 1);
-
-			// No more spaces.
-			if (newEnd == -1)
-				newEnd = text.length();
-
-		} while (textWidth(text.substring(0, newEnd)) < max);
-
-		return text.substring(0, end);
+		return cut(text, max, "", false);
 	}
 
 	public static String bytesToHex(byte[] bytes) {
@@ -113,62 +114,68 @@ public class StrUtils {
 		return StrUtils.bytesToHex(md.digest(s.toUpperCase().replaceAll("\\s", "").getBytes("UTF-8")));
 	}
 
-	public static String getTimeAgo(Context context, String dateTimeStr) {
+	public static String getTimeAgo(Resources resources, String dateTimeStr) {
+		if (resources == null) {
+			return dateTimeStr;
+		}
+		if (Strings.isNullOrEmpty(dateTimeStr)) {
+			return resources.getString(R.string.PERIOD_UNKNOWN);
+		}
 		DateTime dateTime = parseDateTime(dateTimeStr);
 		if (dateTime!=null) {
-			return getTimeAgo(context, dateTime);
+			return getTimeAgo(resources, dateTime);
 		}
 		else {
 			return dateTimeStr;
 		}
 	}
 
-	public static String getTimeAgo(Context context, DateTime date) {
+	public static String getTimeAgo(Resources resources, DateTime date) {
 		Period period = new Period(date, DateTime.now());
 
 		int years = period.getYears();
 		if (2<=years) {
-			return String.format(context.getResources().getString(R.string.PERIOD_YEAR_AGO), years);
+			return String.format(resources.getString(R.string.PERIOD_YEAR_AGO), years);
 		}
 		if (1<=years) {
-			return context.getResources().getString(R.string.PERIOD_LAST_YEAR);
+			return resources.getString(R.string.PERIOD_LAST_YEAR);
 		}
 
 		int months = period.getMonths();
 		if (2<=months) {
-			return String.format(context.getResources().getString(R.string.PERIOD_MONTH_AGO), months);
+			return String.format(resources.getString(R.string.PERIOD_MONTH_AGO), months);
 		}
 		if (1<=months) {
-			return context.getResources().getString(R.string.PERIOD_LAST_MONTH);
+			return resources.getString(R.string.PERIOD_LAST_MONTH);
 		}
 
 		int weeks = period.getWeeks();
 		if (2<=weeks) {
-			return String.format(context.getResources().getString(R.string.PERIOD_WEEK_AGO), weeks);
+			return String.format(resources.getString(R.string.PERIOD_WEEK_AGO), weeks);
 		}
 		if (1<=weeks) {
-			return context.getResources().getString(R.string.PERIOD_LAST_WEEK);
+			return resources.getString(R.string.PERIOD_LAST_WEEK);
 		}
 
 		int days = period.getDays();
 		if (2<=days) {
-			return String.format(context.getResources().getString(R.string.PERIOD_DAY_AGO), days);
+			return String.format(resources.getString(R.string.PERIOD_DAY_AGO), days);
 		}
 		if (1<=days) {
-			return context.getResources().getString(R.string.PERIOD_YESTERDAY);
+			return resources.getString(R.string.PERIOD_YESTERDAY);
 		}
 
 		int hours = period.getHours();
 		if (1<=hours) {
-			return String.format(context.getResources().getString(R.string.PERIOD_HOURS_AGO), hours);
+			return String.format(resources.getString(R.string.PERIOD_HOURS_AGO), hours);
 		}
 
 		int minutes = period.getMinutes();
 		if (1<=minutes) {
-			return String.format(context.getResources().getString(R.string.PERIOD_MINUTE_AGO), minutes);
+			return String.format(resources.getString(R.string.PERIOD_MINUTE_AGO), minutes);
 		}
 
-		return context.getResources().getString(R.string.PERIOD_JUST_NOW);
+		return resources.getString(R.string.PERIOD_JUST_NOW);
 	}
 
 	public static DateTime parseDateTime(String dateTimeStr) {
@@ -193,5 +200,12 @@ public class StrUtils {
 		}
 
 		return resu;
+	}
+
+	/**
+	 * Remove double white space, and convert to upper case
+	 */
+	public static String normalizeUpper(String s) {
+		return s.trim().replaceAll("\\s+", " ").toUpperCase();
 	}
 }

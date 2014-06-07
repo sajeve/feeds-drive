@@ -9,6 +9,7 @@ public class SchemaBuilder {
 		System.out.println("Start generate..");
 
 		Schema schema = new Schema(100, "dh.newspaper.model.generated");
+		schema.enableKeepSectionsByDefault();
 
 		addPathToContent(schema);
 		addArticle(schema);
@@ -25,7 +26,7 @@ public class SchemaBuilder {
 		article.addIdProperty().autoincrement();
 
 		article.addStringProperty("articleUrl").notNull().unique();
-		article.addStringProperty("parentUrl");
+		article.addStringProperty("parentUrl").notNull();
 		article.addStringProperty("imageUrl");
 		article.addStringProperty("title").notNull();
 		article.addStringProperty("author");
@@ -34,11 +35,13 @@ public class SchemaBuilder {
 		article.addStringProperty("checksum"); //checksum of title+content (uppercase + ignore white space)
 		article.addStringProperty("language");
 		article.addLongProperty("openedCount");
-		article.addDateProperty("published");
-		article.addDateProperty("publishedDateString");
+		article.addStringProperty("publishedDateString");
+		article.addDateProperty("publishedDate");
 		article.addDateProperty("archived");
 		article.addDateProperty("lastOpened");
 		article.addDateProperty("lastUpdated");
+		article.addStringProperty("xpath");
+		article.addStringProperty("parseNotice");
 
 //		Entity articleCategory = schema.addEntity("ArticleCategory");
 //		articleCategory.addIdProperty();
@@ -51,8 +54,9 @@ public class SchemaBuilder {
 		Entity entity = schema.addEntity("PathToContent");
 		entity.addIdProperty().autoincrement();
 		entity.addStringProperty("urlPattern").notNull().unique();
-		entity.addStringProperty("xpath");
+		entity.addStringProperty("xpath").notNull();
 		entity.addStringProperty("language");
+		entity.addIntProperty("priority");
 		entity.addBooleanProperty("enable");
 		entity.addDateProperty("lastUpdate");
 	}

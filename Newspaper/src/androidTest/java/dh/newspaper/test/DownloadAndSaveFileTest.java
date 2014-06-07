@@ -7,7 +7,7 @@ import dh.newspaper.MainActivity;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.parser.FeedParserException;
-import dh.newspaper.parser.NetworkUtils;
+import dh.newspaper.tools.NetworkUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Entities;

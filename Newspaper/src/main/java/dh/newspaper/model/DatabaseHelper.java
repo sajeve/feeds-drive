@@ -14,7 +14,7 @@ import dh.newspaper.Constants;
  */
 public class DatabaseHelper extends SQLiteAssetHelper
 {
-	public static final SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+	//public static final SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
 	private static final String DATABASE_NAME = Constants.DATABASE_NAME + ".db";
 
 	// private LruCache<Long, BaseEntity> entityCache;
@@ -23,9 +23,9 @@ public class DatabaseHelper extends SQLiteAssetHelper
 		super(context, DATABASE_NAME, getDatabaseDir(context), null, Constants.DATABASE_VERSION);
 	}
 
-	public static long getNow() {
+	/*public static long getNow() {
 		return Calendar.getInstance().getTime().getTime();
-	}
+	}*/
 
 	private static String getDatabaseDir(Context context) {
 		if (Constants.DEBUG) {

@@ -11,6 +11,7 @@ public class JsonPathToContent implements Serializable {
 	private String urlPattern;
 	private String xpath;
 	private String language;
+	private Integer priority=0;
 	private boolean enable = true;
 
 	public JsonPathToContent() {
@@ -47,6 +48,10 @@ public class JsonPathToContent implements Serializable {
 		return enable;
 	}
 
+	public Integer getPriority() {
+		return priority;
+	}
+
 	public void setUrlPattern(String urlPattern) {
 		this.urlPattern = urlPattern;
 	}
@@ -61,5 +66,9 @@ public class JsonPathToContent implements Serializable {
 
 	public void setEnable(boolean enable) {
 		this.enable = enable;
+	}
+
+	public void setPriority(Integer priority) {
+		this.priority = priority;
 	}
 }

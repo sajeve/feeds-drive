@@ -1,15 +1,12 @@
 package dh.newspaper.test;
 
 import com.google.common.base.Strings;
-import dh.newspaper.parser.StrUtils;
+import dh.newspaper.tools.StrUtils;
 import junit.framework.TestCase;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by hiep on 10/05/2014.

@@ -34,11 +34,13 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         public final static Property Checksum = new Property(8, String.class, "checksum", false, "CHECKSUM");
         public final static Property Language = new Property(9, String.class, "language", false, "LANGUAGE");
         public final static Property OpenedCount = new Property(10, Long.class, "openedCount", false, "OPENED_COUNT");
-        public final static Property Published = new Property(11, java.util.Date.class, "published", false, "PUBLISHED");
-        public final static Property PublishedDateString = new Property(12, java.util.Date.class, "publishedDateString", false, "PUBLISHED_DATE_STRING");
+        public final static Property PublishedDateString = new Property(11, String.class, "publishedDateString", false, "PUBLISHED_DATE_STRING");
+        public final static Property PublishedDate = new Property(12, java.util.Date.class, "publishedDate", false, "PUBLISHED_DATE");
         public final static Property Archived = new Property(13, java.util.Date.class, "archived", false, "ARCHIVED");
         public final static Property LastOpened = new Property(14, java.util.Date.class, "lastOpened", false, "LAST_OPENED");
         public final static Property LastUpdated = new Property(15, java.util.Date.class, "lastUpdated", false, "LAST_UPDATED");
+        public final static Property Xpath = new Property(16, String.class, "xpath", false, "XPATH");
+        public final static Property ParseNotice = new Property(17, String.class, "parseNotice", false, "PARSE_NOTICE");
     };
 
 
@@ -56,7 +58,7 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         db.execSQL("CREATE TABLE " + constraint + "'ARTICLE' (" + //
                 "'_id' INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "'ARTICLE_URL' TEXT NOT NULL UNIQUE ," + // 1: articleUrl
-                "'PARENT_URL' TEXT," + // 2: parentUrl
+                "'PARENT_URL' TEXT NOT NULL ," + // 2: parentUrl
                 "'IMAGE_URL' TEXT," + // 3: imageUrl
                 "'TITLE' TEXT NOT NULL ," + // 4: title
                 "'AUTHOR' TEXT," + // 5: author
@@ -65,11 +67,13 @@ public class ArticleDao extends AbstractDao<Article, Long> {
                 "'CHECKSUM' TEXT," + // 8: checksum
                 "'LANGUAGE' TEXT," + // 9: language
                 "'OPENED_COUNT' INTEGER," + // 10: openedCount
-                "'PUBLISHED' INTEGER," + // 11: published
-                "'PUBLISHED_DATE_STRING' INTEGER," + // 12: publishedDateString
+                "'PUBLISHED_DATE_STRING' TEXT," + // 11: publishedDateString
+                "'PUBLISHED_DATE' INTEGER," + // 12: publishedDate
                 "'ARCHIVED' INTEGER," + // 13: archived
                 "'LAST_OPENED' INTEGER," + // 14: lastOpened
-                "'LAST_UPDATED' INTEGER);"); // 15: lastUpdated
+                "'LAST_UPDATED' INTEGER," + // 15: lastUpdated
+                "'XPATH' TEXT," + // 16: xpath
+                "'PARSE_NOTICE' TEXT);"); // 17: parseNotice
     }
 
     /** Drops the underlying database table. */
@@ -88,11 +92,7 @@ public class ArticleDao extends AbstractDao<Article, Long> {
             stmt.bindLong(1, id);
         }
         stmt.bindString(2, entity.getArticleUrl());
- 
-        String parentUrl = entity.getParentUrl();
-        if (parentUrl != null) {
-            stmt.bindString(3, parentUrl);
-        }
+        stmt.bindString(3, entity.getParentUrl());
  
         String imageUrl = entity.getImageUrl();
         if (imageUrl != null) {
@@ -130,14 +130,14 @@ public class ArticleDao extends AbstractDao<Article, Long> {
             stmt.bindLong(11, openedCount);
         }
  
-        java.util.Date published = entity.getPublished();
-        if (published != null) {
-            stmt.bindLong(12, published.getTime());
+        String publishedDateString = entity.getPublishedDateString();
+        if (publishedDateString != null) {
+            stmt.bindString(12, publishedDateString);
         }
  
-        java.util.Date publishedDateString = entity.getPublishedDateString();
-        if (publishedDateString != null) {
-            stmt.bindLong(13, publishedDateString.getTime());
+        java.util.Date publishedDate = entity.getPublishedDate();
+        if (publishedDate != null) {
+            stmt.bindLong(13, publishedDate.getTime());
         }
  
         java.util.Date archived = entity.getArchived();
@@ -154,6 +154,16 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         if (lastUpdated != null) {
             stmt.bindLong(16, lastUpdated.getTime());
         }
+ 
+        String xpath = entity.getXpath();
+        if (xpath != null) {
+            stmt.bindString(17, xpath);
+        }
+ 
+        String parseNotice = entity.getParseNotice();
+        if (parseNotice != null) {
+            stmt.bindString(18, parseNotice);
+        }
     }
 
     /** @inheritdoc */
@@ -168,7 +178,7 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         Article entity = new Article( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.getString(offset + 1), // articleUrl
-            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // parentUrl
+            cursor.getString(offset + 2), // parentUrl
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // imageUrl
             cursor.getString(offset + 4), // title
             cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5), // author
@@ -177,11 +187,13 @@ public class ArticleDao extends AbstractDao<Article, Long> {
             cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // checksum
             cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9), // language
             cursor.isNull(offset + 10) ? null : cursor.getLong(offset + 10), // openedCount
-            cursor.isNull(offset + 11) ? null : new java.util.Date(cursor.getLong(offset + 11)), // published
-            cursor.isNull(offset + 12) ? null : new java.util.Date(cursor.getLong(offset + 12)), // publishedDateString
+            cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11), // publishedDateString
+            cursor.isNull(offset + 12) ? null : new java.util.Date(cursor.getLong(offset + 12)), // publishedDate
             cursor.isNull(offset + 13) ? null : new java.util.Date(cursor.getLong(offset + 13)), // archived
             cursor.isNull(offset + 14) ? null : new java.util.Date(cursor.getLong(offset + 14)), // lastOpened
-            cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)) // lastUpdated
+            cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)), // lastUpdated
+            cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16), // xpath
+            cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17) // parseNotice
         );
         return entity;
     }
@@ -191,7 +203,7 @@ public class ArticleDao extends AbstractDao<Article, Long> {
     public void readEntity(Cursor cursor, Article entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setArticleUrl(cursor.getString(offset + 1));
-        entity.setParentUrl(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
+        entity.setParentUrl(cursor.getString(offset + 2));
         entity.setImageUrl(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setTitle(cursor.getString(offset + 4));
         entity.setAuthor(cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5));
@@ -200,11 +212,13 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         entity.setChecksum(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
         entity.setLanguage(cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9));
         entity.setOpenedCount(cursor.isNull(offset + 10) ? null : cursor.getLong(offset + 10));
-        entity.setPublished(cursor.isNull(offset + 11) ? null : new java.util.Date(cursor.getLong(offset + 11)));
-        entity.setPublishedDateString(cursor.isNull(offset + 12) ? null : new java.util.Date(cursor.getLong(offset + 12)));
+        entity.setPublishedDateString(cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11));
+        entity.setPublishedDate(cursor.isNull(offset + 12) ? null : new java.util.Date(cursor.getLong(offset + 12)));
         entity.setArchived(cursor.isNull(offset + 13) ? null : new java.util.Date(cursor.getLong(offset + 13)));
         entity.setLastOpened(cursor.isNull(offset + 14) ? null : new java.util.Date(cursor.getLong(offset + 14)));
         entity.setLastUpdated(cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)));
+        entity.setXpath(cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16));
+        entity.setParseNotice(cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17));
      }
     
     /** @inheritdoc */
