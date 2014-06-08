@@ -9,12 +9,12 @@ import android.os.StrictMode;
 import android.util.Log;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingApplication;
+import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.modules.AppBundle;
 import dh.newspaper.modules.AppContextModule;
 import dh.newspaper.modules.GlobalModule;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.view.utils.ErrorDialogFragment;
-import dh.newspaper.workflow.WorkflowException;
 import net.danlew.android.joda.ResourceZoneInfoProvider;
 import org.joda.time.DateTime;
 
@@ -28,9 +28,6 @@ public class MyApplication extends InjectingApplication {
 
 	@Inject
 	AppBundle mAppBundle;
-
-	//@Inject
-	SQLiteDatabase mDatabase;
 
 	@Override
 	public void onCreate() {
@@ -63,7 +60,8 @@ public class MyApplication extends InjectingApplication {
 	public void onTerminate() {
 		try {
 			EventBus.getDefault().unregister(mAppBundle);
-			mDatabase.close();
+			/*getObjectGraph().get(BackgroundTasksManager.class).close();
+			getObjectGraph().get(DaoMaster.class).getDatabase().close();*/
 		}
 		catch (Exception ex) {
 			Log.w(TAG, ex);

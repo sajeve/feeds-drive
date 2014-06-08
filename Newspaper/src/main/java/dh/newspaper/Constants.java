@@ -19,8 +19,8 @@ public class Constants {
 	public static final int DATABASE_VERSION = 100;
 	public static final String DEFAULT_ENCODING = "UTF-8";
 	public static final int EXCERPT_LENGTH = 160;
-	public static final Duration ARTICLE_TTL = DEBUG ? new Duration(0) : new Duration(10000) ; //10s
-	public static final Duration SUBSCRIPTION_TTL = DEBUG ? new Duration(0) : new Duration(10000) ; //10s
+	public static final Duration ARTICLE_TTL = DEBUG ? new Duration(10) : new Duration(10000) ; //10s
+	public static final Duration SUBSCRIPTION_TTL = DEBUG ? new Duration(10) : new Duration(10000) ; //10s
 
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
 	public static final String SUBJECT_TAGS_REFRESH = "Tags.Refresh";

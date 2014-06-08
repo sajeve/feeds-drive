@@ -2,6 +2,7 @@ package dh.newspaper.modules;
 
 import dagger.Module;
 import dagger.Provides;
+import dh.newspaper.DetailActivity;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
 import dh.newspaper.parser.ContentParser;
@@ -27,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 			FeedsFragment.class,
 			ArticleFragment.class,
 			MainActivity.class,
+			DetailActivity.class,
 			MyApplication.class,
 			SubscriptionFactory.class,
 			SelectArticleWorkflow.class,

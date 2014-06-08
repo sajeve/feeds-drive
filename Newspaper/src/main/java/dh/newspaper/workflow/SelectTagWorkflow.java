@@ -74,12 +74,12 @@ public class SelectTagWorkflow implements Closeable {
 	/**
 	 * Start the workflow
 	 */
-	public void run() throws WorkflowException {
-		if (isCanceled()) {
+	public void run() {
+		if (isCancelled()) {
 			return;
 		}
 		if (used) {
-			throw new IllegalStateException("Workflow is used");
+			throw new IllegalStateException(toString()+" is used");
 		}
 		used = true;
 		mRunning = true;
@@ -89,21 +89,21 @@ public class SelectTagWorkflow implements Closeable {
 		mStopwatch = Stopwatch.createStarted();
 		try {
 			lazyLoadArticlesFromCache();
-			if (mCallback != null && !isCanceled()) {
+			if (mCallback != null && !isCancelled()) {
 				resetStopwatch();
 				mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
 				log("Callback onFinishedLoadFromCache()");
 			}
 
 			downloadFeeds();
-			if (mCallback != null && !isCanceled()) {
+			if (mCallback != null && !isCancelled()) {
 				resetStopwatch();
 				mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
 				log("Callback onFinishedDownloadFeeds()");
 			}
 
 			downloadArticles();
-			if (mCallback != null && !isCanceled()) {
+			if (mCallback != null && !isCancelled()) {
 				resetStopwatch();
 				mCallback.onFinishedDownloadArticles(this);
 				log("Callback onFinishedDownloadArticles()");
@@ -112,7 +112,7 @@ public class SelectTagWorkflow implements Closeable {
 		finally {
 			if (mCallback!=null) {
 				resetStopwatch();
-				mCallback.done(this, mArticles, mCountArticles, mNotices, isCanceled());
+				mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
 				log("Callback done()");
 			}
 			mRunning = false;
@@ -120,8 +120,8 @@ public class SelectTagWorkflow implements Closeable {
 		}
 	}
 
-	private void lazyLoadArticlesFromCache() throws WorkflowException {
-		if (isCanceled()) {
+	private void lazyLoadArticlesFromCache() {
+		if (isCancelled()) {
 			return;
 		}
 		logSimple("Load articles from cache");
@@ -158,7 +158,7 @@ public class SelectTagWorkflow implements Closeable {
 			mArticles = mSelectArticleQueryBuilder.listLazy();
 			log("Load articles to a lazy list");
 
-			if (isCanceled()) {
+			if (isCancelled()) {
 				return;
 			}
 
@@ -168,11 +168,11 @@ public class SelectTagWorkflow implements Closeable {
 	}
 
 	private void downloadFeeds() {
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 		for(Subscription sub : getSubscriptions(mTag)) {
-			if (isCanceled()) {
+			if (isCancelled()) {
 				return;
 			}
 			if (!isExpiry(sub)) {
@@ -193,7 +193,7 @@ public class SelectTagWorkflow implements Closeable {
 
 				//upsert article to database with excerpt
 				for (FeedItem feedItem : feeds) {
-					if (isCanceled()) {
+					if (isCancelled()) {
 						return;
 					}
 					try {
@@ -227,12 +227,12 @@ public class SelectTagWorkflow implements Closeable {
 	}
 
 	private void downloadArticles() {
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 
 		for(Subscription sub : mSubscriptions.keySet()) {
-			if (isCanceled()) {
+			if (isCancelled()) {
 				return;
 			}
 			Feeds feeds = mSubscriptions.get(sub);
@@ -244,7 +244,7 @@ public class SelectTagWorkflow implements Closeable {
 
 			logSimple("Start download and parse full articles of " + sub);
 			for (FeedItem feedItem : feeds) {
-				if (isCanceled()) {
+				if (isCancelled()) {
 					return;
 				}
 				try {
@@ -310,7 +310,7 @@ public class SelectTagWorkflow implements Closeable {
 	}
 
 	private void buildArticlesQuery() {
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 		if (mSelectArticleQueryBuilder == null) {
@@ -381,7 +381,7 @@ public class SelectTagWorkflow implements Closeable {
 		return "|"+StrUtils.normalizeUpper(tag)+"|";
 	}
 
-	public boolean isCanceled() {
+	public boolean isCancelled() {
 		return mCanceled || Thread.interrupted();
 	}
 
@@ -398,7 +398,7 @@ public class SelectTagWorkflow implements Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public synchronized void close() throws IOException {
 		cancel();
 		if (mArticles != null) {
 			mArticles.close();
@@ -424,6 +424,8 @@ public class SelectTagWorkflow implements Closeable {
 		return mRunning;
 	}
 
+	//<editor-fold desc="Simple Log Utils for Profiler">
+
 	private void logInfo(String message) {
 		Log.i(TAG, message + " - " + mTag);
 	}
@@ -438,6 +440,12 @@ public class SelectTagWorkflow implements Closeable {
 		mStopwatch.reset().start();
 	}
 
+	//</editor-fold>
+
+	@Override
+	public String toString() {
+		return String.format("[SelectTagWorkflow: %s]", mTag);
+	}
 
 	public static interface SelectTagCallback {
 		public void onFinishedLoadFromCache(SelectTagWorkflow sender, LazyList<Article> articles, int count);

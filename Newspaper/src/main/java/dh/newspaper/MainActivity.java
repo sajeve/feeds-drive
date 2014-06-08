@@ -13,7 +13,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import dagger.Lazy;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.Injector;
 import dh.newspaper.view.FeedsFragment;
@@ -25,10 +24,10 @@ public class MainActivity extends Activity {
 	private static final String TAG = MainActivity.class.getName();
 
 	@Inject
-	Lazy<TagsFragment> mCategoriesFragment;
+	TagsFragment mTagsFragment;
 
 	@Inject
-	Lazy<FeedsFragment> mFeedsFragment;
+	FeedsFragment mFeedsFragment;
 
 	/**
 	 * Helper component that ties the action bar to the navigation drawer.
@@ -56,8 +55,12 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
 		((Injector) getApplication()).inject(this);
+
+		getFragmentManager().beginTransaction()
+				.replace(R.id.fragment_feeds, mFeedsFragment)
+				.replace(R.id.fragment_tags, mTagsFragment)
+				.commit();
 
 		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -68,14 +71,12 @@ public class MainActivity extends Activity {
 			// Read in the flag indicating whether or not the user has demonstrated awareness of the
 			// drawer. See PREF_USER_LEARNED_DRAWER for details.
 			mUserLearnedDrawer = mSharedPreferences.getBoolean(Constants.PREF_USER_LEARNED_DRAWER, false);
-
-			FragmentManager fragmentManager = getFragmentManager();
-			fragmentManager.beginTransaction()
-					.replace(R.id.fragment_feeds_container, mFeedsFragment.get())
-					.commit();
-
 			setUpAsNavigationDrawer();
 		}
+		/*else {
+			View v = findViewById(R.id.fragment_feeds);
+			Log.i(TAG, "fragment_feed.id = " + v.getId());
+		}*/
 
 		//System.setProperty("http.useragent", "");
 	}
@@ -186,7 +187,7 @@ public class MainActivity extends Activity {
 	 * Set up the navigation drawer interactions.
 	 */
 	public void setUpAsNavigationDrawer() {
-		mFragmentContainerView = findViewById(R.id.tags_drawer);
+		mFragmentContainerView = findViewById(R.id.fragment_tags);
 
 		// set a custom shadow that overlays the main content when the drawer opens
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
@@ -208,7 +209,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onDrawerClosed(View drawerView) {
 				super.onDrawerClosed(drawerView);
-				if (!mCategoriesFragment.get().isAdded()) {
+				if (!mTagsFragment.isAdded()) {
 					return;
 				}
 
@@ -218,7 +219,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onDrawerOpened(View drawerView) {
 				super.onDrawerOpened(drawerView);
-				if (!mCategoriesFragment.get().isAdded()) {
+				if (!mTagsFragment.isAdded()) {
 					return;
 				}
 

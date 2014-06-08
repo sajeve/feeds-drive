@@ -64,7 +64,8 @@ public class TagsFragment extends Fragment {
 
 	@Inject
     public TagsFragment() {
-		setRetainInstance(true);
+		super();
+		//setRetainInstance(true);
     }
 
     @Override
@@ -155,7 +156,7 @@ public class TagsFragment extends Fragment {
 		if (mRefData.getTags() != null) {
 			mDrawerListViewAdapter.clear();
 			mDrawerListViewAdapter.addAll(mRefData.getTags());
-			//mDrawerListViewAdapter.notifyDataSetChanged();
+			mDrawerListViewAdapter.notifyDataSetChanged();
 		}
 	}
 

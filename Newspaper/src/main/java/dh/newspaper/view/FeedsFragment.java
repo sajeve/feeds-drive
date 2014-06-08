@@ -40,17 +40,8 @@ public class FeedsFragment extends Fragment {
 	@Inject
 	AppBundle mAppBundle;
 
-//	@Inject
-//	ContentParser mContentParser;
-
 	@Inject
 	BackgroundTasksManager mBackgroundTasksManager;
-
-//	@Inject
-//	RequestQueue mRequestQueue;
-
-//	@Inject
-//	SQLiteDatabase mDatabase;
 
 	/**
 	 * The fragment argument representing the section number for this
@@ -60,7 +51,8 @@ public class FeedsFragment extends Fragment {
 
 	@Inject
 	public FeedsFragment() {
-		setRetainInstance(true);
+		super();
+		//setRetainInstance(true);
 	}
 
 	@Override
@@ -89,8 +81,30 @@ public class FeedsFragment extends Fragment {
 			mGridView.setNumColumns(numberOfColumns);
 			//rootView.forceLayout();
 			mGridView.setAdapter(mGridViewAdapter);
-			mGridView.setOnItemClickListener(onArticleClickListener);
+			mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				@Override
+				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+					try {
+						if (position == ListView.INVALID_POSITION || !FeedsFragment.this.isAdded()) {
+							return;
+						}
 
+						final Article article = (Article) parent.getItemAtPosition(position);
+						final Activity currentActivity = FeedsFragment.this.getActivity();
+						if (currentActivity instanceof MainActivity) {
+							Intent detailIntent = new Intent(currentActivity, DetailActivity.class);
+							//detailIntent.putExtra("article", article);
+							startActivity(detailIntent);
+						}
+
+						mGridView.setItemChecked(position, true);
+						EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, article));
+					}
+					catch (Exception ex) {
+						Log.w(TAG, ex);
+					}
+				}
+			});
 
 //			FeedItemLoader feedItemLoader = new FeedItemLoader((DatabaseActivity)currentActivity);
 //			ItemManager.Builder builder = new ItemManager.Builder(feedItemLoader);
@@ -163,36 +177,11 @@ public class FeedsFragment extends Fragment {
 
 	@Override
 	public void onDestroy() {
-		if (mGridViewAdapter!=null) {
+		if (mGridViewAdapter!=null && mGridViewAdapter.getData() != null) {
 			mGridViewAdapter.getData().close();
 		}
 		super.onDestroy();
 	}
-
-	AdapterView.OnItemClickListener onArticleClickListener = new AdapterView.OnItemClickListener() {
-		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			try {
-				if (position == ListView.INVALID_POSITION || !FeedsFragment.this.isAdded()) {
-					return;
-				}
-
-				final Article article = (Article) parent.getItemAtPosition(position);
-				final Activity currentActivity = FeedsFragment.this.getActivity();
-				if (currentActivity instanceof MainActivity) {
-					Intent detailIntent = new Intent(currentActivity, DetailActivity.class);
-					//detailIntent.putExtra("article", article);
-					startActivity(detailIntent);
-				}
-
-				mGridView.setItemChecked(position, true);
-				EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, article));
-			}
-			catch (Exception ex) {
-				Log.w(TAG, ex);
-			}
-		}
-	};
 
 	public void onEventMainThread(TagsFragment.Event event) {
 		if (!isAdded()) {

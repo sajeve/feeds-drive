@@ -30,7 +30,7 @@ public class SelectTagWorkflowTest extends ActivityInstrumentationTestCase2<Main
 //		//((MyApplication)this.getActivity().getApplication()).getObjectGraph().inject(this);
 //	}
 
-	public void testSelectTagWorkflow1() throws IOException, FeedParserException, WorkflowException {
+	public void testSelectTagWorkflow1() throws IOException, FeedParserException {
 		SelectTagWorkflow stw = new SelectTagWorkflow(this.getActivity(), "world", null, null, null, null);
 		stw.run();
 		assertTrue(stw.getResultSize() > 0);

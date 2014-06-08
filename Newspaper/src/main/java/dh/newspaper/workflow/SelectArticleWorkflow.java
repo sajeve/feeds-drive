@@ -86,11 +86,11 @@ public class SelectArticleWorkflow {
 	 * Start the workflow
 	 */
 	public void run() {
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 		if (used) {
-			throw new IllegalStateException("Workflow is used");
+			throw new IllegalStateException(toString()+" is used");
 		}
 		used = true;
 		mRunning = true;
@@ -105,7 +105,7 @@ public class SelectArticleWorkflow {
 					.where(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()))
 					.unique();
 			log("Find Parent subscription: "+mArticle);
-			if (isCanceled()) {
+			if (isCancelled()) {
 				return;
 			}
 
@@ -114,7 +114,7 @@ public class SelectArticleWorkflow {
 				mArticle = mDaoSession.getArticleDao().queryBuilder()
 						.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
 				log("Find Article in cache: "+mArticle);
-				if (isCanceled()) {
+				if (isCancelled()) {
 					return;
 				}
 
@@ -136,7 +136,7 @@ public class SelectArticleWorkflow {
 				try {
 					mDaoSession.getArticleDao().refresh(mArticle);
 					log("Refresh cached Article from database: "+mArticle);
-					if (isCanceled()) {
+					if (isCancelled()) {
 						return;
 					}
 
@@ -157,7 +157,7 @@ public class SelectArticleWorkflow {
 		} finally {
 			if (mCallback!=null) {
 				logSimple("callback done");
-				mCallback.done(this, getArticle());
+				mCallback.done(this, getArticle(), isCancelled());
 			}
 			mRunning = false;
 			logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
@@ -169,7 +169,7 @@ public class SelectArticleWorkflow {
 	 */
 	private void insertNewToCache() {
 		downloadArticleContent();
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 
@@ -205,7 +205,7 @@ public class SelectArticleWorkflow {
 
 		mDaoSession.getArticleDao().insert(mArticle);
 		log("Insert new "+mArticle);
-		if (mCallback!=null && !isCanceled()) {
+		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
 			mCallback.onFinishedUpdateCache(this, getArticle(), true);
 			log("Callback onFinishedUpdateCache()");
@@ -213,7 +213,7 @@ public class SelectArticleWorkflow {
 	}
 
 	private void checkArticleExpiration() {
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 		boolean articleIsExpiry = (mArticleTimeToLive == null) || new Duration(new DateTime(mArticle.getLastUpdated()), DateTime.now()).isLongerThan(mArticleTimeToLive);
@@ -229,7 +229,7 @@ public class SelectArticleWorkflow {
 	private void updateArticleContent() {
 		downloadArticleContent();
 
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 		resetStopwatch();
@@ -246,6 +246,9 @@ public class SelectArticleWorkflow {
 		}
 		mArticle.setContent(mArticleContent);
 
+		if (mPathToContent!=null) {
+			mArticle.setXpath(mPathToContent.getXpath());
+		}
 		if (Strings.isNullOrEmpty(mArticleLanguage)) {
 			mArticleLanguage = mFeedItem.getLanguage();
 		}
@@ -258,7 +261,7 @@ public class SelectArticleWorkflow {
 
 		log("Update article content"+mArticle);
 
-		if (mCallback!=null && !isCanceled()) {
+		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
 			mCallback.onFinishedUpdateCache(this, getArticle(), false);
 			log("Callback onFinishedUpdateCache()");
@@ -276,7 +279,7 @@ public class SelectArticleWorkflow {
 		}
 
 		findFirstMatchingPathToContent();
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 		if (mPathToContent == null) {
@@ -301,7 +304,7 @@ public class SelectArticleWorkflow {
 			Log.w(TAG, e);
 		}
 
-		if (mCallback!=null && !isCanceled()) {
+		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
 			mCallback.onFinishedDownloadContent(this, getArticle());
 			log("Callback onFinishedDownloadContent()");
@@ -312,7 +315,7 @@ public class SelectArticleWorkflow {
 	 * feed mPathToContent
 	 */
 	private void findFirstMatchingPathToContent() {
-		if (isCanceled()) {
+		if (isCancelled()) {
 			return;
 		}
 		resetStopwatch();
@@ -331,7 +334,7 @@ public class SelectArticleWorkflow {
 		return null;
 	}
 
-	public boolean isCanceled() {
+	public boolean isCancelled() {
 		return mCanceled || Thread.interrupted();
 	}
 	
@@ -364,6 +367,8 @@ public class SelectArticleWorkflow {
 		return mRunning;
 	}
 
+	//<editor-fold desc="Simple Log Utils for Profiler">
+
 	private void logInfo(String message) {
 		Log.i(TAG, message + " - "  + mFeedItem.getUri());
 	}
@@ -378,10 +383,17 @@ public class SelectArticleWorkflow {
 		mStopwatch.reset().start();
 	}
 
+	//</editor-fold>
+
+	@Override
+	public String toString() {
+		return String.format("[SelectArticleWorkflow: %s]", getFeedItem().getUri());
+	}
+
 	public static interface SelectArticleCallback {
 		public void onFinishedCheckCache(SelectArticleWorkflow sender, Article article);
 		public void onFinishedDownloadContent(SelectArticleWorkflow sender, Article article);
 		public void onFinishedUpdateCache(SelectArticleWorkflow sender, Article article, boolean isInsertNew);
-		public void done(SelectArticleWorkflow sender, Article article);
+		public void done(SelectArticleWorkflow sender, Article article, boolean isCancelled);
 	}
 }

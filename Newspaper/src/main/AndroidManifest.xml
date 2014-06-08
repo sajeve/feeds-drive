@@ -43,7 +43,7 @@
                 android:value="dh.newspaper.ReaderActivityListActivity" />
         </activity>-->
 	    
-	    <service android:name=".services.MyLocalService"></service>
+	    <!--<service android:name=".services.MyLocalService"></service>-->
     </application>
 
 </manifest>

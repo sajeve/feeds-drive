@@ -2,14 +2,31 @@
 		xmlns:tools="http://schemas.android.com/tools"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:layout_margin="16dp"
 		android:baselineAligned="false"
 		android:divider="?android:attr/dividerHorizontal"
 		android:orientation="horizontal"
 		android:showDividers="middle"
 		tools:context="dh.newspaper.MainActivity">
 
-	<fragment
+	<FrameLayout
+			android:id="@+id/fragment_tags"
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:paddingLeft="16dp"
+			android:paddingTop="16dp"
+			tools:layout="@layout/fragment_tags"/>
+
+	<FrameLayout
+			android:id="@+id/fragment_feeds"
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:paddingTop="16dp"
+			android:layout_marginLeft="8dp"
+			android:layout_weight="3"
+			tools:layout="@layout/fragment_feeds"/>
+
+	<!--<fragment
 			android:id="@+id/fragment_tags"
 			android:name="dh.newspaper.view.TagsFragment"
 			android:layout_width="0dp"
@@ -24,6 +41,6 @@
 			android:layout_height="match_parent"
 			android:layout_marginLeft="8dp"
 			android:layout_weight="3"
-			tools:layout="@layout/fragment_feeds"/>
+			tools:layout="@layout/fragment_feeds"/>-->
 
 </LinearLayout>

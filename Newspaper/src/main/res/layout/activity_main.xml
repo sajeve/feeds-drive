@@ -4,7 +4,6 @@
 		android:id="@+id/drawer_layout"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:layout_margin="16dp"
 		tools:context="dh.newspaper.MainActivity">
 
 	<!--
@@ -13,9 +12,10 @@
 	-->
 
 	<FrameLayout
-			android:id="@+id/fragment_feeds_container"
+			android:id="@+id/fragment_feeds"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
+			android:layout_margin="16dp"
 			tools:layout="@layout/fragment_feeds"/>
 
 	<!--
@@ -30,12 +30,20 @@
 		 the container.
 	-->
 
-	<fragment
-			android:id="@+id/tags_drawer"
+
+	<FrameLayout
+			android:id="@+id/fragment_tags"
+			android:layout_width="@dimen/navigation_drawer_width"
+			android:layout_height="match_parent"
+			android:layout_gravity="start"
+			tools:layout="@layout/fragment_tags"/>
+
+	<!--<fragment
+			android:id="@+id/fragment_tags"
 			android:name="dh.newspaper.view.TagsFragment"
 			android:layout_width="@dimen/navigation_drawer_width"
 			android:layout_height="match_parent"
 			android:layout_gravity="start"
-			tools:layout="@layout/fragment_feeds"/>
+			tools:layout="@layout/fragment_feeds"/>-->
 
 </android.support.v4.widget.DrawerLayout>

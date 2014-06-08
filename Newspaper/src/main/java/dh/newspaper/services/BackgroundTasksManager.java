@@ -82,8 +82,8 @@ public class BackgroundTasksManager implements Closeable {
 	public void loadActiveTag(final String tag) {
 		if (mSelectTagWorkflow != null) {
 			//the same tag is loading
-
 			if (Strings.equalsIgnoreCase(mSelectTagWorkflow.getTag(), tag) && mSelectTagWorkflow.isRunning()) {
+				Log.i(TAG, mSelectTagWorkflow+" is running. No need to run it again");
 				return;
 			}
 
@@ -111,6 +111,9 @@ public class BackgroundTasksManager implements Closeable {
 
 			@Override
 			public void done(SelectTagWorkflow sender, LazyList<Article> articles, int count, List<String> notices, boolean isCancelled) {
+				if (isCancelled) {
+					return;
+				}
 				EventBus.getDefault().post(new RefreshFeedsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_FEEDS_DONE_LOADING, articles, count));
 			}
 		});
@@ -123,6 +126,7 @@ public class BackgroundTasksManager implements Closeable {
 					mSelectTagWorkflow.run();
 				} catch (Exception ex) {
 					Log.w(TAG, ex);
+					EventBus.getDefault().post(new RefreshFeedsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_FEEDS_DONE_LOADING, null, 0));
 				}
 			}
 		});
@@ -136,6 +140,7 @@ public class BackgroundTasksManager implements Closeable {
 		if (mSelectArticleWorkflow != null) {
 			//the same article is loading
 			if (mSelectArticleWorkflow.getFeedItem().getUri().equals(article.getArticleUrl()) && mSelectArticleWorkflow.isRunning()) {
+				Log.i(TAG, mSelectArticleWorkflow+" is running. No need to run it again");
 				return;
 			}
 		}
@@ -159,7 +164,10 @@ public class BackgroundTasksManager implements Closeable {
 				EventBus.getDefault().post(new RefreshArticleEvent(BackgroundTasksManager.this, Constants.SUBJECT_ARTICLE_REFRESH, sender));
 			}
 			@Override
-			public void done(SelectArticleWorkflow sender, Article article) {
+			public void done(SelectArticleWorkflow sender, Article article, boolean isCancelled) {
+				if (isCancelled) {
+					return;
+				}
 				EventBus.getDefault().post(new RefreshArticleEvent(BackgroundTasksManager.this, Constants.SUBJECT_ARTICLE_DONE_LOADING, sender));
 			}
 		});

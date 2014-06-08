@@ -48,11 +48,6 @@ public class ArticleFragment extends Fragment {
 	@Inject
 	BackgroundTasksManager mBackgroundTasksManager;
 
-	@Inject
-	DaoSession mDaoSession;
-
-
-
 	private SwipeRefreshLayout mSwipeRefreshLayout;
     private Article mArticle;
 	private WebView mWebView;
@@ -63,8 +58,9 @@ public class ArticleFragment extends Fragment {
 	private View mPanelNotice;
 
     public ArticleFragment() {
-        // Required empty public constructor
-		setRetainInstance(true);
+		// Required empty public constructor
+		super();
+		//setRetainInstance(true);
     }
 
 	@Override
