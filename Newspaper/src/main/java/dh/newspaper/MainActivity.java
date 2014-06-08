@@ -57,10 +57,10 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		((Injector) getApplication()).inject(this);
 
-		getFragmentManager().beginTransaction()
+		/*getFragmentManager().beginTransaction()
 				.replace(R.id.fragment_feeds, mFeedsFragment)
 				.replace(R.id.fragment_tags, mTagsFragment)
-				.commit();
+				.commit();*/
 
 		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 

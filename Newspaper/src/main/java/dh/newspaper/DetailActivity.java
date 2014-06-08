@@ -33,7 +33,7 @@ public class DetailActivity extends Activity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
 		mSinglePane = findViewById(R.id.fragment_feeds) == null;
-		if (mSinglePane) {
+		/*if (mSinglePane) {
 			getFragmentManager().beginTransaction()
 					.replace(R.id.fragment_article, mArticleFragment)
 					.commit();
@@ -43,7 +43,7 @@ public class DetailActivity extends Activity {
 					.replace(R.id.fragment_feeds, mFeedsFragment)
 					.replace(R.id.fragment_article, mArticleFragment)
 					.commit();
-		}
+		}*/
 
         // TODO: If exposing deep links into your app, handle intents here.
     }

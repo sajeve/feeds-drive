@@ -8,8 +8,9 @@
 		android:showDividers="middle"
 		tools:context="dh.newspaper.MainActivity">
 
-	<FrameLayout
+	<fragment
 			android:id="@+id/fragment_tags"
+			android:name="dh.newspaper.view.TagsFragment"
 			android:layout_width="0dp"
 			android:layout_height="match_parent"
 			android:layout_weight="1"
@@ -17,8 +18,9 @@
 			android:paddingTop="16dp"
 			tools:layout="@layout/fragment_tags"/>
 
-	<FrameLayout
+	<fragment
 			android:id="@+id/fragment_feeds"
+			android:name="dh.newspaper.view.FeedsFragment"
 			android:layout_width="0dp"
 			android:layout_height="match_parent"
 			android:paddingTop="16dp"
