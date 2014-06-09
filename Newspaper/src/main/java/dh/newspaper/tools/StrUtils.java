@@ -208,4 +208,26 @@ public class StrUtils {
 	public static String normalizeUpper(String s) {
 		return s.trim().replaceAll("\\s+", " ").toUpperCase();
 	}
+
+	/**
+	 * Same as {@link java.lang.String#equalsIgnoreCase(String)}
+	 * prevent NullPointerException, return true if both a and b is Null or Empty
+	 */
+	public static boolean equalsIgnoreCases(String a, String b) {
+		if (Strings.isNullOrEmpty(a)) {
+			return Strings.isNullOrEmpty(b);
+		}
+		return a.equalsIgnoreCase(b);
+	}
+
+	/**
+	 * Same as {@link java.lang.String#equals(Object)}
+	 * prevent NullPointerException, return true if both a and b is Null or Empty
+	 */
+	public static boolean equalsString(String a, String b) {
+		if (Strings.isNullOrEmpty(a)) {
+			return Strings.isNullOrEmpty(b);
+		}
+		return a.equals(b);
+	}
 }

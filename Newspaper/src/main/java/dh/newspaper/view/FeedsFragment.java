@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListView;
+import com.google.common.base.Stopwatch;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.*;
 import dh.newspaper.adapter.ArticlesGridAdapter;
@@ -23,8 +24,11 @@ import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.modules.AppBundle;
 import dh.newspaper.services.BackgroundTasksManager;
+import dh.newspaper.tools.StrUtils;
 
 import javax.inject.Inject;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -36,6 +40,11 @@ public class FeedsFragment extends Fragment {
 	private GridView mGridView;
 	private ArticlesGridAdapter mGridViewAdapter;
 	private String mCurrentTag;
+
+	/**
+	 * use to trace the current pending event
+	 */
+	private UUID mEventFlowId;
 
 	@Inject
 	AppBundle mAppBundle;
@@ -49,7 +58,6 @@ public class FeedsFragment extends Fragment {
 	 */
 	private static final String ARG_TAG = "tag";
 
-	@Inject
 	public FeedsFragment() {
 		super();
 		//setRetainInstance(true);
@@ -98,6 +106,9 @@ public class FeedsFragment extends Fragment {
 						}
 
 						mGridView.setItemChecked(position, true);
+
+						Log.d(TAG, "Clicked on "+article);
+						Log.d("DebugClick", "Clicked on "+article);
 						EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, article));
 					}
 					catch (Exception ex) {
@@ -195,6 +206,7 @@ public class FeedsFragment extends Fragment {
 		}
 	}
 
+	Stopwatch swRfle = Stopwatch.createStarted();
 	public void onEventMainThread(RefreshFeedsListEvent event) {
 		if (!isAdded() || mGridViewAdapter==null) {
 			return;
@@ -202,13 +214,41 @@ public class FeedsFragment extends Fragment {
 		try {
 			switch (event.getSubject()) {
 				case Constants.SUBJECT_FEEDS_START_LOADING:
+					if (Constants.DEBUG) {
+						swRfle = Stopwatch.createStarted();
+						Log.d("DebugClick", "FeedsFragment START " + event.getSender().getTag() + " - " + mEventFlowId);
+					}
+
 					mSwipeRefreshLayout.setRefreshing(true);
+					mCurrentTag = event.getSender().getTag();
+
+					//Save the identity of the current running workflow recognise future events coming from the same workflow
+					mEventFlowId = event.getFlowId();
+
 					return;
 				case Constants.SUBJECT_FEEDS_REFRESH:
+					if (mEventFlowId != event.getFlowId()) {
+						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
+						return;
+					}
+
+					if (Constants.DEBUG) {
+						Log.d("DebugClick", "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag() + " - " + mEventFlowId);
+						swRfle.reset().start();
+					}
+
 					mGridViewAdapter.setData(event.getArticles(), event.getCount());
 					mGridViewAdapter.notifyDataSetChanged();
 					return;
 				case Constants.SUBJECT_FEEDS_DONE_LOADING:
+					if (mEventFlowId != event.getFlowId()) {
+						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
+						return;
+					}
+
+					if (Constants.DEBUG)
+						Log.d("DebugClick", "FeedsFragment DONE ("+swRfle.elapsed(TimeUnit.MILLISECONDS)+" ms) "+event.getSender().getTag() + " - " + mEventFlowId);
+
 					mGridViewAdapter.setData(event.getArticles(), event.getCount());
 					mGridViewAdapter.notifyDataSetChanged();
 					mSwipeRefreshLayout.setRefreshing(false);
@@ -223,7 +263,7 @@ public class FeedsFragment extends Fragment {
 
 	private void loadTag(String tag) {
 		mCurrentTag = tag;
-		mBackgroundTasksManager.loadActiveTag(tag);
+		mBackgroundTasksManager.loadTag(tag);
 	}
 
 	public class Event extends BaseEventOneArg<FeedsFragment> {

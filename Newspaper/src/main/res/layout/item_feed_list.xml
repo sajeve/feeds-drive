@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!--android:foreground = "?android:selectableItemBackground"-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		android:orientation="horizontal"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:foreground = "?android:selectableItemBackground"
 		>
 
 	<ImageView
 			android:id="@+id/article_image"
 			android:layout_width="50dp"
 			android:layout_height="50dp"
+			android:clickable="false"
 			android:src="@drawable/demo_card_background_color4"
 			/>
 
@@ -45,5 +46,7 @@
 				android:singleLine="true"
 				/>
 	</LinearLayout>
-	<View style="@style/Divider"/>
+	<View style="@style/Divider"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"/>
 </LinearLayout>

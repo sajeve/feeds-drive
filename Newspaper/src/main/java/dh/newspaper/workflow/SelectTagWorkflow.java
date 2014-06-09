@@ -14,6 +14,7 @@ import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
+import dh.newspaper.tools.BumpTask;
 import dh.newspaper.tools.PriorityExecutor;
 import dh.newspaper.tools.StrUtils;
 import org.joda.time.DateTime;
@@ -23,12 +24,13 @@ import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by hiep on 3/06/2014.
  */
-public class SelectTagWorkflow implements Closeable {
+public class SelectTagWorkflow extends BumpTask implements Closeable {
 	private static final String TAG = SelectTagWorkflow.class.getName();
 
 	@Inject DaoSession mDaoSession;
@@ -39,7 +41,7 @@ public class SelectTagWorkflow implements Closeable {
 	private final String mTag;
 	private final Duration mSubscriptionsTimeToLive;
 	private final Duration mArticleTimeToLive;
-	private final PriorityExecutor mArticlesLoader;
+	private final ExecutorService mArticlesLoader;
 	private final SelectTagCallback mCallback;
 	private final Context mContext;
 
@@ -60,7 +62,7 @@ public class SelectTagWorkflow implements Closeable {
 	private volatile boolean used = false;
 	private volatile boolean mRunning = true;
 
-	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, PriorityExecutor articlesLoader, SelectTagCallback callback) {
+	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, ExecutorService articlesLoader, SelectTagCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 
 		mTag = tag;
@@ -79,7 +81,8 @@ public class SelectTagWorkflow implements Closeable {
 			return;
 		}
 		if (used) {
-			throw new IllegalStateException(toString()+" is used");
+			Log.w(TAG, toString()+" is used");
+			return;
 		}
 		used = true;
 		mRunning = true;
@@ -261,18 +264,7 @@ public class SelectTagWorkflow implements Closeable {
 					else {
 						logSimple("Add to article loader queue "+feedItem);
 						mPendingLoadArticleWorkflow.add(wkflow);
-						mArticlesLoader.execute(new Runnable() {
-							@Override
-							public void run() {
-								try {
-									wkflow.run();
-								}
-								catch (Exception e) {
-									Log.w(TAG, e);
-									mNotices.add("Failed updating article "+wkflow.getFeedItem()+": "+e.getMessage());
-								}
-							}
-						}, PriorityExecutor.MEDIUM);
+						mArticlesLoader.execute(wkflow);
 					}
 				}
 				catch (Exception e) {
@@ -445,6 +437,11 @@ public class SelectTagWorkflow implements Closeable {
 	@Override
 	public String toString() {
 		return String.format("[SelectTagWorkflow: %s]", mTag);
+	}
+
+	@Override
+	public String getId() {
+		return getTag();
 	}
 
 	public static interface SelectTagCallback {

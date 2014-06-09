@@ -9,6 +9,7 @@ import dh.newspaper.cache.RefData;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
+import dh.newspaper.tools.BumpTask;
 import dh.newspaper.tools.StrUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  *
  * Created by hiep on 3/06/2014.
  */
-public class SelectArticleWorkflow {
+public class SelectArticleWorkflow extends BumpTask {
 	private static final String TAG = SelectArticleWorkflow.class.getName();
 
 	@Inject DaoSession mDaoSession;
@@ -85,12 +86,14 @@ public class SelectArticleWorkflow {
 	/**
 	 * Start the workflow
 	 */
+	@Override
 	public void run() {
 		if (isCancelled()) {
 			return;
 		}
 		if (used) {
-			throw new IllegalStateException(toString()+" is used");
+			Log.w(TAG, toString()+" is used");
+			return;
 		}
 		used = true;
 		mRunning = true;
@@ -367,6 +370,19 @@ public class SelectArticleWorkflow {
 		return mRunning;
 	}
 
+	/**
+	 * Use to identify this workflow
+	 */
+	public String getArticleUrl() {
+		if (mFeedItem!=null) {
+			return mFeedItem.getUri();
+		}
+		if (mArticle!=null) {
+			return mArticle.getArticleUrl();
+		}
+		return null;
+	}
+
 	//<editor-fold desc="Simple Log Utils for Profiler">
 
 	private void logInfo(String message) {
@@ -388,6 +404,11 @@ public class SelectArticleWorkflow {
 	@Override
 	public String toString() {
 		return String.format("[SelectArticleWorkflow: %s]", getFeedItem().getUri());
+	}
+
+	@Override
+	public String getId() {
+		return getArticleUrl();
 	}
 
 	public static interface SelectArticleCallback {

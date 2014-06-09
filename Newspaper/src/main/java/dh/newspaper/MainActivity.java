@@ -2,6 +2,7 @@ package dh.newspaper;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import de.greenrobot.event.EventBus;
+import dh.newspaper.base.InjectingFragmentModule;
 import dh.newspaper.base.Injector;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.TagsFragment;
@@ -22,13 +24,6 @@ import javax.inject.Inject;
 
 public class MainActivity extends Activity {
 	private static final String TAG = MainActivity.class.getName();
-
-	@Inject
-	TagsFragment mTagsFragment;
-
-	@Inject
-	FeedsFragment mFeedsFragment;
-
 	/**
 	 * Helper component that ties the action bar to the navigation drawer.
 	 */
@@ -55,12 +50,7 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		((Injector) getApplication()).inject(this);
-
-		/*getFragmentManager().beginTransaction()
-				.replace(R.id.fragment_feeds, mFeedsFragment)
-				.replace(R.id.fragment_tags, mTagsFragment)
-				.commit();*/
+		//((Injector) getApplication()).inject(this);
 
 		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -73,6 +63,7 @@ public class MainActivity extends Activity {
 			mUserLearnedDrawer = mSharedPreferences.getBoolean(Constants.PREF_USER_LEARNED_DRAWER, false);
 			setUpAsNavigationDrawer();
 		}
+
 		/*else {
 			View v = findViewById(R.id.fragment_feeds);
 			Log.i(TAG, "fragment_feed.id = " + v.getId());
@@ -209,8 +200,8 @@ public class MainActivity extends Activity {
 			@Override
 			public void onDrawerClosed(View drawerView) {
 				super.onDrawerClosed(drawerView);
-				if (!mTagsFragment.isAdded()) {
-					return;
+				if (!isSinglePane()) {
+					return; //no sense for two-pane layout
 				}
 
 				invalidateOptionsMenu(); // calls onPrepareOptionsMenu()
@@ -219,8 +210,8 @@ public class MainActivity extends Activity {
 			@Override
 			public void onDrawerOpened(View drawerView) {
 				super.onDrawerOpened(drawerView);
-				if (!mTagsFragment.isAdded()) {
-					return;
+				if (!isSinglePane()) {
+					return; //no sense for two-pane layout
 				}
 
 				if (!mUserLearnedDrawer) {

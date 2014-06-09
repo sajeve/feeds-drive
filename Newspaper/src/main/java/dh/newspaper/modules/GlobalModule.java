@@ -27,8 +27,6 @@ import java.security.NoSuchAlgorithmException;
 			TagsFragment.class,
 			FeedsFragment.class,
 			ArticleFragment.class,
-			MainActivity.class,
-			DetailActivity.class,
 			MyApplication.class,
 			SubscriptionFactory.class,
 			SelectArticleWorkflow.class,
@@ -58,20 +56,5 @@ public class GlobalModule {
 	@Provides @Singleton
 	public AppBundle provideAppBundle() {
 		return new AppBundle();
-	}
-
-	@Provides @Singleton
-	public FeedsFragment provideFeedsFragment() {
-		return new FeedsFragment();
-	}
-
-	@Provides @Singleton
-	public ArticleFragment provideArticleFragment() {
-		return new ArticleFragment();
-	}
-
-	@Provides @Singleton
-	public TagsFragment provideCategoriesFragment() {
-		return new TagsFragment();
 	}
 }

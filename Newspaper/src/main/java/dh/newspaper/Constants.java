@@ -13,7 +13,7 @@ import java.util.Calendar;
 public class Constants {
 	public static final boolean DEBUG = true;
 	public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
-	public static final int THREAD_POOL_SIZE = 4;
+	public static final int THREAD_POOL_SIZE = 1;
 
 	public static final String DATABASE_NAME = "newspaper";
 	public static final int DATABASE_VERSION = 100;
@@ -33,4 +33,6 @@ public class Constants {
 	public static final String SUBJECT_ARTICLE_START_LOADING = "Article.StartLoading";
 	public static final String SUBJECT_ARTICLE_REFRESH = "Article.Refresh";
 	public static final String SUBJECT_ARTICLE_DONE_LOADING = "Article.DoneLoading";
+
+	public static final int EVENT_DELAYED = 500;
 }

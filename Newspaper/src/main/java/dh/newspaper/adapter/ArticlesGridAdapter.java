@@ -41,7 +41,7 @@ public class ArticlesGridAdapter extends BaseAdapter {
 
 	@Override
 	public int getCount() {
-		if (mData == null || mData.isClosed()) {
+		if (mData == null) {
 			return 0;
 		}
 		return mCount;
@@ -49,20 +49,26 @@ public class ArticlesGridAdapter extends BaseAdapter {
 
 	@Override
 	public Object getItem(int position) {
-		if (mData == null || mData.isClosed()) {
+		if (mData == null) {
 			return null;
 		}
-		return mData.get(position);
+		try {
+			return mData.get(position);
+		}
+		catch (IllegalStateException ex) {
+			Log.d(TAG, ex.getMessage());
+		}
+		catch (Exception ex) {
+			Log.w(TAG, ex);
+		}
+		return null;
 	}
 
 	@Override
 	public long getItemId(int position) {
-		if (mData == null || mData.isClosed()) {
-			return 0;
-		}
-		Article article = mData.get(position);
+		Article article = (Article)getItem(position);
 		if (article == null) {
-			return  0;
+			return 0;
 		}
 		return article.getId();
 	}
@@ -115,6 +121,7 @@ public class ArticlesGridAdapter extends BaseAdapter {
 	}
 
 	public void setData(LazyList<Article> data, int count) {
+		Log.d(TAG, "setData("+data+") count="+count);
 		this.mData = data;
 		this.mCount = count;
 	}

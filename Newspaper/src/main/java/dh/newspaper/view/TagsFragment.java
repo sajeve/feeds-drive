@@ -62,7 +62,6 @@ public class TagsFragment extends Fragment {
 
     private String mCurrentTag;
 
-	@Inject
     public TagsFragment() {
 		super();
 		//setRetainInstance(true);

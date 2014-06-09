@@ -2,7 +2,6 @@ package dh.newspaper.view;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
@@ -14,6 +13,7 @@ import android.webkit.WebView;
 import android.widget.TextView;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
@@ -24,10 +24,8 @@ import dh.newspaper.event.BaseEventOneArg;
 import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.generated.Article;
-import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.modules.AppBundle;
-import dh.newspaper.parser.ContentParser;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.tools.StrUtils;
 import dh.newspaper.workflow.SelectArticleWorkflow;
@@ -35,6 +33,8 @@ import dh.newspaper.workflow.SelectArticleWorkflow;
 import javax.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Article Reader
@@ -49,13 +49,20 @@ public class ArticleFragment extends Fragment {
 	BackgroundTasksManager mBackgroundTasksManager;
 
 	private SwipeRefreshLayout mSwipeRefreshLayout;
-    private Article mArticle;
 	private WebView mWebView;
 	private TextView mTxtTitle;
 	private TextView mTxtDataSource;
 	private TextView mTxtTags;
 	private TextView mTxtNotice;
 	private View mPanelNotice;
+
+	private Article mArticle;
+
+	/**
+	 * use to trace the current pending event
+	 */
+	private UUID mEventFlowId;
+
 
     public ArticleFragment() {
 		// Required empty public constructor
@@ -133,6 +140,7 @@ public class ArticleFragment extends Fragment {
 		}
 	}
 
+	Stopwatch swRae = Stopwatch.createStarted();
 	public void onEventMainThread(RefreshArticleEvent event) {
 		if (!isAdded() || mWebView ==null) {
 			return;
@@ -140,13 +148,39 @@ public class ArticleFragment extends Fragment {
 		try {
 			switch (event.getSubject()) {
 				case Constants.SUBJECT_ARTICLE_START_LOADING:
+					if (Constants.DEBUG) {
+						swRae = Stopwatch.createStarted();
+						Log.d("DebugClick", "ArticleFragment START " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
+					}
+
 					mSwipeRefreshLayout.setRefreshing(true);
+
+					//Save the identity of the current running workflow recognise future events coming from the same workflow
+					mEventFlowId = event.getFlowId();
+
 					return;
 				case Constants.SUBJECT_ARTICLE_REFRESH:
-					refreshGUI(event.getData());
+					if (mEventFlowId != event.getFlowId()) {
+						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
+						return;
+					}
+
+					if (Constants.DEBUG) {
+						Log.d("DebugClick", "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
+						swRae.reset().start();
+					}
+
+					refreshGUI(event.getSender());
 					return;
 				case Constants.SUBJECT_ARTICLE_DONE_LOADING:
-					refreshGUI(event.getData());
+					if (mEventFlowId != event.getFlowId()) {
+						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
+						return;
+					}
+
+					if (Constants.DEBUG)
+						Log.d("DebugClick", "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
+
 					mSwipeRefreshLayout.setRefreshing(false);
 					return;
 			}
@@ -163,6 +197,7 @@ public class ArticleFragment extends Fragment {
 
 	public void refreshGUI(SelectArticleWorkflow data) {
 		mArticle = data.getArticle();
+
 		mTxtTitle.setText(mArticle.getTitle());
 		mTxtTags.setText(getTagsInfo(data.getParentSubscription()));
 		mTxtDataSource.setText(Html.fromHtml(getBasicInfo(mArticle)));
@@ -193,7 +228,7 @@ public class ArticleFragment extends Fragment {
 		sb.append(getArticleSourceName(article));
 
 		if (!Strings.isNullOrEmpty(article.getAuthor())) {
-			sb.append(" > " + article.getAuthor());
+			sb.append(" &gt; " + article.getAuthor());
 		}
 		return sb.toString();
 	}

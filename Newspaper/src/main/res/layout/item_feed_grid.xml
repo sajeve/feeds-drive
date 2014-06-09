@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!--android:foreground = "?android:selectableItemBackground"-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		android:orientation="vertical"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:foreground = "?android:selectableItemBackground"
 		>
 	<TextView
 			android:id="@+id/article_title"
@@ -27,6 +27,7 @@
 				android:id="@+id/article_image"
 				android:layout_width="125dp"
 				android:layout_height="125dp"
+				android:clickable="false"
 				android:src="@drawable/demo_card_background_color4"
 				/>
 		<TextView
@@ -39,5 +40,7 @@
 				/>
 
 	</LinearLayout>
-	<View style="@style/Divider"/>
+	<View style="@style/Divider"
+			android:layout_width="wrap_content"
+			android:layout_height="match_parent"/>
 </LinearLayout>

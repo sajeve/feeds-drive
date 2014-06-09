@@ -15,19 +15,13 @@ import javax.inject.Inject;
 public class DetailActivity extends Activity {
 	private static final String TAG = DetailActivity.class.getName();
 
-	@Inject
-	FeedsFragment mFeedsFragment;
-
-	@Inject
-	ArticleFragment mArticleFragment;
-
 	private boolean mSinglePane;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
-		((Injector) getApplication()).inject(this);
+		//((Injector) getApplication()).inject(this);
 
         // Show the Up button in the action bar.
         getActionBar().setDisplayHomeAsUpEnabled(true);
