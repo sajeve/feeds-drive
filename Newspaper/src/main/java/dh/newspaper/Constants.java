@@ -13,14 +13,14 @@ import java.util.Calendar;
 public class Constants {
 	public static final boolean DEBUG = true;
 	public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
-	public static final int THREAD_POOL_SIZE = 1;
+	public static final String DEBUG_DATABASE_PATH = "/mnt/shared/bridge";
 
 	public static final String DATABASE_NAME = "newspaper";
 	public static final int DATABASE_VERSION = 100;
 	public static final String DEFAULT_ENCODING = "UTF-8";
 	public static final int EXCERPT_LENGTH = 160;
-	public static final Duration ARTICLE_TTL = DEBUG ? new Duration(10) : new Duration(10000) ; //10s
-	public static final Duration SUBSCRIPTION_TTL = DEBUG ? new Duration(10) : new Duration(10000) ; //10s
+	public static final Duration ARTICLE_TTL = DEBUG ? new Duration(100) : new Duration(1000) ; //10s
+	public static final Duration SUBSCRIPTION_TTL = DEBUG ? new Duration(100) : new Duration(1000) ; //10s
 
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
 	public static final String SUBJECT_TAGS_REFRESH = "Tags.Refresh";

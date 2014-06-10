@@ -29,7 +29,7 @@ public class DatabaseHelper extends SQLiteAssetHelper
 
 	private static String getDatabaseDir(Context context) {
 		if (Constants.DEBUG) {
-			return "/mnt/shared/bridge";
+			return Constants.DEBUG_DATABASE_PATH;
 		}
 		else {
 			return context.getExternalCacheDir().getAbsolutePath(); /* /storage/emulated/0/Android/data/dh.newspaper/cache */

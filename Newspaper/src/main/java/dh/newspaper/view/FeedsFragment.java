@@ -97,7 +97,18 @@ public class FeedsFragment extends Fragment {
 							return;
 						}
 
-						final Article article = (Article) parent.getItemAtPosition(position);
+						Article article = (Article) parent.getItemAtPosition(position);
+						if (article == null)
+							article = (Article)mGridViewAdapter.getItem(position);
+
+						if (article == null) {
+							Log.w(TAG, "select null article");
+							mGridViewAdapter.notifyDataSetChanged();
+							return;
+						}
+
+						Log.d("DebugClick", "Clicked on "+article);
+
 						final Activity currentActivity = FeedsFragment.this.getActivity();
 						if (currentActivity instanceof MainActivity) {
 							Intent detailIntent = new Intent(currentActivity, DetailActivity.class);
@@ -106,9 +117,6 @@ public class FeedsFragment extends Fragment {
 						}
 
 						mGridView.setItemChecked(position, true);
-
-						Log.d(TAG, "Clicked on "+article);
-						Log.d("DebugClick", "Clicked on "+article);
 						EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, article));
 					}
 					catch (Exception ex) {
