@@ -11,10 +11,10 @@ import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.model.generated.Article;
+import dh.newspaper.tools.StrUtils;
 import dh.newspaper.tools.thread.PrifoExecutors;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
-import roboguice.util.temp.Strings;
 
 import javax.inject.Inject;
 import java.io.Closeable;
@@ -98,7 +98,7 @@ public class BackgroundTasksManager implements Closeable {
 				try {
 					if (mSelectTagWorkflow != null) {
 						//the same tag is loading
-						if (Strings.equalsIgnoreCase(mSelectTagWorkflow.getTag(), tag) && mSelectTagWorkflow.isRunning()) {
+						if (StrUtils.equalsIgnoreCases(mSelectTagWorkflow.getTag(), tag) && mSelectTagWorkflow.isRunning()) {
 							Log.d(TAG, String.format("%s is running (priority=%d%s)",
 									mSelectTagWorkflow,
 									mSelectTagWorkflow.getPriority(),

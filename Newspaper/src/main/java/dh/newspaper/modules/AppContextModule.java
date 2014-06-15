@@ -3,8 +3,6 @@ package dh.newspaper.modules;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.Volley;
 import dagger.Module;
 import dagger.Provides;
 import dh.newspaper.MyApplication;
@@ -13,7 +11,6 @@ import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.services.BackgroundTasksManager;
-import dh.newspaper.tools.OkHttpStack;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.TagsFragment;
 
@@ -34,7 +31,7 @@ import javax.inject.Singleton;
 public class AppContextModule {
 
 	private Context mAppContext;
-	private RequestQueue mRequestQueue;
+	//private RequestQueue mRequestQueue;
 	private SQLiteOpenHelper mDbHelper;
 	private SQLiteDatabase mDatabase;
 	private DaoMaster mDaoMaster;
@@ -46,13 +43,13 @@ public class AppContextModule {
 		this.mAppContext = mAppContext;
 	}
 
-	@Provides @Singleton
+	/*@Provides @Singleton
 	public RequestQueue provideRequestQueue() {
 		if (mRequestQueue == null) {
 			mRequestQueue = Volley.newRequestQueue(mAppContext, new OkHttpStack());
 		}
 		return mRequestQueue;
-	}
+	}*/
 
 	@Provides @Singleton
 	public SQLiteDatabase provideDatabase() {
