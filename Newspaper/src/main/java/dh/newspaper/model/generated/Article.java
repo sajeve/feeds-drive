@@ -8,7 +8,7 @@ import dh.newspaper.tools.StrUtils;
 /**
  * Entity mapped to table ARTICLE.
  */
-public class Article {
+public class Article implements java.io.Serializable {
 
     private Long id;
     /** Not-null value. */
@@ -219,7 +219,7 @@ public class Article {
 	public String toString() {
 
 		return String.format("[%s: #%d, title='%s', articleUrl='%s', parentUrl='%s', content='%s', lang='%s', notice='%s']",
-				this.getClass().getSimpleName(), this.id,
+				((Object)this).getClass().getSimpleName(), this.id,
 				this.title, this.articleUrl, this.parentUrl, StrUtils.glimpse(this.content), this.language, this.parseNotice);
 	}
     // KEEP METHODS END

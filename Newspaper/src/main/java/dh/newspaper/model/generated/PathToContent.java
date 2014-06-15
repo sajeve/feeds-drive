@@ -7,7 +7,7 @@ package dh.newspaper.model.generated;
 /**
  * Entity mapped to table PATH_TO_CONTENT.
  */
-public class PathToContent {
+public class PathToContent implements java.io.Serializable {
 
     private Long id;
     /** Not-null value. */
@@ -102,7 +102,7 @@ public class PathToContent {
     // KEEP METHODS - put your custom methods here
 	@Override
 	public String toString() {
-		return String.format("[%s: #%d, pattern='%s', xpath='%s', priority=%d]", this.getClass().getSimpleName(), this.id, this.urlPattern, this.xpath, this.priority);
+		return String.format("[%s: #%d, pattern='%s', xpath='%s', priority=%d]", ((Object)this).getClass().getSimpleName(), this.id, this.urlPattern, this.xpath, this.priority);
 	}
     // KEEP METHODS END
 

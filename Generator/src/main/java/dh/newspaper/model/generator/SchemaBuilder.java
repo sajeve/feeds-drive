@@ -43,6 +43,8 @@ public class SchemaBuilder {
 		article.addStringProperty("xpath");
 		article.addStringProperty("parseNotice");
 
+		article.implementsSerializable();
+
 //		Entity articleCategory = schema.addEntity("ArticleCategory");
 //		articleCategory.addIdProperty();
 //		articleCategory.addLongProperty("categoryId");
@@ -59,6 +61,8 @@ public class SchemaBuilder {
 		entity.addIntProperty("priority");
 		entity.addBooleanProperty("enable");
 		entity.addDateProperty("lastUpdate");
+
+		entity.implementsSerializable();
 	}
 
 	private static void addSubscription(Schema schema) {
@@ -72,5 +76,7 @@ public class SchemaBuilder {
 		entity.addStringProperty("encoding");
 		entity.addStringProperty("publishedDateString");
 		entity.addDateProperty("lastUpdate");
+
+		entity.implementsSerializable();
 	}
 }

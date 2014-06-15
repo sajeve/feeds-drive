@@ -7,7 +7,7 @@ package dh.newspaper.model.generated;
 /**
  * Entity mapped to table SUBSCRIPTION.
  */
-public class Subscription {
+public class Subscription implements java.io.Serializable {
 
     private Long id;
     /** Not-null value. */
@@ -123,7 +123,7 @@ public class Subscription {
 
 	@Override
 	public String toString() {
-		return String.format("[%s: #%d, url='%s', tags='%s']", this.getClass().getSimpleName(), this.id, this.feedsUrl, this.tags);
+		return String.format("[%s: #%d, url='%s', tags='%s']", ((Object)this).getClass().getSimpleName(), this.id, this.feedsUrl, this.tags);
 	}
     // KEEP METHODS END
 
