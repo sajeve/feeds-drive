@@ -54,6 +54,7 @@
 					android:id="@+id/panel_notice"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
+					android:layout_marginTop="16dp"
 					android:orientation="horizontal">
 				<ImageView
 						android:layout_width="32dp"
@@ -66,6 +67,7 @@
 						android:layout_height="wrap_content"
 						android:text="status"
 						android:textIsSelectable="true"
+						android:autoLink="web"
 						style="@style/Article.Info"
 						/>
 			</LinearLayout>
