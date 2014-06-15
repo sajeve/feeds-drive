@@ -4,18 +4,21 @@ import android.content.Context;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
-import dh.newspaper.tools.BumpTask;
+import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.tools.StrUtils;
+import dh.newspaper.tools.thread.PrifoTask;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  *
  * Created by hiep on 3/06/2014.
  */
-public class SelectArticleWorkflow extends BumpTask {
+public class SelectArticleWorkflow extends PrifoTask {
 	private static final String TAG = SelectArticleWorkflow.class.getName();
 
 	@Inject DaoSession mDaoSession;
@@ -52,7 +55,6 @@ public class SelectArticleWorkflow extends BumpTask {
 	private StringBuilder mParseNotice = new StringBuilder();
 	private Subscription mParentSubscription;
 
-	private volatile boolean mCanceled = false;
 	private volatile boolean mRunning;
 	private volatile boolean used = false;
 
@@ -92,6 +94,9 @@ public class SelectArticleWorkflow extends BumpTask {
 			return;
 		}
 		if (used) {
+			if (Constants.DEBUG) {
+				throw new IllegalStateException(toString() + " is used");
+			}
 			Log.w(TAG, toString()+" is used");
 			return;
 		}
@@ -292,8 +297,15 @@ public class SelectArticleWorkflow extends BumpTask {
 		mArticleLanguage = mPathToContent.getLanguage();
 		try {
 			resetStopwatch();
+			//mArticleContent = mContentParser.extractContent(mFeedItem.getUri(), mPathToContent.getXpath()).html();
 
-			mArticleContent = mContentParser.extractContent(mFeedItem.getUri(), mPathToContent.getXpath()).html();
+			InputStream inputStream = NetworkUtils.getStreamFromUrl(mFeedItem.getUri(), NetworkUtils.MOBILE_USER_AGENT, this);
+			if (inputStream == null) {
+				log("Download article content Cancelled");
+				return;
+			}
+
+			mArticleContent = mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri()).html();
 
 			log("Download article content: "+StrUtils.glimpse(mArticleContent));
 			if (Strings.isNullOrEmpty(mArticleContent)) {
@@ -337,14 +349,6 @@ public class SelectArticleWorkflow extends BumpTask {
 		return null;
 	}
 
-	public boolean isCancelled() {
-		return mCanceled || Thread.interrupted();
-	}
-	
-	public synchronized void cancel() {
-		mCanceled = true;
-	}
-
 	public Article getArticle() {
 		if (mArticle != null) {
 			return mArticle;
@@ -386,13 +390,13 @@ public class SelectArticleWorkflow extends BumpTask {
 	//<editor-fold desc="Simple Log Utils for Profiler">
 
 	private void logInfo(String message) {
-		Log.i(TAG, message + " - "  + mFeedItem.getUri());
+		Log.d(TAG, message + " - "  + mFeedItem.getUri());
 	}
 	private void logSimple(String message) {
-		Log.d(TAG, message + " - " + mFeedItem.getUri());
+		Log.v(TAG, message + " - " + mFeedItem.getUri());
 	}
 	private void log(String message) {
-		Log.d(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mFeedItem.getUri());
+		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mFeedItem.getUri());
 		mStopwatch.reset().start();
 	}
 	private void resetStopwatch() {
@@ -407,7 +411,7 @@ public class SelectArticleWorkflow extends BumpTask {
 	}
 
 	@Override
-	public String getId() {
+	public String getMissionId() {
 		return getArticleUrl();
 	}
 

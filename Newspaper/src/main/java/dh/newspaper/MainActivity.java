@@ -17,6 +17,7 @@ import android.view.View;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingFragmentModule;
 import dh.newspaper.base.Injector;
+import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.TagsFragment;
 
@@ -50,7 +51,6 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		//((Injector) getApplication()).inject(this);
 
 		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -66,7 +66,7 @@ public class MainActivity extends Activity {
 
 		/*else {
 			View v = findViewById(R.id.fragment_feeds);
-			Log.i(TAG, "fragment_feed.id = " + v.getId());
+			Log.i(TAG, "fragment_feed.id = " + v.getMissionId());
 		}*/
 
 		//System.setProperty("http.useragent", "");

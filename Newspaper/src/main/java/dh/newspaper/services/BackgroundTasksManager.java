@@ -3,7 +3,6 @@ package dh.newspaper.services;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
-import de.greenrobot.dao.query.LazyList;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
@@ -12,7 +11,7 @@ import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.model.generated.Article;
-import dh.newspaper.tools.*;
+import dh.newspaper.tools.thread.PrifoExecutors;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
 import roboguice.util.temp.Strings;
@@ -21,8 +20,8 @@ import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by hiep on 4/06/2014.
@@ -34,16 +33,19 @@ public class BackgroundTasksManager implements Closeable {
 	private Context mContext;
 
 	private ExecutorService mTagsListLoader;
-	private ExecutorService mArticlesLoader = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
+	private ExecutorService mArticlesLoader = PrifoExecutors.newCachedThreadExecutor(1, 1);
+	//private ExecutorService mArticlesLoader = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
 	//private PriorityExecutor mArticlesLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
 	private SelectTagWorkflow mSelectTagWorkflow;
-	private ExecutorService mActiveTagLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
-	//private ExecutorService mActiveTagLoader = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LifoBlockingDeque<Runnable>());
+	private ExecutorService mSelectTagLoader = PrifoExecutors.newCachedThreadExecutor(1, Integer.MAX_VALUE);
+	//private ExecutorService mSelectTagLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
+	//private ExecutorService mSelectTagLoader = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LifoBlockingDeque<Runnable>());
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
-	private ExecutorService mActiveArticleLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
-	//private ExecutorService mActiveArticleLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
+	private ExecutorService mSelectArticleLoader = PrifoExecutors.newCachedThreadExecutor(1, Integer.MAX_VALUE);
+	//private ExecutorService mSelectArticleLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
+	//private ExecutorService mSelectArticleLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
 	@Inject
 	RefData mRefData;
@@ -84,8 +86,6 @@ public class BackgroundTasksManager implements Closeable {
 		});
 	}
 
-
-
 	private Runnable lastLoadTagCall;
 	public void loadTag(final String tag) {
 
@@ -100,27 +100,23 @@ public class BackgroundTasksManager implements Closeable {
 					if (mSelectTagWorkflow != null) {
 						//the same tag is loading
 						if (Strings.equalsIgnoreCase(mSelectTagWorkflow.getTag(), tag) && mSelectTagWorkflow.isRunning()) {
-							Log.i(TAG, mSelectTagWorkflow+" is running. No need to run it again");
-							return;
+							Log.d(TAG, String.format("%s is running (priority=%d%s)",
+									mSelectTagWorkflow,
+									mSelectTagWorkflow.getPriority(),
+									mSelectTagWorkflow.isFocused() ? " focused" : ""));
 						}
-
-						try {
-							mSelectTagWorkflow.close();
-						} catch (IOException e) {
-							Log.w(TAG, e);
-						}
+						mSelectTagWorkflow.cancel();
 					}
 
-					final UUID flowId = UUID.randomUUID();
-					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
+					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
 						@Override
-						public void onFinishedLoadFromCache(SelectTagWorkflow sender, LazyList<Article> articles, int count) {
-							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, flowId, articles, count));
+						public void onFinishedLoadFromCache(SelectTagWorkflow sender, List<Article> articles, int count) {
+							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag(), articles, count));
 						}
 
 						@Override
-						public void onFinishedDownloadFeeds(SelectTagWorkflow sender, LazyList<Article> articles, int count) {
-							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, flowId, articles, count));
+						public void onFinishedDownloadFeeds(SelectTagWorkflow sender, List<Article> articles, int count) {
+							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag(), articles, count));
 						}
 
 						@Override
@@ -128,16 +124,16 @@ public class BackgroundTasksManager implements Closeable {
 						}
 
 						@Override
-						public void done(SelectTagWorkflow sender, LazyList<Article> articles, int count, List<String> notices, boolean isCancelled) {
-							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_DONE_LOADING, flowId, articles, count));
+						public void done(SelectTagWorkflow sender, List<Article> articles, int count, List<String> notices, boolean isCancelled) {
+							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_DONE_LOADING, sender.getTag(), articles, count));
 						}
 					});
-					mSelectTagWorkflow.setActive(true);
+					mSelectTagWorkflow.setFocus(true);
 
-					EventBus.getDefault().post(new RefreshFeedsListEvent(mSelectTagWorkflow, Constants.SUBJECT_FEEDS_START_LOADING, flowId, null, 0));
-					mActiveTagLoader.execute(mSelectTagWorkflow);
+					EventBus.getDefault().post(new RefreshFeedsListEvent(mSelectTagWorkflow, Constants.SUBJECT_FEEDS_START_LOADING, mSelectTagWorkflow.getTag(), null, 0));
+					mSelectTagLoader.execute(mSelectTagWorkflow);
 
-					/*mActiveTagLoader.execute(new Runnable() {
+					/*mSelectTagLoader.execute(new Runnable() {
 						@Override
 						public void run() {
 							try {
@@ -183,17 +179,18 @@ public class BackgroundTasksManager implements Closeable {
 					if (mSelectArticleWorkflow != null) {
 						//the same article is loading
 						if (mSelectArticleWorkflow.getFeedItem().getUri().equals(article.getArticleUrl()) && mSelectArticleWorkflow.isRunning()) {
-							Log.i(TAG, mSelectArticleWorkflow+" is running. No need to run it again");
-							return;
+							Log.d(TAG, String.format("%s is running (priority=%d%s)",
+									mSelectArticleWorkflow,
+									mSelectArticleWorkflow.getPriority(),
+									mSelectArticleWorkflow.isFocused() ? " focused" : ""));
 						}
 						mSelectArticleWorkflow.cancel();
 					}
 
-					final UUID flowId = UUID.randomUUID();
 					mSelectArticleWorkflow = new SelectArticleWorkflow(mContext, article, Constants.ARTICLE_TTL, true, new SelectArticleWorkflow.SelectArticleCallback() {
 						@Override
 						public void onFinishedCheckCache(SelectArticleWorkflow sender, Article article) {
-							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, flowId));
+							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl()));
 						}
 						@Override
 						public void onFinishedDownloadContent(SelectArticleWorkflow sender, Article article) {
@@ -201,19 +198,19 @@ public class BackgroundTasksManager implements Closeable {
 						}
 						@Override
 						public void onFinishedUpdateCache(SelectArticleWorkflow sender, Article article, boolean isInsertNew) {
-							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, flowId));
+							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl()));
 						}
 						@Override
 						public void done(SelectArticleWorkflow sender, Article article, boolean isCancelled) {
-							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_DONE_LOADING, flowId));
+							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_DONE_LOADING, sender.getArticleUrl()));
 						}
 					});
-					mSelectArticleWorkflow.setActive(true);
+					mSelectArticleWorkflow.setFocus(true);
 
-					EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_START_LOADING, flowId));
-					mActiveArticleLoader.execute(mSelectArticleWorkflow);
+					EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_START_LOADING, mSelectArticleWorkflow.getArticleUrl()));
+					mSelectArticleLoader.execute(mSelectArticleWorkflow);
 
-					/*mActiveArticleLoader.execute(new Runnable() {
+					/*mSelectArticleLoader.execute(new Runnable() {
 						@Override
 						public void run() {
 							try {
@@ -237,25 +234,14 @@ public class BackgroundTasksManager implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		if (mSelectTagWorkflow != null) {
-			try {
-				mSelectTagWorkflow.close();
-			} catch (IOException e) {
-				Log.w(TAG, e);
-			}
-		}
-
 		if (mTagsListLoader != null) {
 			mTagsListLoader.shutdownNow();
 		}
-		if (mActiveTagLoader != null) {
-			mActiveTagLoader.shutdownNow();
+		if (mSelectTagLoader != null) {
+			mSelectTagLoader.shutdownNow();
 		}
 		if (mArticlesLoader != null) {
 			mArticlesLoader.shutdownNow();
 		}
-		/*if (mActiveArticleLoader != null) {
-			mActiveArticleLoader.shutdownNow();
-		}*/
 	}
 }

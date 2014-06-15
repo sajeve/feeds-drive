@@ -4,15 +4,13 @@ import android.test.ActivityInstrumentationTestCase2;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
-import dh.newspaper.cache.RefData;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.PathToContent;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
-import dh.newspaper.workflow.SelectArticleWorkflow;
+import dh.newspaper.tools.thread.ICancellation;
 
-import javax.inject.Inject;
 import java.io.IOException;
 
 /**
@@ -34,7 +32,12 @@ public class SelectArticleWorkflowTest extends ActivityInstrumentationTestCase2<
 	}
 
 	public void testSelectArticleWorkflow1() throws IOException, FeedParserException {
-		Feeds feeds = mContentParser.parseFeeds("http://vnexpress.net/rss/thoi-su.rss", "utf-8");
+		Feeds feeds = mContentParser.parseFeeds("http://vnexpress.net/rss/thoi-su.rss", "utf-8", new ICancellation() {
+			@Override
+			public boolean isCancelled() {
+				return false;
+			}
+		});
 		assertTrue(feeds.size() > 0);
 		FeedItem feedItem = feeds.get(0);
 

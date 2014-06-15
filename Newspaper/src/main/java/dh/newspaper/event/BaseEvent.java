@@ -2,18 +2,16 @@ package dh.newspaper.event;
 
 import com.google.common.base.Strings;
 
-import java.util.UUID;
-
 /**
  * Created by hiep on 11/05/2014.
  */
 public class BaseEvent<T> {
-	private UUID flowId;
+	private String flowId;
 	private T sender;
 	private String subject;
 
 
-	public BaseEvent(T sender, String subject, UUID flowId) {
+	public BaseEvent(T sender, String subject, String flowId) {
 		if (sender == null) {
 			throw new IllegalStateException("Null event sender");
 		}
@@ -30,10 +28,6 @@ public class BaseEvent<T> {
 		this(sender, subject, null);
 	}
 
-	public BaseEvent(T sender, UUID flowId) {
-		this(sender, null, flowId);
-	}
-
 	public T getSender() {
 		return sender;
 	}
@@ -42,7 +36,7 @@ public class BaseEvent<T> {
 		return subject;
 	}
 
-	public UUID getFlowId() {
+	public String getFlowId() {
 		return flowId;
 	}
 

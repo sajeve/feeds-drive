@@ -14,13 +14,13 @@ public class Constants {
 	public static final boolean DEBUG = true;
 	public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
 	public static final String DEBUG_DATABASE_PATH = "/mnt/shared/bridge";
-
 	public static final String DATABASE_NAME = "newspaper";
 	public static final int DATABASE_VERSION = 100;
 	public static final String DEFAULT_ENCODING = "UTF-8";
 	public static final int EXCERPT_LENGTH = 160;
-	public static final Duration ARTICLE_TTL = DEBUG ? new Duration(100) : new Duration(1000) ; //10s
-	public static final Duration SUBSCRIPTION_TTL = DEBUG ? new Duration(100) : new Duration(1000) ; //10s
+	public static final Duration ARTICLE_TTL = DEBUG ? new Duration(100) : new Duration(1000); //1s
+	public static final Duration SUBSCRIPTION_TTL = DEBUG ? new Duration(100) : new Duration(1000); //1s
+	public static final int ARTICLES_PER_PAGE = DEBUG ? 100 : 200;
 
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
 	public static final String SUBJECT_TAGS_REFRESH = "Tags.Refresh";
@@ -34,5 +34,6 @@ public class Constants {
 	public static final String SUBJECT_ARTICLE_REFRESH = "Article.Refresh";
 	public static final String SUBJECT_ARTICLE_DONE_LOADING = "Article.DoneLoading";
 
-	public static final int EVENT_DELAYED = 500;
+
+	public static final int EVENT_DELAYED = 200;
 }

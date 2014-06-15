@@ -1,7 +1,9 @@
 package dh.newspaper.view;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
@@ -61,7 +63,7 @@ public class ArticleFragment extends Fragment {
 	/**
 	 * use to trace the current pending event
 	 */
-	private UUID mEventFlowId;
+	private String mEventFlowId;
 
 
     public ArticleFragment() {
@@ -125,6 +127,27 @@ public class ArticleFragment extends Fragment {
 		mArticle = mAppBundle.getCurrentArticle();
 	}
 
+	private static final String STATE_EVENT_FLOW_ID = "EventFlowId";
+	private static final String STATE_ARTICLE = "Article";
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putSerializable(STATE_ARTICLE, mArticle);
+		outState.putString(STATE_EVENT_FLOW_ID, mEventFlowId);
+	}
+
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+	@Override
+	public void onViewStateRestored(Bundle savedInstanceState) {
+		super.onViewStateRestored(savedInstanceState);
+		if (savedInstanceState == null) {
+			return;
+		}
+		mArticle = (Article)savedInstanceState.getSerializable(STATE_ARTICLE);
+		mEventFlowId = savedInstanceState.getString(STATE_EVENT_FLOW_ID);
+	}
+
 	public void onEventMainThread(FeedsFragment.Event event) {
 		if (!isAdded()) {
 			return;
@@ -150,7 +173,7 @@ public class ArticleFragment extends Fragment {
 				case Constants.SUBJECT_ARTICLE_START_LOADING:
 					if (Constants.DEBUG) {
 						swRae = Stopwatch.createStarted();
-						Log.d("DebugClick", "ArticleFragment START " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
+						Log.d("dh.newspaper.DebugClick", "ArticleFragment START " + event.getSender().getArticleUrl() + " - " + event.getFlowId() + " (previous flow="+mEventFlowId+")");
 					}
 
 					mSwipeRefreshLayout.setRefreshing(true);
@@ -166,7 +189,7 @@ public class ArticleFragment extends Fragment {
 					}
 
 					if (Constants.DEBUG) {
-						Log.d("DebugClick", "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
+						Log.d("dh.newspaper.DebugClick", "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
 						swRae.reset().start();
 					}
 
@@ -179,7 +202,7 @@ public class ArticleFragment extends Fragment {
 					}
 
 					if (Constants.DEBUG)
-						Log.d("DebugClick", "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
+						Log.d("dh.newspaper.DebugClick", "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
 
 					mSwipeRefreshLayout.setRefreshing(false);
 					return;

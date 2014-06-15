@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.Subscription;
+import dh.newspaper.tools.thread.ICancellation;
 import dh.newspaper.tools.StrUtils;
 import org.joda.time.DateTime;
 
@@ -23,7 +24,12 @@ public class SubscriptionFactory {
 	}
 
 	public Subscription createSubscription(String feedsUrl, String[] tags, boolean enable, String language, String encoding) throws IOException, FeedParserException {
-		Feeds feeds = mContentParser.parseFeeds(feedsUrl, encoding);
+		Feeds feeds = mContentParser.parseFeeds(feedsUrl, encoding, new ICancellation() {
+			@Override
+			public boolean isCancelled() {
+				return false;
+			}
+		});
 		String feedsLang =  feeds.getLanguage();
 		if (Strings.isNullOrEmpty(feedsLang)) {
 			feedsLang = language;

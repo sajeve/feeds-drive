@@ -146,4 +146,11 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 		daoSession.getSubscriptionDao().refresh(firstSubscriptionFound);
 		assertTrue(firstSubscriptionFound.getEnable());
 	}
+
+/*	public void testLazyLoadPerf() {
+		DaoSession daoSession = mDaoMaster.newSession();
+		m
+
+		//daoSession.getArticleDao().
+	}*/
 }

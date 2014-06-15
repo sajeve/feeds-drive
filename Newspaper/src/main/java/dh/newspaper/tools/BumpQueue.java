@@ -356,7 +356,7 @@ public class BumpQueue<E extends BumpTask> extends AbstractQueue<E>
 				existTask.setActive(true);
 				existTaskIndex = siftUp(existTaskIndex, (E)existTask);
 				Log.d(TAG, "Promote to active task, move it from "+oldpos+" to "+existTaskIndex+" (N="+size+") - "+existTask);
-				Log.d("DebugClick", "Promote to active task, move it from "+oldpos+" to "+existTaskIndex+" (N="+size+") - "+existTask);
+				Log.d("dh.newspaper.DebugClick", "Promote to active task, move it from "+oldpos+" to "+existTaskIndex+" (N="+size+") - "+existTask);
 			}
 		}
 		else {

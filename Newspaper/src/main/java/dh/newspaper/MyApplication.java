@@ -10,6 +10,7 @@ import android.util.Log;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingApplication;
 import dh.newspaper.model.generated.DaoMaster;
+import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.modules.AppBundle;
 import dh.newspaper.modules.AppContextModule;
 import dh.newspaper.modules.GlobalModule;

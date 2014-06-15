@@ -8,6 +8,7 @@ import android.webkit.URLUtil;
 import dh.newspaper.Constants;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
+import dh.newspaper.tools.thread.ICancellation;
 import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.tools.StrUtils;
 import org.jsoup.Connection;
@@ -26,7 +27,6 @@ import org.jsoup.select.Elements;
 import com.google.common.base.Strings;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Clean a HTML, extractContent the main content
@@ -166,8 +166,11 @@ public class ContentParser {
 
 	//<editor-fold desc="Feed Parse">
 
-	public Feeds parseFeeds(String addressUrl, String charSet) throws FeedParserException, IOException {
-		InputStream input = NetworkUtils.getStreamFromUrl(addressUrl, NetworkUtils.DESKTOP_USER_AGENT);
+	public Feeds parseFeeds(String addressUrl, String charSet, ICancellation cancelListener) throws FeedParserException, IOException {
+		InputStream input = NetworkUtils.getStreamFromUrl(addressUrl, NetworkUtils.DESKTOP_USER_AGENT, cancelListener);
+		if (input==null) {
+			return null;
+		}
 		Document doc = Jsoup.parse(input, charSet, addressUrl, Parser.xmlParser());
 		input.close();
 		return parseFeeds(doc);

@@ -11,7 +11,7 @@ import java.util.UUID;
  * Created by hiep on 4/06/2014.
  */
 public class RefreshArticleEvent extends BaseEvent<SelectArticleWorkflow> {
-	public RefreshArticleEvent(SelectArticleWorkflow sender, String subject, UUID flowId) {
+	public RefreshArticleEvent(SelectArticleWorkflow sender, String subject, String flowId) {
 		super(sender, subject, flowId);
 	}
 }

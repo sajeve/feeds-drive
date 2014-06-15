@@ -4,33 +4,39 @@ import android.content.Context;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
-import de.greenrobot.dao.query.LazyList;
 import de.greenrobot.dao.query.QueryBuilder;
 import de.greenrobot.dao.query.WhereCondition;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
+import dh.newspaper.adapter.IArticleCollection;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
-import dh.newspaper.tools.BumpTask;
-import dh.newspaper.tools.PriorityExecutor;
+import dh.newspaper.tools.thread.ICancellation;
 import dh.newspaper.tools.StrUtils;
+import dh.newspaper.tools.thread.PrifoTask;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
 import javax.inject.Inject;
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * The workflow executed when user select a Tag.
+ * This is also the collection of all article of the Tag.
+ * It used the paging technique to freely navigate to any item in the big list
+ * by holding a small articles list in memory (called buffer or page or windows). See {@link dh.newspaper.adapter.IArticleCollection}
+ *
  * Created by hiep on 3/06/2014.
  */
-public class SelectTagWorkflow extends BumpTask implements Closeable {
+public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	private static final String TAG = SelectTagWorkflow.class.getName();
 
 	@Inject DaoSession mDaoSession;
@@ -45,24 +51,36 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 	private final SelectTagCallback mCallback;
 	private final Context mContext;
 
-	private LazyList<Article> mArticles;
+	/**
+	 * Special treatment for articleZero should be always in memory cache. Because the listView call for it all the time
+	 */
+	private Article mArticleZero;
+
+	/**
+	 * page cache
+	 */
+	private List<Article> mArticles;
+	private int mOffset;
+	private int mPageSize;
 	private int mCountArticles;
 
 	private HashMap<Subscription, Feeds> mSubscriptions;
 	private QueryBuilder<Article> mSelectArticleQueryBuilder;
 
+	/**
+	 * use only if {@link dh.newspaper.workflow.SelectTagWorkflow#mArticlesLoader} is null,
+	 * to run {@link dh.newspaper.workflow.SelectArticleWorkflow} on the same thread as this workflow.
+	 */
 	private SelectArticleWorkflow mCurrentLoadArticleWorkflow;
 	private List<SelectArticleWorkflow> mPendingLoadArticleWorkflow = new ArrayList<>();
 
 	private List<String> mNotices = new ArrayList<>();
-
-	private volatile boolean mCanceled = false;
 	private Stopwatch mStopwatch;
 
 	private volatile boolean used = false;
 	private volatile boolean mRunning = true;
 
-	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, ExecutorService articlesLoader, SelectTagCallback callback) {
+	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, int pageSize, ExecutorService articlesLoader, SelectTagCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 
 		mTag = tag;
@@ -71,17 +89,22 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 		mContext = context;
 		mArticlesLoader = articlesLoader;
 		mCallback = callback;
+		mPageSize = pageSize;
 	}
 
 	/**
 	 * Start the workflow
 	 */
-	public void run() {
+	public synchronized void run() {
 		if (isCancelled()) {
+			logSimple(toString() + " is cancelled");
 			return;
 		}
 		if (used) {
-			Log.w(TAG, toString()+" is used");
+			if (Constants.DEBUG) {
+				throw new IllegalStateException(toString() + " is used");
+			}
+			logWarn(toString() + " is used");
 			return;
 		}
 		used = true;
@@ -91,7 +114,7 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 		Stopwatch genericStopWatch = Stopwatch.createStarted();
 		mStopwatch = Stopwatch.createStarted();
 		try {
-			lazyLoadArticlesFromCache();
+			loadFirstPageArticlesFromCache();
 			if (mCallback != null && !isCancelled()) {
 				resetStopwatch();
 				mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
@@ -123,7 +146,7 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 		}
 	}
 
-	private void lazyLoadArticlesFromCache() {
+	private void loadFirstPageArticlesFromCache() {
 		if (isCancelled()) {
 			return;
 		}
@@ -139,36 +162,83 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 					mSubscriptions.put(sub, null);
 				}
 				else {
-					Log.w(TAG, "GreenDAO return null object");
+					logWarn("GreenDAO return null object");
 				}
 			}
 
 			log("Found " + mSubscriptions.size() + " active subscriptions");
 		}
 
-		updateResult();
-	}
-
-	private void updateResult() {
 		buildArticlesQuery();
-		if (mSelectArticleQueryBuilder != null) {
-			resetStopwatch();
-			if (mArticles!=null) {
-				mArticles.close();
-				log("Close old result");
-			}
-
-			mArticles = mSelectArticleQueryBuilder.listLazy();
-			log("Load articles to a lazy list");
-
-			if (isCancelled()) {
-				return;
-			}
-
-			mCountArticles = (int)mSelectArticleQueryBuilder.count();
-			log("Count articles in lazy list = "+mCountArticles);
-		}
+		updateCountArticles();
+		loadPage(0);
 	}
+
+	private boolean updateCountArticles() {
+		if (isCancelled() || mSelectArticleQueryBuilder==null) {
+			return false;
+		}
+		resetStopwatch();
+		int oldCount = mCountArticles;
+		mCountArticles = (int)mSelectArticleQueryBuilder.count();
+		log("Count total articles = "+mCountArticles);
+
+		return oldCount!=mCountArticles;
+	}
+
+	public synchronized boolean loadPage(int offset) {
+		if (isCancelled()) {
+			logWarn("The workflow is cancelled");//consider to throw exception here
+			return false;
+		}
+
+		if (mSelectArticleQueryBuilder == null) {
+			return false;
+		}
+
+		if (offset > mCountArticles-mPageSize) {
+			offset = mCountArticles-mPageSize;
+		}
+		if (offset<0) {
+			offset = 0;
+		}
+
+		mOffset = offset;
+
+		resetStopwatch();
+		mArticles = mSelectArticleQueryBuilder.offset(mOffset).limit(mPageSize).list();
+		log("loadPage("+offset+")");
+
+		if (offset == 0) {
+			mArticleZero = mArticles.get(0);
+		}
+
+		if (mOnInMemoryCacheChangeCallback!=null) {
+			mOnInMemoryCacheChangeCallback.onChanged(this);
+		}
+
+		return true;
+	}
+
+
+	private OnInMemoryCacheChangeCallback mOnInMemoryCacheChangeCallback;
+	public void setCacheChangeListener(OnInMemoryCacheChangeCallback callback) {
+		mOnInMemoryCacheChangeCallback = callback;
+	}
+
+/*
+	public boolean loadNextPage() {
+		return loadPage(mOffset + mCountArticles/2);
+	}
+
+	public boolean loadPreviousPage() {
+		return loadPage(mOffset - mCountArticles/2);
+	}
+
+	public boolean isLastPage() {
+		return mOffset + mPageSize >= mCountArticles;
+	}
+*/
 
 	private void downloadFeeds() {
 		if (isCancelled()) {
@@ -189,7 +259,13 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 			}
 			try {
 				resetStopwatch();
-				Feeds feeds = mContentParser.parseFeeds(sub.getFeedsUrl(), encoding);
+				Feeds feeds = mContentParser.parseFeeds(sub.getFeedsUrl(), encoding, this);
+
+				if (feeds == null) {
+					log("Download and parse feeds cancelled "+sub);
+					return;
+				}
+
 				log("Download and parse feeds of "+sub);
 
 				mSubscriptions.put(sub, feeds);
@@ -208,25 +284,24 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 						log("Download full content of "+feedItem);
 					}
 					catch (Exception e) {
-						Log.w(TAG, e);
+						logWarn(e);
 						mNotices.add("Failed updating article excerpt "+feedItem+": "+e.getMessage());
 					}
 				}
 			} catch (FeedParserException e) {
-				Log.w(TAG, e);
+				logWarn(e);
 				mNotices.add("Failed parsing feed of "+sub+": "+e.getMessage());
 			} catch (IOException e) {
-				Log.w(TAG, e);
+				logWarn(e);
 				mNotices.add("Failed connect feed of "+sub+": "+e.getMessage());
 			} catch (Exception e) {
-				Log.w(TAG, e);
+				logWarn(e);
 				mNotices.add("Fatal while parsing feed of "+sub+": "+e.getMessage());
 			}
 		}
 
-		if (mCountArticles == 0) {
-			updateResult();
-		}
+		updateCountArticles();
+		loadPage(mOffset);
 	}
 
 	private void downloadArticles() {
@@ -268,7 +343,7 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 					}
 				}
 				catch (Exception e) {
-					Log.w(TAG, e);
+					logWarn(e);
 					mNotices.add("Failed updating article "+feedItem+": "+e.getMessage());
 				}
 			}
@@ -289,8 +364,6 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 			mDaoSession.getSubscriptionDao().update(sub);
 
 			log("Update " + sub + " in database");
-
-			updateResult();
 		}
 	}
 
@@ -373,12 +446,9 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 		return "|"+StrUtils.normalizeUpper(tag)+"|";
 	}
 
-	public boolean isCancelled() {
-		return mCanceled || Thread.interrupted();
-	}
-
-	public synchronized void cancel() {
-		mCanceled = true;
+	@Override
+	public void cancel() {
+		super.cancel();
 		if (mCurrentLoadArticleWorkflow != null) {
 			mCurrentLoadArticleWorkflow.cancel();
 		}
@@ -387,20 +457,56 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 				saw.cancel();
 			}
 		}
+		logSimple("Cancelled workflow");
 	}
 
 	@Override
-	public synchronized void close() throws IOException {
-		cancel();
-		if (mArticles != null) {
-			mArticles.close();
+	public boolean isInMemoryCache(int position) {
+		if (position==0) {
+			return true; //articleZero is always in memory
+		}
+		if (mArticles == null) {
+			return false;
+		}
+		return mOffset <= position && position <= mOffset+ mPageSize - 1;
+	}
+
+	/**
+	 * get article at any position, load page which contains the article if it is not in memory cache
+	 */
+	@Override
+	public Article getArticle(int position) {
+		if (position == 0) {
+			return mArticleZero;
+		}
+		if (mArticles == null) {
+			return null;
+		}
+		if (isInMemoryCache(position)) {
+			return mArticles.get(position-mOffset);
+		}
+		else {
+			if (loadPage(position-mPageSize/2)) {
+				return mArticles.get(position-mOffset);
+				/*if (position-mOffset<mArticles.size())
+					return mArticles.get(position-mOffset);
+				else {
+					Log.w(TAG, "Too far position "+position);
+				}*/
+			}
+			return null;
 		}
 	}
 
-	public LazyList<Article> getResult() {
+	public int getOffset() {
+		return mOffset;
+	}
+
+	public List<Article> getInMemoryCache() {
 		return mArticles;
 	}
-	public int getResultSize() {
+	@Override
+	public int getTotalSize() {
 		return mCountArticles;
 	}
 
@@ -419,13 +525,19 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 	//<editor-fold desc="Simple Log Utils for Profiler">
 
 	private void logInfo(String message) {
-		Log.i(TAG, message + " - " + mTag);
-	}
-	private void logSimple(String message) {
 		Log.d(TAG, message + " - " + mTag);
 	}
+	private void logWarn(String message) {
+		Log.w(TAG, message + " - " + mTag);
+	}
+	private void logWarn(Throwable ex) {
+		Log.w(TAG, "Error " + mTag, ex);
+	}
+	private void logSimple(String message) {
+		Log.v(TAG, message + " - " + mTag);
+	}
 	private void log(String message) {
-		Log.d(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mTag);
+		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mTag);
 		resetStopwatch();
 	}
 	private void resetStopwatch() {
@@ -440,14 +552,14 @@ public class SelectTagWorkflow extends BumpTask implements Closeable {
 	}
 
 	@Override
-	public String getId() {
+	public String getMissionId() {
 		return getTag();
 	}
 
 	public static interface SelectTagCallback {
-		public void onFinishedLoadFromCache(SelectTagWorkflow sender, LazyList<Article> articles, int count);
-		public void onFinishedDownloadFeeds(SelectTagWorkflow sender, LazyList<Article> articles, int count);
+		public void onFinishedLoadFromCache(SelectTagWorkflow sender, List<Article> articles, int count);
+		public void onFinishedDownloadFeeds(SelectTagWorkflow sender, List<Article> articles, int count);
 		public void onFinishedDownloadArticles(SelectTagWorkflow sender);
-		public void done(SelectTagWorkflow sender, LazyList<Article> articles, int count, List<String> notices, boolean isCancelled);
+		public void done(SelectTagWorkflow sender, List<Article> articles, int count, List<String> notices, boolean isCancelled);
 	}
 }

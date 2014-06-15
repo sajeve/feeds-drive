@@ -24,7 +24,6 @@ import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.modules.AppBundle;
 import dh.newspaper.services.BackgroundTasksManager;
-import dh.newspaper.tools.StrUtils;
 
 import javax.inject.Inject;
 import java.util.UUID;
@@ -35,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class FeedsFragment extends Fragment {
 	static final String TAG = FeedsFragment.class.getName();
+	private static final String STATE_EVENT_FLOW_ID = "EventFlowId";
 
 	private SwipeRefreshLayout mSwipeRefreshLayout;
 	private GridView mGridView;
@@ -44,7 +44,7 @@ public class FeedsFragment extends Fragment {
 	/**
 	 * use to trace the current pending event
 	 */
-	private UUID mEventFlowId;
+	private String mEventFlowId;
 
 	@Inject
 	AppBundle mAppBundle;
@@ -56,7 +56,7 @@ public class FeedsFragment extends Fragment {
 	 * The fragment argument representing the section number for this
 	 * fragment.
 	 */
-	private static final String ARG_TAG = "tag";
+	private static final String STATE_TAG = "tag";
 
 	public FeedsFragment() {
 		super();
@@ -107,7 +107,7 @@ public class FeedsFragment extends Fragment {
 							return;
 						}
 
-						Log.d("DebugClick", "Clicked on "+article);
+						Log.d("dh.newspaper.DebugClick", "Clicked on "+article);
 
 						final Activity currentActivity = FeedsFragment.this.getActivity();
 						if (currentActivity instanceof MainActivity) {
@@ -124,21 +124,6 @@ public class FeedsFragment extends Fragment {
 					}
 				}
 			});
-
-//			FeedItemLoader feedItemLoader = new FeedItemLoader((DatabaseActivity)currentActivity);
-//			ItemManager.Builder builder = new ItemManager.Builder(feedItemLoader);
-//			builder.setPreloadItemsEnabled(true).setPreloadItemsCount(5);
-//			builder.setThreadPoolSize(4);
-//			ItemManager itemManager = builder.build();
-//
-//			mGridViewAdapter = new FeedsGridAdapter(currentActivity, mContentParser, numberOfColumns);
-//			refreshContent();
-//
-//			mGridView = (AsyncGridView) rootView.findViewById(R.id.articles_gridview);
-//			mGridView.setNumColumns(numberOfColumns);
-//			mGridView.setAdapter(mGridViewAdapter);
-//			mGridView.setOnItemClickListener(onArticleClickListener);
-//			mGridView.setItemManager(itemManager);
 		}
 
 		return mSwipeRefreshLayout;
@@ -158,7 +143,7 @@ public class FeedsFragment extends Fragment {
 		}
 
 		if (activity instanceof MainActivity && getArguments()!=null) {
-			final String currentTag = getArguments().getString(ARG_TAG);
+			final String currentTag = getArguments().getString(STATE_TAG);
 			EventBus.getDefault().post(new Event(Event.ON_FRAGMENT_ATTACHED) {{
 				stringArg = currentTag;
 			}});
@@ -181,7 +166,8 @@ public class FeedsFragment extends Fragment {
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putString(ARG_TAG, mCurrentTag);
+		outState.putString(STATE_TAG, mCurrentTag);
+		outState.putString(STATE_EVENT_FLOW_ID, mEventFlowId);
 	}
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -191,15 +177,10 @@ public class FeedsFragment extends Fragment {
 		if (savedInstanceState == null) {
 			return;
 		}
-		loadTag(savedInstanceState.getString(ARG_TAG));
-	}
 
-	@Override
-	public void onDestroy() {
-		if (mGridViewAdapter!=null && mGridViewAdapter.getData() != null) {
-			mGridViewAdapter.getData().close();
-		}
-		super.onDestroy();
+		mCurrentTag = savedInstanceState.getString(STATE_TAG);
+		mEventFlowId = savedInstanceState.getString(STATE_EVENT_FLOW_ID);
+		loadTag(savedInstanceState.getString(STATE_TAG));
 	}
 
 	public void onEventMainThread(TagsFragment.Event event) {
@@ -215,6 +196,7 @@ public class FeedsFragment extends Fragment {
 	}
 
 	Stopwatch swRfle = Stopwatch.createStarted();
+
 	public void onEventMainThread(RefreshFeedsListEvent event) {
 		if (!isAdded() || mGridViewAdapter==null) {
 			return;
@@ -224,7 +206,7 @@ public class FeedsFragment extends Fragment {
 				case Constants.SUBJECT_FEEDS_START_LOADING:
 					if (Constants.DEBUG) {
 						swRfle = Stopwatch.createStarted();
-						Log.d("DebugClick", "FeedsFragment START " + event.getSender().getTag() + " - " + mEventFlowId);
+						Log.d("dh.newspaper.DebugClick", "FeedsFragment START " + event.getSender().getTag() + " - " + event.getFlowId() + " (previous flow="+mEventFlowId+")");
 					}
 
 					mSwipeRefreshLayout.setRefreshing(true);
@@ -232,6 +214,8 @@ public class FeedsFragment extends Fragment {
 
 					//Save the identity of the current running workflow recognise future events coming from the same workflow
 					mEventFlowId = event.getFlowId();
+
+					mGridViewAdapter.setData(event.getSender());
 
 					return;
 				case Constants.SUBJECT_FEEDS_REFRESH:
@@ -241,23 +225,22 @@ public class FeedsFragment extends Fragment {
 					}
 
 					if (Constants.DEBUG) {
-						Log.d("DebugClick", "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag() + " - " + mEventFlowId);
+						Log.d("dh.newspaper.DebugClick", "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag() + " - " + mEventFlowId);
 						swRfle.reset().start();
 					}
 
-					mGridViewAdapter.setData(event.getArticles(), event.getCount());
 					mGridViewAdapter.notifyDataSetChanged();
 					return;
 				case Constants.SUBJECT_FEEDS_DONE_LOADING:
 					if (mEventFlowId != event.getFlowId()) {
 						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
+						Log.d("dh.newspaper.DebugClick", "FeedsFragment DONE ignored "+event.getSender().getTag() + " <> currentTag="+mCurrentTag+ " - "+event.getFlowId() + " <> currentFlowId="+mEventFlowId);
 						return;
 					}
 
 					if (Constants.DEBUG)
-						Log.d("DebugClick", "FeedsFragment DONE ("+swRfle.elapsed(TimeUnit.MILLISECONDS)+" ms) "+event.getSender().getTag() + " - " + mEventFlowId);
+						Log.d("dh.newspaper.DebugClick", "FeedsFragment DONE ("+swRfle.elapsed(TimeUnit.MILLISECONDS)+" ms) "+event.getSender().getTag() + " - " + mEventFlowId);
 
-					mGridViewAdapter.setData(event.getArticles(), event.getCount());
 					mGridViewAdapter.notifyDataSetChanged();
 					mSwipeRefreshLayout.setRefreshing(false);
 					return;

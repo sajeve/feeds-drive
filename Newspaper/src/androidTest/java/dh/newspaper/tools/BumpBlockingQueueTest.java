@@ -129,6 +129,6 @@ public class BumpBlockingQueueTest extends ActivityInstrumentationTestCase2<Main
 //		queue.offer(t[1]);
 //		queue.offer(t[2]);
 //
-//		assertEquals("t1", ((BumpTask) queue.poll()).getId());
+//		assertEquals("t1", ((BumpTask) queue.poll()).getMissionId());
 //	}
 }

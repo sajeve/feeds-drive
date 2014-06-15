@@ -24,10 +24,10 @@ import java.security.NoSuchAlgorithmException;
 @Module (
 	includes = AppContextModule.class,
 	injects = {
+			MyApplication.class,
 			TagsFragment.class,
 			FeedsFragment.class,
 			ArticleFragment.class,
-			MyApplication.class,
 			SubscriptionFactory.class,
 			SelectArticleWorkflow.class,
 			SelectTagWorkflow.class,

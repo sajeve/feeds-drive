@@ -1,18 +1,21 @@
 package dh.newspaper.adapter;
 
+import android.app.Activity;
 import android.content.Context;
+import android.os.AsyncTask;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.TextView;
-import de.greenrobot.dao.query.LazyList;
+import android.widget.*;
+import dh.newspaper.Constants;
 import dh.newspaper.R;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.tools.StrUtils;
-import org.joda.time.DateTime;
+import dh.newspaper.workflow.SelectTagWorkflow;
+
+import java.util.List;
 
 /**
 * Created by hiep on 8/05/2014.
@@ -23,13 +26,14 @@ public class ArticlesGridAdapter extends BaseAdapter {
 	private final Context mContext;
 	private final LayoutInflater mInflater;
 	private int mNumberOfColumns;
-	private LazyList<Article> mData;
-	private int mCount;
+	private IArticleCollection mData;
+	private Handler mMainThreadHandler;
 
 	public ArticlesGridAdapter(Context context, int numberOfColumns) {
 		mContext = context;
 		mInflater = LayoutInflater.from(context);
 		mNumberOfColumns = numberOfColumns;
+		mMainThreadHandler = new Handler();
 	}
 
 	private int getItemResource() {
@@ -44,19 +48,56 @@ public class ArticlesGridAdapter extends BaseAdapter {
 		if (mData == null) {
 			return 0;
 		}
-		return mCount;
+		return mData.getTotalSize();
 	}
 
+	private Runnable lastGetItemCall;
 	@Override
-	public Object getItem(int position) {
+	public Object getItem(final int position) {
 		if (mData == null) {
 			return null;
 		}
 		try {
-			return mData.get(position);
-		}
-		catch (IllegalStateException ex) {
-			Log.d(TAG, ex.getMessage());
+			/*if (position==0) {
+				Log.v(TAG, "position 0");
+				//return null;
+			}*/
+			if (mData.isInMemoryCache(position)) {
+				return mData.getArticle(position);
+			}
+			else {
+				if (lastGetItemCall!=null) {
+					mMainThreadHandler.removeCallbacks(lastGetItemCall); //we received new call, so remove the last one
+				}
+
+				lastGetItemCall = new Runnable() {
+					@Override
+					public void run() {
+						try {
+							AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+								@Override
+								protected Void doInBackground(Void... params) {
+									mData.getArticle(position);
+									return null;
+								}
+
+								@Override
+								protected void onPostExecute(Void aVoid) {
+									notifyDataSetChanged();
+								}
+							};
+
+							task.execute();
+						}
+						catch (Exception ex) {
+							Log.w(TAG, ex);
+						}
+					}
+				};
+
+				mMainThreadHandler.postDelayed(lastGetItemCall, Constants.EVENT_DELAYED);
+				return null;
+			}
 		}
 		catch (Exception ex) {
 			Log.w(TAG, ex);
@@ -78,7 +119,7 @@ public class ArticlesGridAdapter extends BaseAdapter {
 		try {
 			/* create (or get) view */
 
-			View v;
+			ViewSwitcher v;
 			ImageView imageView;
 			TextView titleLabel;
 			TextView dateLabel;
@@ -86,14 +127,14 @@ public class ArticlesGridAdapter extends BaseAdapter {
 
 			if (convertView == null) {
 				// create new view
-				v = mInflater.inflate(getItemResource(), parent, false);
+				v = (ViewSwitcher)mInflater.inflate(getItemResource(), parent, false);
 				imageView = (ImageView) v.findViewById(R.id.article_image);
 				titleLabel = (TextView) v.findViewById(R.id.article_title);
 				dateLabel = (TextView) v.findViewById(R.id.article_date);
 				excerptLabel = (TextView) v.findViewById(R.id.article_excerpt);
 				v.setTag(new View[]{imageView, titleLabel, dateLabel, excerptLabel});
 			} else {
-				v = convertView;
+				v = (ViewSwitcher)convertView;
 				View[] viewsHolder = (View[]) v.getTag();
 				imageView = (ImageView) viewsHolder[0];
 				titleLabel = (TextView) viewsHolder[1];
@@ -109,6 +150,9 @@ public class ArticlesGridAdapter extends BaseAdapter {
 				dateLabel.setText(StrUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString()));
 				excerptLabel.setText(article.getExcerpt());
 			}
+
+			switchView(v, article==null);
+
 			return v;
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
@@ -116,15 +160,50 @@ public class ArticlesGridAdapter extends BaseAdapter {
 		}
 	}
 
-	public LazyList<Article> getData() {
+	private void switchView(ViewSwitcher v, boolean toProgressBar) {
+		if ((v.getNextView() instanceof ProgressBar && toProgressBar) ||
+				(! (v.getNextView() instanceof ProgressBar) && !toProgressBar)) {
+			v.showNext();
+		}
+		return;
+	}
+
+	public IArticleCollection getData() {
 		return mData;
 	}
 
-	public void setData(LazyList<Article> data, int count) {
-		Log.d(TAG, "setData("+data+") count="+count);
+	public void setData(IArticleCollection data) {
+		Log.d(TAG, "setData("+data+") count="+data.getTotalSize());
 		this.mData = data;
-		this.mCount = count;
+		//this.mData.setCacheChangeListener(cacheChangedListener);
+		notifyDataSetChanged();
 	}
+
+	@Override
+	public void notifyDataSetChanged() {
+		super.notifyDataSetChanged();
+
+		if (mData!=null)
+			Log.d(TAG, String.format("notifyDataSetChanged '%s' N=%d",
+				((SelectTagWorkflow)mData).getTag(),
+				mData.getTotalSize()));
+	}
+
+/*	private SelectTagWorkflow.OnInMemoryCacheChangeCallback cacheChangedListener = new IArticleCollection.OnInMemoryCacheChangeCallback() {
+		@Override
+		public void onChanged(IArticleCollection sender) {
+			((Activity)mContext).runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						notifyDataSetChanged();
+					} catch (Exception e) {
+						Log.w(TAG, e);
+					}
+				}
+			});
+		}
+	};*/
 
 	/*
 	public class Event extends BaseEvent<ArticlesGridAdapter> {

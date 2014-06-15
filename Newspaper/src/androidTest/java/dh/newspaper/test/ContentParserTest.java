@@ -2,6 +2,7 @@ package dh.newspaper.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import android.test.ActivityInstrumentationTestCase2;
 import dh.newspaper.MainActivity;
