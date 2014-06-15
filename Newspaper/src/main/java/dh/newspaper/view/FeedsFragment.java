@@ -22,11 +22,10 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.event.BaseEventOneArg;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.model.generated.Article;
-import dh.newspaper.modules.AppBundle;
 import dh.newspaper.services.BackgroundTasksManager;
+import dh.newspaper.workflow.SelectTagWorkflow;
 
 import javax.inject.Inject;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,8 +45,8 @@ public class FeedsFragment extends Fragment {
 	 */
 	private String mEventFlowId;
 
-	@Inject
-	AppBundle mAppBundle;
+/*	@Inject
+	AppBundle mAppBundle;*/
 
 	@Inject
 	BackgroundTasksManager mBackgroundTasksManager;
@@ -81,7 +80,6 @@ public class FeedsFragment extends Fragment {
 					: getResources().getInteger(R.integer.grid_columns_count);
 
 			mGridViewAdapter = new ArticlesGridAdapter(currentActivity, numberOfColumns);
-			loadTag(mCurrentTag);
 
 			//mGridView = (StaggeredGridView) rootView.findViewById(R.id.articles_gridview);
 			mGridView = (GridView) mSwipeRefreshLayout.findViewById(R.id.articles_gridview);
@@ -112,12 +110,13 @@ public class FeedsFragment extends Fragment {
 						final Activity currentActivity = FeedsFragment.this.getActivity();
 						if (currentActivity instanceof MainActivity) {
 							Intent detailIntent = new Intent(currentActivity, DetailActivity.class);
-							//detailIntent.putExtra("article", article);
+							detailIntent.putExtra(Constants.ACTIONBAR_TITLE, mCurrentTag);
 							startActivity(detailIntent);
 						}
 
 						mGridView.setItemChecked(position, true);
-						EventBus.getDefault().post(new Event(Event.ON_ITEM_SELECTED, article));
+						mBackgroundTasksManager.loadArticle(article);
+						//EventBus.getDefault().post(new Event(Event.SELECT_ITEM, article));
 					}
 					catch (Exception ex) {
 						Log.w(TAG, ex);
@@ -141,20 +140,14 @@ public class FeedsFragment extends Fragment {
 			((Injector) activity.getApplication()).inject(this);
 			mFirstAttach = false;
 		}
-
-		if (activity instanceof MainActivity && getArguments()!=null) {
-			final String currentTag = getArguments().getString(STATE_TAG);
-			EventBus.getDefault().post(new Event(Event.ON_FRAGMENT_ATTACHED) {{
-				stringArg = currentTag;
-			}});
-		}
-		loadTag(mAppBundle.getCurrentTag());
+		//loadTag(mAppBundle.getCurrentTag());
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
 		EventBus.getDefault().register(this);
+		refreshGUI();
 	}
 
 	@Override
@@ -180,7 +173,6 @@ public class FeedsFragment extends Fragment {
 
 		mCurrentTag = savedInstanceState.getString(STATE_TAG);
 		mEventFlowId = savedInstanceState.getString(STATE_EVENT_FLOW_ID);
-		loadTag(savedInstanceState.getString(STATE_TAG));
 	}
 
 	public void onEventMainThread(TagsFragment.Event event) {
@@ -197,6 +189,10 @@ public class FeedsFragment extends Fragment {
 
 	Stopwatch swRfle = Stopwatch.createStarted();
 
+	/**
+	 * {@link #loadTag(String)} will implicitly call this method via {@link dh.newspaper.services.BackgroundTasksManager#loadTag(String)}
+	 * @param event
+	 */
 	public void onEventMainThread(RefreshFeedsListEvent event) {
 		if (!isAdded() || mGridViewAdapter==null) {
 			return;
@@ -209,13 +205,9 @@ public class FeedsFragment extends Fragment {
 						Log.d("dh.newspaper.DebugClick", "FeedsFragment START " + event.getSender().getTag() + " - " + event.getFlowId() + " (previous flow="+mEventFlowId+")");
 					}
 
-					mSwipeRefreshLayout.setRefreshing(true);
-					mCurrentTag = event.getSender().getTag();
-
 					//Save the identity of the current running workflow recognise future events coming from the same workflow
 					mEventFlowId = event.getFlowId();
-
-					mGridViewAdapter.setData(event.getSender());
+					setData(event.getSender());
 
 					return;
 				case Constants.SUBJECT_FEEDS_REFRESH:
@@ -257,9 +249,34 @@ public class FeedsFragment extends Fragment {
 		mBackgroundTasksManager.loadTag(tag);
 	}
 
+	private void refreshGUI() {
+		SelectTagWorkflow selectTagWorkflow = mBackgroundTasksManager.getActiveSelectTagWorkflow();
+		if (selectTagWorkflow != null) {
+			setData(selectTagWorkflow);
+		}
+		else {
+			loadTag(mCurrentTag);
+		}
+	}
+
+	private void setData(final SelectTagWorkflow selectTagWorkflow) {
+		mGridViewAdapter.setData(selectTagWorkflow);
+
+		if (selectTagWorkflow!=null) {
+			mSwipeRefreshLayout.setRefreshing(selectTagWorkflow.isRunning());
+
+			mCurrentTag = selectTagWorkflow.getTag();
+
+			//change the actionBar title
+			EventBus.getDefault().post(new Event(Event.CHANGE_TITLE) {{
+				stringArg = mCurrentTag;
+			}});
+		}
+	}
+
 	public class Event extends BaseEventOneArg<FeedsFragment> {
-		public static final String ON_FRAGMENT_ATTACHED = "OnFragmentAttached";
-		public static final String ON_ITEM_SELECTED = "OnItemSelected";
+		public static final String CHANGE_TITLE = "ChangeTitle";
+		//public static final String SELECT_ITEM = "SelectItem";
 
 		private Article mArticle;
 

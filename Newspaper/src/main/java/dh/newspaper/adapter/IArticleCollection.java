@@ -2,6 +2,8 @@ package dh.newspaper.adapter;
 
 import dh.newspaper.model.generated.Article;
 
+import java.util.List;
+
 /**
  * Technique to navigate a very long list in the disk cache database but keeping a
  * small list of article (buffer) in memory. Using paging (or window) mechanism
@@ -29,6 +31,6 @@ public interface IArticleCollection {
 	public void setCacheChangeListener(OnInMemoryCacheChangeCallback callback);
 
 	public static interface OnInMemoryCacheChangeCallback {
-		public void onChanged(IArticleCollection sender);
+		public void onChanged(IArticleCollection sender, List<Article> buffer, int offset, int pageSize);
 	}
 }

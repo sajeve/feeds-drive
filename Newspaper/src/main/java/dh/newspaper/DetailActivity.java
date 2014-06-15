@@ -25,6 +25,7 @@ public class DetailActivity extends Activity {
 
         // Show the Up button in the action bar.
         getActionBar().setDisplayHomeAsUpEnabled(true);
+		getActionBar().setTitle(mTitle);
 
 		mSinglePane = findViewById(R.id.fragment_feeds) == null;
 		/*if (mSinglePane) {
@@ -42,7 +43,14 @@ public class DetailActivity extends Activity {
         // TODO: If exposing deep links into your app, handle intents here.
     }
 
-    @Override
+	@Override
+	protected void onStart() {
+		super.onStart();
+		mTitle = getIntent().getStringExtra(Constants.ACTIONBAR_TITLE);
+		getActionBar().setTitle(mTitle);
+	}
+
+	@Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == android.R.id.home) {
@@ -58,4 +66,23 @@ public class DetailActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+	/**
+	 * Used to store the last screen title. For use in
+	 */
+	private CharSequence mTitle;
+
+	private final String STATE_TITLE = "title";
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putCharSequence(STATE_TITLE, mTitle);
+	}
+
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+		mTitle = savedInstanceState.getCharSequence(STATE_TITLE);
+	}
 }

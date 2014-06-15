@@ -36,4 +36,5 @@ public class Constants {
 
 
 	public static final int EVENT_DELAYED = 200;
+	public static final String ACTIONBAR_TITLE = "ActionBar.Title";
 }

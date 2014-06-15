@@ -88,7 +88,6 @@ public class BackgroundTasksManager implements Closeable {
 
 	private Runnable lastLoadTagCall;
 	public void loadTag(final String tag) {
-
 		if (lastLoadTagCall!=null) {
 			mMainThreadHandler.removeCallbacks(lastLoadTagCall); //we received new call, so remove the last one
 		}
@@ -230,6 +229,14 @@ public class BackgroundTasksManager implements Closeable {
 		};
 
 		mMainThreadHandler.postDelayed(lastLoadArticleCall, Constants.EVENT_DELAYED);
+	}
+
+	public SelectTagWorkflow getActiveSelectTagWorkflow() {
+		return mSelectTagWorkflow;
+	}
+
+	public SelectArticleWorkflow getActiveSelectArticleWorkflow() {
+		return mSelectArticleWorkflow;
 	}
 
 	@Override

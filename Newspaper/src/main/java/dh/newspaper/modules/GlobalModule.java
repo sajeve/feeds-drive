@@ -53,8 +53,8 @@ public class GlobalModule {
 		return new ContentParser();
 	}
 
-	@Provides @Singleton
+	/*@Provides @Singleton
 	public AppBundle provideAppBundle() {
 		return new AppBundle();
-	}
+	}*/
 }

@@ -27,7 +27,6 @@ import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.generated.Subscription;
-import dh.newspaper.modules.AppBundle;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.tools.StrUtils;
 import dh.newspaper.workflow.SelectArticleWorkflow;
@@ -35,7 +34,6 @@ import dh.newspaper.workflow.SelectArticleWorkflow;
 import javax.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 public class ArticleFragment extends Fragment {
 	private static final String TAG = ArticleFragment.class.getName();
 
-	@Inject
-	AppBundle mAppBundle;
+	/*@Inject
+	AppBundle mAppBundle;*/
 
 	@Inject
 	BackgroundTasksManager mBackgroundTasksManager;
@@ -83,7 +81,6 @@ public class ArticleFragment extends Fragment {
 		mTxtTags = (TextView) mSwipeRefreshLayout.findViewById(R.id.txt_tags);
 		mTxtNotice = (TextView) mSwipeRefreshLayout.findViewById(R.id.txt_notice);
 		mPanelNotice = mSwipeRefreshLayout.findViewById(R.id.panel_notice);
-		loadArticle(mArticle);
 
 		mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 			@Override
@@ -105,6 +102,7 @@ public class ArticleFragment extends Fragment {
 	public void onResume() {
 		super.onResume();
 		EventBus.getDefault().register(this);
+		refreshGUI();
 	}
 
 	@Override
@@ -124,7 +122,7 @@ public class ArticleFragment extends Fragment {
 			((Injector) activity.getApplication()).inject(this);
 			mFirstAttach = false;
 		}
-		mArticle = mAppBundle.getCurrentArticle();
+		//mArticle = mAppBundle.getCurrentArticle();
 	}
 
 	private static final String STATE_EVENT_FLOW_ID = "EventFlowId";
@@ -148,20 +146,20 @@ public class ArticleFragment extends Fragment {
 		mEventFlowId = savedInstanceState.getString(STATE_EVENT_FLOW_ID);
 	}
 
-	public void onEventMainThread(FeedsFragment.Event event) {
+	/*public void onEventMainThread(FeedsFragment.Event event) {
 		if (!isAdded()) {
 			return;
 		}
 		try {
-			if (!FeedsFragment.Event.ON_ITEM_SELECTED.equals(event.getSubject())) {
+			if (!FeedsFragment.Event.SELECT_ITEM.equals(event.getSubject())) {
 				return;
 			}
-			loadArticle(event.getArticle());
+			mBackgroundTasksManager.loadArticle(event.getArticle());
 		}catch (Exception ex) {
 			Log.w(TAG, ex);
 			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
 		}
-	}
+	}*/
 
 	Stopwatch swRae = Stopwatch.createStarted();
 	public void onEventMainThread(RefreshArticleEvent event) {
@@ -213,12 +211,25 @@ public class ArticleFragment extends Fragment {
 		}
 	}
 
-	public void loadArticle(Article article) {
-		mArticle = article;
-		mBackgroundTasksManager.loadArticle(article);
-	}
 
-	public void refreshGUI(SelectArticleWorkflow data) {
+	private void refreshGUI() {
+		SelectArticleWorkflow selectArticleWorkflow = mBackgroundTasksManager.getActiveSelectArticleWorkflow();
+		if (selectArticleWorkflow!=null) {
+			refreshGUI(selectArticleWorkflow);
+		}
+		else {
+			mBackgroundTasksManager.loadArticle(mArticle);
+		}
+	}
+	private void refreshGUI(SelectArticleWorkflow data) {
+		if (data == null) {
+			if (Constants.DEBUG) {
+				throw new IllegalStateException("data is null");
+			}
+			else {
+				Log.w(TAG, "data is null");
+			}
+		}
 		mArticle = data.getArticle();
 
 		mTxtTitle.setText(mArticle.getTitle());
@@ -229,12 +240,14 @@ public class ArticleFragment extends Fragment {
 		mWebView.loadDataWithBaseURL(mArticle.getArticleUrl(), mArticle.getContent(), "text/html", encoding, mArticle.getParentUrl());
 
 		if (!Strings.isNullOrEmpty(mArticle.getParseNotice())) {
-			mTxtNotice.setText(mArticle.getParseNotice());
+			mTxtNotice.setText(mArticle.getParseNotice() + "-" + mArticle.getArticleUrl());
 			mPanelNotice.setVisibility(View.VISIBLE);
 		}
 		else {
 			mPanelNotice.setVisibility(View.GONE);
 		}
+
+		mSwipeRefreshLayout.setRefreshing(data.isRunning());
 	}
 
 	/**

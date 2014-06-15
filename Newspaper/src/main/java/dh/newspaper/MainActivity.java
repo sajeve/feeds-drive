@@ -2,8 +2,6 @@ package dh.newspaper;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -15,13 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import de.greenrobot.event.EventBus;
-import dh.newspaper.base.InjectingFragmentModule;
-import dh.newspaper.base.Injector;
-import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.view.FeedsFragment;
-import dh.newspaper.view.TagsFragment;
-
-import javax.inject.Inject;
 
 public class MainActivity extends Activity {
 	private static final String TAG = MainActivity.class.getName();
@@ -121,6 +113,7 @@ public class MainActivity extends Activity {
 			restoreActionBar();
 			return true;
 		}
+		restoreActionBar();
 		return super.onCreateOptionsMenu(menu);
 	}
 
@@ -139,15 +132,21 @@ public class MainActivity extends Activity {
 	/**
 	 * Invoke by EventBus when {@link dh.newspaper.view.FeedsFragment} attached
 	 */
-	public void onEvent(FeedsFragment.Event e) {
+	public void onEventMainThread(FeedsFragment.Event e) {
 		try {
-			if (!FeedsFragment.Event.ON_FRAGMENT_ATTACHED.equals(e.getSubject())) {
+			if (!FeedsFragment.Event.CHANGE_TITLE.equals(e.getSubject())) {
 				return;
 			}
+
 			mTitle = e.stringArg;
+
+			ActionBar actionBar = getActionBar();
+			if (actionBar!=null)
+				actionBar.setTitle(mTitle);
+
 		}catch (Exception ex) {
 			Log.w(TAG, ex);
-			MyApplication.showErrorDialog(this.getFragmentManager(), "MainActivity FeedsFragment.Event.ON_FRAGMENT_ATTACHED", ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), "MainActivity FeedsFragment.Event.CHANGE_TITLE", ex);
 		}
 	}
 
@@ -161,7 +160,7 @@ public class MainActivity extends Activity {
 //	*/		}
 //		}catch (Exception ex) {
 //			Log.w(TAG, ex);
-//			MyApplication.showErrorDialog(this.getFragmentManager(), "MainActivity FeedsFragment.Event.ON_FRAGMENT_ATTACHED", ex);
+//			MyApplication.showErrorDialog(this.getFragmentManager(), "MainActivity FeedsFragment.Event.CHANGE_TITLE", ex);
 //		}
 //	}
 
@@ -172,6 +171,20 @@ public class MainActivity extends Activity {
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
 		actionBar.setDisplayShowTitleEnabled(true);
 		actionBar.setTitle(mTitle);
+	}
+
+	private final String STATE_TITLE = "title";
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putCharSequence(STATE_TITLE, mTitle);
+	}
+
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+		mTitle = savedInstanceState.getCharSequence(STATE_TITLE);
 	}
 
 	/**

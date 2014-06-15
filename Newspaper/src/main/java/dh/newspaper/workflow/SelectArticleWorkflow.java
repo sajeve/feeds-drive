@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Workflow:
@@ -59,7 +60,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 	private volatile boolean used = false;
 
 	private Stopwatch mStopwatch;
-
+	private final ReentrantLock lock = new ReentrantLock();
 
 	private SelectArticleWorkflow(Context context, Duration articleTimeToLive, boolean downloadFullContent, SelectArticleCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
@@ -86,64 +87,46 @@ public class SelectArticleWorkflow extends PrifoTask {
 	}
 
 	/**
-	 * Start the workflow
+	 * Start the workflow. This method can only be executed once. Otherwise, create other Workflow
 	 */
 	@Override
 	public void run() {
 		if (isCancelled()) {
+			logSimple(toString() + " is cancelled");
 			return;
 		}
-		if (used) {
-			if (Constants.DEBUG) {
-				throw new IllegalStateException(toString() + " is used");
-			}
-			Log.w(TAG, toString()+" is used");
-			return;
-		}
-		used = true;
-		mRunning = true;
-
-		logSimple("Start SelectArticleWorkflow");
-		Stopwatch genericStopWatch = Stopwatch.createStarted();
-		mStopwatch = Stopwatch.createStarted();
+		final ReentrantLock lock = this.lock;
+		lock.lock();
 		try {
-			resetStopwatch();
-
-			mParentSubscription = mDaoSession.getSubscriptionDao().queryBuilder()
-					.where(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()))
-					.unique();
-			log("Find Parent subscription: "+mArticle);
-			if (isCancelled()) {
+			if (used) {
+				if (Constants.DEBUG) {
+					throw new IllegalStateException(toString() + " is used");
+				}
+				Log.w(TAG, toString()+" is used");
 				return;
 			}
+			used = true;
+			mRunning = true;
 
-			if (mArticle == null) {
-				//find mArticle from database
-				mArticle = mDaoSession.getArticleDao().queryBuilder()
-						.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
-				log("Find Article in cache: "+mArticle);
+			logSimple("Start SelectArticleWorkflow");
+			Stopwatch genericStopWatch = Stopwatch.createStarted();
+			mStopwatch = Stopwatch.createStarted();
+			try {
+				resetStopwatch();
+
+				mParentSubscription = mDaoSession.getSubscriptionDao().queryBuilder()
+						.where(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()))
+						.unique();
+				log("Find Parent subscription: "+mArticle);
 				if (isCancelled()) {
 					return;
 				}
 
-				if (mCallback!=null) {
-					resetStopwatch();
-					mCallback.onFinishedCheckCache(this, getArticle());
-					log("Callback onFinishedCheckCache()");
-				}
-
-				//upsert the article
 				if (mArticle == null) {
-					insertNewToCache();
-				}
-				else {
-					checkArticleExpiration();
-				}
-			}
-			else { //mArticle is not null, refresh it from database
-				try {
-					mDaoSession.getArticleDao().refresh(mArticle);
-					log("Refresh cached Article from database: "+mArticle);
+					//find mArticle from database
+					mArticle = mDaoSession.getArticleDao().queryBuilder()
+							.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
+					log("Find Article in cache: "+mArticle);
 					if (isCancelled()) {
 						return;
 					}
@@ -154,21 +137,46 @@ public class SelectArticleWorkflow extends PrifoTask {
 						log("Callback onFinishedCheckCache()");
 					}
 
-					checkArticleExpiration();
-				} catch (Exception ex) {
-					Log.w(TAG, ex);
-					mParseNotice.append(" Error while refresh cached article: " + ex.getMessage());
-					return;
+					//upsert the article
+					if (mArticle == null) {
+						insertNewToCache();
+					}
+					else {
+						checkArticleExpiration();
+					}
 				}
-			}
+				else { //mArticle is not null, refresh it from database
+					try {
+						mDaoSession.getArticleDao().refresh(mArticle);
+						log("Refresh cached Article from database: "+mArticle);
+						if (isCancelled()) {
+							return;
+						}
 
-		} finally {
-			if (mCallback!=null) {
-				logSimple("callback done");
-				mCallback.done(this, getArticle(), isCancelled());
+						if (mCallback!=null) {
+							resetStopwatch();
+							mCallback.onFinishedCheckCache(this, getArticle());
+							log("Callback onFinishedCheckCache()");
+						}
+
+						checkArticleExpiration();
+					} catch (Exception ex) {
+						Log.w(TAG, ex);
+						mParseNotice.append(" Error while refresh cached article: " + ex.getMessage());
+						return;
+					}
+				}
+
+			} finally {
+				if (mCallback!=null) {
+					logSimple("callback done");
+					mCallback.done(this, getArticle(), isCancelled());
+				}
+				mRunning = false;
+				logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 			}
-			mRunning = false;
-			logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+		} finally {
+			lock.unlock();
 		}
 	}
 

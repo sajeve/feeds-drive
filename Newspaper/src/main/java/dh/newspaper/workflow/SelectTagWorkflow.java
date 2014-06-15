@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The workflow executed when user select a Tag.
@@ -51,6 +52,7 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	private final SelectTagCallback mCallback;
 	private final Context mContext;
 
+	private final ReentrantLock lock = new ReentrantLock();
 	/**
 	 * Special treatment for articleZero should be always in memory cache. Because the listView call for it all the time
 	 */
@@ -93,56 +95,63 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	}
 
 	/**
-	 * Start the workflow
+	 * Start the workflow. This method can only be executed once. Otherwise, create other Workflow
 	 */
-	public synchronized void run() {
+	public void run() {
 		if (isCancelled()) {
 			logSimple(toString() + " is cancelled");
 			return;
 		}
-		if (used) {
-			if (Constants.DEBUG) {
-				throw new IllegalStateException(toString() + " is used");
-			}
-			logWarn(toString() + " is used");
-			return;
-		}
-		used = true;
-		mRunning = true;
 
-		logSimple("Start workflow");
-		Stopwatch genericStopWatch = Stopwatch.createStarted();
-		mStopwatch = Stopwatch.createStarted();
+		final ReentrantLock lock = this.lock;
+		lock.lock();
 		try {
-			loadFirstPageArticlesFromCache();
-			if (mCallback != null && !isCancelled()) {
-				resetStopwatch();
-				mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
-				log("Callback onFinishedLoadFromCache()");
+			if (used) {
+				if (Constants.DEBUG) {
+					throw new IllegalStateException(toString() + " is used");
+				}
+				logWarn(toString() + " is used");
+				return;
 			}
+			used = true;
+			mRunning = true;
 
-			downloadFeeds();
-			if (mCallback != null && !isCancelled()) {
-				resetStopwatch();
-				mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
-				log("Callback onFinishedDownloadFeeds()");
-			}
+			logSimple("Start workflow");
+			Stopwatch genericStopWatch = Stopwatch.createStarted();
+			mStopwatch = Stopwatch.createStarted();
+			try {
+				loadFirstPageArticlesFromCache();
+				if (mCallback != null && !isCancelled()) {
+					resetStopwatch();
+					mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
+					log("Callback onFinishedLoadFromCache()");
+				}
 
-			downloadArticles();
-			if (mCallback != null && !isCancelled()) {
-				resetStopwatch();
-				mCallback.onFinishedDownloadArticles(this);
-				log("Callback onFinishedDownloadArticles()");
+				downloadFeeds();
+				if (mCallback != null && !isCancelled()) {
+					resetStopwatch();
+					mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
+					log("Callback onFinishedDownloadFeeds()");
+				}
+
+				downloadArticles();
+				if (mCallback != null && !isCancelled()) {
+					resetStopwatch();
+					mCallback.onFinishedDownloadArticles(this);
+					log("Callback onFinishedDownloadArticles()");
+				}
 			}
-		}
-		finally {
-			if (mCallback!=null) {
-				resetStopwatch();
-				mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
-				log("Callback done()");
+			finally {
+				if (mCallback!=null) {
+					resetStopwatch();
+					mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
+					log("Callback done()");
+				}
+				mRunning = false;
+				logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 			}
-			mRunning = false;
-			logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+		} finally {
+			lock.unlock();
 		}
 	}
 
@@ -186,38 +195,51 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 		return oldCount!=mCountArticles;
 	}
 
-	public synchronized boolean loadPage(int offset) {
+	/**
+	 * Load the page (or window) from the offset, the offset will be justify if out of allowing scope:
+	 * (0..maxSize-pageSize)
+	 * @param offset
+	 * @return
+	 */
+	public boolean loadPage(int offset) {
 		if (isCancelled()) {
 			logWarn("The workflow is cancelled");//consider to throw exception here
 			return false;
 		}
 
-		if (mSelectArticleQueryBuilder == null) {
-			return false;
+		final ReentrantLock lock = this.lock;
+		lock.lock();
+		try {
+			if (mSelectArticleQueryBuilder == null) {
+				return false;
+			}
+
+			if (offset > mCountArticles-mPageSize) {
+				offset = mCountArticles-mPageSize;
+			}
+			if (offset<0) {
+				offset = 0;
+			}
+
+			mOffset = offset;
+
+			resetStopwatch();
+			mArticles = mSelectArticleQueryBuilder.offset(mOffset).limit(mPageSize).list();
+			log("loadPage("+offset+")");
+
+			if (offset == 0) {
+				//update the article-zero
+				mArticleZero = mArticles.get(0);
+			}
+
+			if (mOnInMemoryCacheChangeCallback!=null) {
+				mOnInMemoryCacheChangeCallback.onChanged(this, mArticles, mOffset, mPageSize);
+			}
+
+			return true;
+		} finally {
+			lock.unlock();
 		}
-
-		if (offset > mCountArticles-mPageSize) {
-			offset = mCountArticles-mPageSize;
-		}
-		if (offset<0) {
-			offset = 0;
-		}
-
-		mOffset = offset;
-
-		resetStopwatch();
-		mArticles = mSelectArticleQueryBuilder.offset(mOffset).limit(mPageSize).list();
-		log("loadPage("+offset+")");
-
-		if (offset == 0) {
-			mArticleZero = mArticles.get(0);
-		}
-
-		if (mOnInMemoryCacheChangeCallback!=null) {
-			mOnInMemoryCacheChangeCallback.onChanged(this);
-		}
-
-		return true;
 	}
 
 
@@ -472,7 +494,9 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	}
 
 	/**
-	 * get article at any position, load page which contains the article if it is not in memory cache
+	 * get article at any position, move to the window to the position.
+	 * except the position 0 is special, getArticle(0) is called all the time, so it should return immediately the
+	 * article zero and do not move the window.
 	 */
 	@Override
 	public Article getArticle(int position) {
@@ -486,7 +510,7 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 			return mArticles.get(position-mOffset);
 		}
 		else {
-			if (loadPage(position-mPageSize/2)) {
+			if (loadPage(position - mPageSize / 2)) {
 				return mArticles.get(position-mOffset);
 				/*if (position-mOffset<mArticles.size())
 					return mArticles.get(position-mOffset);

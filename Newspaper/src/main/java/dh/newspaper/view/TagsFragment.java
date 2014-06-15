@@ -22,7 +22,6 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.BaseEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
-import dh.newspaper.modules.AppBundle;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.tools.ArrayAdapterCompat;
 
@@ -38,8 +37,8 @@ import java.util.TreeSet;
 public class TagsFragment extends Fragment {
 	static final String TAG = TagsFragment.class.getName();
 
-	@Inject
-	AppBundle mAppBundle;
+/*	@Inject
+	AppBundle mAppBundle;*/
 
 	@Inject
 	RefData mRefData;
@@ -74,12 +73,12 @@ public class TagsFragment extends Fragment {
         if (savedInstanceState != null) {
             mCurrentTag = savedInstanceState.getString(STATE_SELECTED_POSITION);
         }
-		else {
-			mCurrentTag = mAppBundle.getCurrentTag();
-		}
+//		else {
+//			mCurrentTag = mAppBundle.getCurrentTag();
+//		}
 
         // Select either the default item (0) or the last selected item.
-        selectTag(mCurrentTag);
+        //selectTag(mCurrentTag);
 
     }
 
@@ -93,7 +92,7 @@ public class TagsFragment extends Fragment {
 		if (mFirstAttach) {
 			((Injector) activity.getApplication()).inject(this);
 			mFirstAttach = false;
-			mCurrentTag = mAppBundle.getCurrentTag();
+			//mCurrentTag = mAppBundle.getCurrentTag();
 		}
 	}
 

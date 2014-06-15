@@ -11,7 +11,6 @@ import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingApplication;
 import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
-import dh.newspaper.modules.AppBundle;
 import dh.newspaper.modules.AppContextModule;
 import dh.newspaper.modules.GlobalModule;
 import dh.newspaper.services.BackgroundTasksManager;
@@ -27,8 +26,8 @@ import java.util.List;
 public class MyApplication extends InjectingApplication {
 	private static final String TAG = MyApplication.class.getName();
 
-	@Inject
-	AppBundle mAppBundle;
+	/*@Inject
+	AppBundle mAppBundle;*/
 
 	@Override
 	public void onCreate() {
@@ -54,13 +53,13 @@ public class MyApplication extends InjectingApplication {
 			Log.w(TAG, ex.getMessage());
 		}
 */
-		EventBus.getDefault().register(mAppBundle, 100);
+		//EventBus.getDefault().register(mAppBundle, 100);
 	}
 
 	@Override
 	public void onTerminate() {
 		try {
-			EventBus.getDefault().unregister(mAppBundle);
+			//EventBus.getDefault().unregister(mAppBundle);
 			/*getObjectGraph().get(BackgroundTasksManager.class).close();
 			getObjectGraph().get(DaoMaster.class).getDatabase().close();*/
 		}
