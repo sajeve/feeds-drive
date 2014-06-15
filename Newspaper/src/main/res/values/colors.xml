@@ -32,11 +32,12 @@
     <color name="demo_purchase_pressed">#CC2A84A5</color>
 
     <!-- color card -->
-    <color name="demo_card_background_color1">#FFBB33</color>
-    <color name="demo_card_background_color2">#98CC00</color>
-    <color name="demo_card_background_color3">#A966CC</color>
-    <color name="demo_card_background_color4">#33B4E4</color>
-    <color name="demo_card_background_color5">#FF4343</color>
+    <color name="demo_card_background_yellow">#FFBB33</color>
+    <color name="demo_card_background_green_light">#98CC00</color>
+    <color name="demo_card_background_violet">#A966CC</color>
+    <color name="demo_card_background_cyan">#33B4E4</color>
+    <color name="demo_card_background_red">#FF4343</color>
+	<color name="demo_card_background_gray1">#aaaaaa</color>
 
     <!-- Birth new-->
     <color name="demo_card_header_birth_color">#707070</color>

@@ -93,6 +93,7 @@
     <orderEntry type="library" exported="" name="jackson-databind-2.3.3" level="project" />
     <orderEntry type="library" exported="" name="android.joda-2.3.3-SNAPSHOT" level="project" />
     <orderEntry type="library" exported="" name="okhttp-1.5.4" level="project" />
+    <orderEntry type="module" module-name="AndroidUniversalImageLoader" exported="" />
     <orderEntry type="module" module-name="SqliteAssetHelper" exported="" />
   </component>
 </module>

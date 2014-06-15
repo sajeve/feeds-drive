@@ -1,5 +1,6 @@
 package dh.newspaper.cache;
 
+import android.content.Context;
 import android.os.Looper;
 import android.util.Log;
 import com.google.common.base.Splitter;
@@ -8,6 +9,7 @@ import dh.newspaper.Constants;
 import dh.newspaper.model.generated.*;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -24,10 +26,12 @@ public class RefData {
 
 	private boolean pathToContentsStale = false;
 	private boolean mTagsStale = false;
+	private Context mContext;
 
 	@Inject
-	public RefData(DaoSession daoSession) {
+	public RefData(DaoSession daoSession, Context context) {
 		mDaoSession = daoSession;
+		mContext = context;
 	}
 
 	/**
@@ -75,6 +79,20 @@ public class RefData {
 
 	public TreeSet<String> getTags() {
 		return mTags;
+	}
+
+	public String getCachePath() {
+		if (Constants.DEBUG) {
+			return Constants.DEBUG_DATABASE_PATH;
+		}
+		return mContext.getExternalCacheDir().getAbsolutePath();
+	}
+
+	public File getCacheDir() {
+		if (Constants.DEBUG) {
+			return new File(Constants.DEBUG_DATABASE_PATH);
+		}
+		return mContext.getExternalCacheDir();
 	}
 
 	private void checkAccessDiskOnMainThread() {

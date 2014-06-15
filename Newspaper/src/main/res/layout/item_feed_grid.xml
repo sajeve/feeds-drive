@@ -37,7 +37,7 @@
 					android:layout_width="125dp"
 					android:layout_height="125dp"
 					android:clickable="false"
-					android:src="@drawable/demo_card_background_color4"
+					android:src="@drawable/card_background_gray"
 					/>
 
 			<TextView

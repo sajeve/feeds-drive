@@ -6,6 +6,7 @@ import android.os.NetworkOnMainThreadException;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import com.nostra13.universalimageloader.core.ImageLoader;
 import de.greenrobot.dao.query.QueryBuilder;
 import de.greenrobot.dao.query.WhereCondition;
 import dh.newspaper.Constants;

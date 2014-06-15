@@ -9,12 +9,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.google.common.base.Strings;
+import com.nostra13.universalimageloader.core.ImageLoader;
 import dh.newspaper.Constants;
 import dh.newspaper.R;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.tools.StrUtils;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
+import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -149,6 +152,15 @@ public class ArticlesGridAdapter extends BaseAdapter {
 				titleLabel.setText(article.getTitle());
 				dateLabel.setText(StrUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString()));
 				excerptLabel.setText(article.getExcerpt());
+
+				String imageUrl = article.getImageUrl();
+				if (Strings.isNullOrEmpty(imageUrl)) {
+					//imageView.setVisibility(View.INVISIBLE);
+				}
+				else {
+					ImageLoader.getInstance().displayImage(imageUrl, imageView);
+					//imageView.setVisibility(View.VISIBLE);
+				}
 			}
 
 			switchView(v, article==null);

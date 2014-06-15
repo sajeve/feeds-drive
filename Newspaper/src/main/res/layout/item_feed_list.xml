@@ -18,7 +18,7 @@
 				android:layout_width="50dp"
 				android:layout_height="50dp"
 				android:clickable="false"
-				android:src="@drawable/demo_card_background_color4"
+				android:src="@drawable/card_background_gray"
 				/>
 
 		<LinearLayout

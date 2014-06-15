@@ -3,9 +3,14 @@ package dh.newspaper.modules;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import dagger.Module;
 import dagger.Provides;
+import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
+import dh.newspaper.adapter.ArticlesGridAdapter;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.DaoMaster;
@@ -24,7 +29,7 @@ import javax.inject.Singleton;
 			MyApplication.class,
 			FeedsFragment.class,
 			TagsFragment.class,
-			BackgroundTasksManager.class
+			BackgroundTasksManager.class,
 		},
 		library = true
 )
@@ -38,6 +43,7 @@ public class AppContextModule {
 	private DaoSession mDaoSession;
 	private RefData mRefData;
 	private BackgroundTasksManager mBackgroundTasksManager;
+	private boolean isImageLoaderInitialized = false;
 
 	public AppContextModule(Context mAppContext) {
 		this.mAppContext = mAppContext;
@@ -80,7 +86,7 @@ public class AppContextModule {
 	@Provides @Singleton
 	public RefData provideRefData() {
 		if (mRefData == null) {
-			mRefData = new RefData(provideDaoSession());
+			mRefData = new RefData(provideDaoSession(), mAppContext);
 		}
 		return mRefData;
 	}
@@ -90,7 +96,6 @@ public class AppContextModule {
 		if (mBackgroundTasksManager == null) {
 			mBackgroundTasksManager = new BackgroundTasksManager(mAppContext);
 		}
-		return  mBackgroundTasksManager;
+		return mBackgroundTasksManager;
 	}
-
 }

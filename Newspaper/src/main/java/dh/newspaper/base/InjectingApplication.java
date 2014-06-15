@@ -21,6 +21,7 @@ import dagger.ObjectGraph;
 import dagger.Provides;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
+import dh.newspaper.modules.AppContextModule;
 
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
@@ -108,6 +109,7 @@ public abstract class InjectingApplication
 			injects = {
 					MyApplication.class
 			},
+			includes = AppContextModule.class,
 			library = true
 	)
     public static class InjectingApplicationModule {

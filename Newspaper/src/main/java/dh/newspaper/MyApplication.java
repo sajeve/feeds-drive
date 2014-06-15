@@ -7,12 +7,17 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
+import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.InjectingApplication;
+import dh.newspaper.cache.RefData;
 import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.modules.AppContextModule;
 import dh.newspaper.modules.GlobalModule;
+import dh.newspaper.parser.ContentParser;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.view.utils.ErrorDialogFragment;
 import net.danlew.android.joda.ResourceZoneInfoProvider;
@@ -26,8 +31,9 @@ import java.util.List;
 public class MyApplication extends InjectingApplication {
 	private static final String TAG = MyApplication.class.getName();
 
-	/*@Inject
-	AppBundle mAppBundle;*/
+	@Inject RefData mRefData;
+
+	@Inject BackgroundTasksManager mBackgroundTasksManager;
 
 	@Override
 	public void onCreate() {
@@ -38,6 +44,7 @@ public class MyApplication extends InjectingApplication {
 		}
 
 		ResourceZoneInfoProvider.init(this);
+		initImageLoader();
 
 /*
 		mDb = mDbHelper.getWritableDatabase();
@@ -60,8 +67,7 @@ public class MyApplication extends InjectingApplication {
 	public void onTerminate() {
 		try {
 			//EventBus.getDefault().unregister(mAppBundle);
-			/*getObjectGraph().get(BackgroundTasksManager.class).close();
-			getObjectGraph().get(DaoMaster.class).getDatabase().close();*/
+			mBackgroundTasksManager.close();
 		}
 		catch (Exception ex) {
 			Log.w(TAG, ex);
@@ -84,18 +90,18 @@ public class MyApplication extends InjectingApplication {
 		return super.openOrCreateDatabase(getDatabasePathString(name), mode, factory, errorHandler);
 	}
 
+	@Override
+	public File getCacheDir() {
+		return mRefData.getCacheDir();
+	}
+
 	public String getDatabasePathString(String name) {
-		if (Constants.DEBUG) {
-			return "/mnt/shared/bridge/"+name+".mDb";
-		}
-		else {
-			return getExternalCacheDir().getAbsolutePath()+ "/" + name+".mDb";
-		}
+		return mRefData.getCachePath()+"/"+name+".mDb";
 	}
 
 	public static void showErrorDialog(final FragmentManager fm, final String message, final Throwable ex) {
 		try {
-			Log.e("dh.newspaper", message, ex);
+			Log.e(TAG, message, ex);
 			if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
 				showErrorDialogOnMainThread(fm, message, ex);
 			}
@@ -108,14 +114,14 @@ public class MyApplication extends InjectingApplication {
 							showErrorDialogOnMainThread(fm, message, ex);
 						}
 						catch (Exception ex1) {
-							Log.wtf("MyApp", ex1);
+							Log.wtf(TAG, ex1);
 						}
 					}
 				});
 			}
 		}
 		catch (Exception ex2) {
-			Log.wtf("MyApp", ex2);
+			Log.wtf(TAG, ex2);
 		}
 	}
 
@@ -124,6 +130,17 @@ public class MyApplication extends InjectingApplication {
 	{
 		ErrorDialogFragment dialog = ErrorDialogFragment.newInstance(message, ex);
 		dialog.show(fm, "ReportErrorDialog "+ DateTime.now());
+	}
+
+	private void initImageLoader() {
+		ImageLoaderConfiguration.Builder config = new ImageLoaderConfiguration.Builder(this)
+				.diskCache(new UnlimitedDiscCache(getCacheDir()))
+				.diskCacheSize(100 * 1024 * 1024);
+
+		if (Constants.DEBUG) {
+			config.writeDebugLogs();
+		}
+		ImageLoader.getInstance().init(config.build());
 	}
 
 	@Override
