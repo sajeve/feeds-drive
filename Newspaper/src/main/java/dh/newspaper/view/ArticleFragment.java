@@ -58,12 +58,6 @@ public class ArticleFragment extends Fragment {
 
 	private Article mArticle;
 
-	/**
-	 * use to trace the current pending event
-	 */
-	private String mEventFlowId;
-
-
     public ArticleFragment() {
 		// Required empty public constructor
 		super();
@@ -125,14 +119,12 @@ public class ArticleFragment extends Fragment {
 		//mArticle = mAppBundle.getCurrentArticle();
 	}
 
-	private static final String STATE_EVENT_FLOW_ID = "EventFlowId";
 	private static final String STATE_ARTICLE = "Article";
 
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putSerializable(STATE_ARTICLE, mArticle);
-		outState.putString(STATE_EVENT_FLOW_ID, mEventFlowId);
 	}
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -143,7 +135,6 @@ public class ArticleFragment extends Fragment {
 			return;
 		}
 		mArticle = (Article)savedInstanceState.getSerializable(STATE_ARTICLE);
-		mEventFlowId = savedInstanceState.getString(STATE_EVENT_FLOW_ID);
 	}
 
 	/*public void onEventMainThread(FeedsFragment.Event event) {
@@ -171,36 +162,34 @@ public class ArticleFragment extends Fragment {
 				case Constants.SUBJECT_ARTICLE_START_LOADING:
 					if (Constants.DEBUG) {
 						swRae = Stopwatch.createStarted();
-						Log.d("dh.newspaper.DebugClick", "ArticleFragment START " + event.getSender().getArticleUrl() + " - " + event.getFlowId() + " (previous flow="+mEventFlowId+")");
+						Log.d(TAG, "ArticleFragment START " + event.getSender().getArticleUrl());
 					}
 
 					mSwipeRefreshLayout.setRefreshing(true);
-
-					//Save the identity of the current running workflow recognise future events coming from the same workflow
-					mEventFlowId = event.getFlowId();
+					refreshGUI(event.getSender());
 
 					return;
 				case Constants.SUBJECT_ARTICLE_REFRESH:
-					if (mEventFlowId != event.getFlowId()) {
+					if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
 						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
 						return;
 					}
 
 					if (Constants.DEBUG) {
-						Log.d("dh.newspaper.DebugClick", "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
+						Log.d(TAG, "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
 						swRae.reset().start();
 					}
 
 					refreshGUI(event.getSender());
 					return;
 				case Constants.SUBJECT_ARTICLE_DONE_LOADING:
-					if (mEventFlowId != event.getFlowId()) {
+					if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
 						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
 						return;
 					}
 
 					if (Constants.DEBUG)
-						Log.d("dh.newspaper.DebugClick", "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl() + " - " + mEventFlowId);
+						Log.d(TAG, "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
 
 					mSwipeRefreshLayout.setRefreshing(false);
 					return;
@@ -223,14 +212,20 @@ public class ArticleFragment extends Fragment {
 	}
 	private void refreshGUI(SelectArticleWorkflow data) {
 		if (data == null) {
+			Log.w(TAG, "data is null");
 			if (Constants.DEBUG) {
 				throw new IllegalStateException("data is null");
 			}
-			else {
-				Log.w(TAG, "data is null");
-			}
 		}
+
+		mSwipeRefreshLayout.setRefreshing(data.isRunning());
+
 		mArticle = data.getArticle();
+
+		if (mArticle == null) {
+			Log.i(TAG, "Article is null");
+			return;
+		}
 
 		mTxtTitle.setText(mArticle.getTitle());
 		mTxtTags.setText(getTagsInfo(data.getParentSubscription()));
@@ -246,8 +241,6 @@ public class ArticleFragment extends Fragment {
 		else {
 			mPanelNotice.setVisibility(View.GONE);
 		}
-
-		mSwipeRefreshLayout.setRefreshing(data.isRunning());
 	}
 
 	/**

@@ -1,6 +1,8 @@
 package dh.newspaper.workflow;
 
 import android.content.Context;
+import android.os.Looper;
+import android.os.NetworkOnMainThreadException;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
@@ -107,10 +109,10 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 		lock.lock();
 		try {
 			if (used) {
+				logWarn(toString() + " is used");
 				if (Constants.DEBUG) {
 					throw new IllegalStateException(toString() + " is used");
 				}
-				logWarn(toString() + " is used");
 				return;
 			}
 			used = true;
@@ -224,7 +226,10 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 			mOffset = offset;
 
 			resetStopwatch();
+
+			checkAccessDiskOnMainThread();
 			mArticles = mSelectArticleQueryBuilder.offset(mOffset).limit(mPageSize).list();
+
 			log("loadPage("+offset+")");
 
 			if (offset == 0) {
@@ -241,7 +246,6 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 			lock.unlock();
 		}
 	}
-
 
 	private OnInMemoryCacheChangeCallback mOnInMemoryCacheChangeCallback;
 	public void setCacheChangeListener(OnInMemoryCacheChangeCallback callback) {
@@ -456,9 +460,12 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 			qb.where(
 					SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
 					qb.or(SubscriptionDao.Properties.Tags.isNull(), SubscriptionDao.Properties.Tags.eq("")));
+
+			checkAccessDiskOnMainThread();
 			return qb.list();
 		}
 
+		checkAccessDiskOnMainThread();
 		return mDaoSession.getSubscriptionDao().queryBuilder()
 				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
 						SubscriptionDao.Properties.Tags.like("%"+getTechnicalTag(tag)+"%")).list();
@@ -578,6 +585,15 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	@Override
 	public String getMissionId() {
 		return getTag();
+	}
+
+	private void checkAccessDiskOnMainThread() {
+		if (Looper.myLooper() == Looper.getMainLooper()) {
+			logWarn("Access disk on main thread");
+			if (Constants.DEBUG) {
+				throw new IllegalStateException("Access disk on main thread");
+			}
+		}
 	}
 
 	public static interface SelectTagCallback {

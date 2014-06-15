@@ -1,10 +1,16 @@
 package dh.newspaper.tools;
 
+import android.net.http.AndroidHttpClient;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.squareup.okhttp.OkHttpClient;
 import dh.newspaper.Constants;
 import dh.newspaper.tools.thread.ICancellation;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.util.EntityUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -21,38 +27,39 @@ public class NetworkUtils {
 
 	private static final OkHttpClient okHttpClient = new OkHttpClient();
 
-//	/**
-//	 * Get network stream (mobile user-agent) use HttpGet
-//	 * @param address
-//	 * @return
-//	 * @throws IllegalStateException
-//	 * @throws IOException
-//	 */
-//	public static InputStream getStreamFromUrl3(String address, String userAgent) throws IOException {
-//		Stopwatch sw;
-//		if (Constants.DEBUG) {
-//			sw = Stopwatch.createStarted();
-//			Log.v(TAG, "Downloading " + address);
-//		}
-//
-//		AndroidHttpClient client = AndroidHttpClient.newInstance(userAgent);
-//		HttpGet request = new HttpGet(address);
-//		byte[] rawData = null;
-//		try {
-//			HttpResponse response = client.execute(request);
-//			HttpEntity entity = response.getEntity();
-//			rawData = EntityUtils.toByteArray(entity);
-//			return new ByteArrayInputStream(rawData);
-//		} finally {
-//			client.close();
-//
-//			if (Constants.DEBUG) {
-//				sw.stop();
-//				int size = rawData == null ? 0 : rawData.length;
-//				Log.v(TAG, "Downloaded OK "+size+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
-//			}
-//		}
-//	}
+	/**
+	 * Get network stream (mobile user-agent) use HttpGet
+	 * @param address
+	 * @return
+	 * @throws IllegalStateException
+	 * @throws IOException
+	 */
+	public static InputStream getStreamFromUrl_HttpGet(String address, String userAgent) throws IOException {
+		Stopwatch sw;
+		if (Constants.DEBUG) {
+			sw = Stopwatch.createStarted();
+		}
+
+		AndroidHttpClient client = AndroidHttpClient.newInstance(userAgent);
+		client.getParams().setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, true); //Too many redirects: 21
+
+		HttpGet request = new HttpGet(address);
+		byte[] rawData = null;
+		try {
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			rawData = EntityUtils.toByteArray(entity);
+			return new ByteArrayInputStream(rawData);
+		} finally {
+			client.close();
+
+			if (Constants.DEBUG) {
+				sw.stop();
+				int size = rawData == null ? 0 : rawData.length;
+				Log.v(TAG, "Downloaded end "+size+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
+			}
+		}
+	}
 
 //	/**
 //	 * Get network stream (mobile user-agent) use HttpURLConnection
@@ -89,6 +96,7 @@ public class NetworkUtils {
 		try {
 			httpConnection = okHttpClient.open(new URL(address));
 			httpConnection.addRequestProperty("User-Agent", userAgent);
+
 			int responseCode = httpConnection.getResponseCode();
 			input = httpConnection.getInputStream();
 
@@ -111,6 +119,10 @@ public class NetworkUtils {
 				throw new IllegalStateException("Failed to connect to " + address + ": " + httpConnection.getResponseMessage() + " (" + responseCode + ")");
 			}
 		}
+//		catch (IOException ex) {
+//			Log.w(TAG, "Failed download "+address+": "+ex.getMessage()+" . Retry with HttpGet");
+//			return getStreamFromUrl_HttpGet(address, userAgent);
+//		}
 		finally {
 			if (input != null) {
 				input.close();

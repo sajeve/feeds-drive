@@ -99,10 +99,10 @@ public class SelectArticleWorkflow extends PrifoTask {
 		lock.lock();
 		try {
 			if (used) {
+				Log.w(TAG, toString()+" is used");
 				if (Constants.DEBUG) {
 					throw new IllegalStateException(toString() + " is used");
 				}
-				Log.w(TAG, toString()+" is used");
 				return;
 			}
 			used = true;

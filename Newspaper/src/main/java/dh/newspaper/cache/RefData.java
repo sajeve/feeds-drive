@@ -1,8 +1,10 @@
 package dh.newspaper.cache;
 
+import android.os.Looper;
 import android.util.Log;
 import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
+import dh.newspaper.Constants;
 import dh.newspaper.model.generated.*;
 
 import javax.inject.Inject;
@@ -33,6 +35,7 @@ public class RefData {
 	 */
 	public synchronized List<PathToContent> pathToContentList() {
 		if (mPathToContents==null || pathToContentsStale) {
+			checkAccessDiskOnMainThread();
 			Stopwatch sw = Stopwatch.createStarted();
 			mPathToContents = mDaoSession.getPathToContentDao().queryBuilder()
 					.where(PathToContentDao.Properties.Enable.eq(Boolean.TRUE))
@@ -47,6 +50,8 @@ public class RefData {
 	 * Get all possible tags from active subscription (alphabetic order)
 	 */
 	public synchronized TreeSet<String> loadTags() {
+		checkAccessDiskOnMainThread();
+
 		Stopwatch sw = Stopwatch.createStarted();
 		List<Subscription> subscriptions = mDaoSession.getSubscriptionDao().queryBuilder()
 				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE))
@@ -58,16 +63,26 @@ public class RefData {
 				mTags.add(tag);
 			}
 		}
+
 		Log.i(TAG, "Found " + mTags.size() + " tags from " + subscriptions.size() + " active subscription ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 
 		return mTags;
 	}
 
-	public boolean isTagsAvailableInMemory() {
+	public boolean isTagsListReadyInMemory() {
 		return mTags!=null && !mTagsStale;
 	}
 
 	public TreeSet<String> getTags() {
 		return mTags;
+	}
+
+	private void checkAccessDiskOnMainThread() {
+		if (Looper.myLooper() == Looper.getMainLooper()) {
+			Log.w(TAG, "Access disk on main thread");
+			if (Constants.DEBUG) {
+				throw new IllegalStateException("Access disk on main thread");
+			}
+		}
 	}
 }

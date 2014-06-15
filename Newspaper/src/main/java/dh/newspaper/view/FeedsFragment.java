@@ -15,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListView;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.*;
 import dh.newspaper.adapter.ArticlesGridAdapter;
@@ -23,6 +24,7 @@ import dh.newspaper.event.BaseEventOneArg;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.services.BackgroundTasksManager;
+import dh.newspaper.tools.StrUtils;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
 import javax.inject.Inject;
@@ -33,17 +35,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class FeedsFragment extends Fragment {
 	static final String TAG = FeedsFragment.class.getName();
-	private static final String STATE_EVENT_FLOW_ID = "EventFlowId";
 
 	private SwipeRefreshLayout mSwipeRefreshLayout;
 	private GridView mGridView;
 	private ArticlesGridAdapter mGridViewAdapter;
 	private String mCurrentTag;
-
-	/**
-	 * use to trace the current pending event
-	 */
-	private String mEventFlowId;
 
 /*	@Inject
 	AppBundle mAppBundle;*/
@@ -160,7 +156,6 @@ public class FeedsFragment extends Fragment {
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putString(STATE_TAG, mCurrentTag);
-		outState.putString(STATE_EVENT_FLOW_ID, mEventFlowId);
 	}
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -172,7 +167,6 @@ public class FeedsFragment extends Fragment {
 		}
 
 		mCurrentTag = savedInstanceState.getString(STATE_TAG);
-		mEventFlowId = savedInstanceState.getString(STATE_EVENT_FLOW_ID);
 	}
 
 	public void onEventMainThread(TagsFragment.Event event) {
@@ -202,36 +196,35 @@ public class FeedsFragment extends Fragment {
 				case Constants.SUBJECT_FEEDS_START_LOADING:
 					if (Constants.DEBUG) {
 						swRfle = Stopwatch.createStarted();
-						Log.d("dh.newspaper.DebugClick", "FeedsFragment START " + event.getSender().getTag() + " - " + event.getFlowId() + " (previous flow="+mEventFlowId+")");
+						Log.d(TAG, "FeedsFragment START " + event.getSender().getTag());
 					}
 
 					//Save the identity of the current running workflow recognise future events coming from the same workflow
-					mEventFlowId = event.getFlowId();
 					setData(event.getSender());
 
 					return;
 				case Constants.SUBJECT_FEEDS_REFRESH:
-					if (mEventFlowId != event.getFlowId()) {
+					if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
 						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
 						return;
 					}
 
 					if (Constants.DEBUG) {
-						Log.d("dh.newspaper.DebugClick", "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag() + " - " + mEventFlowId);
+						Log.d(TAG, "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag());
 						swRfle.reset().start();
 					}
 
 					mGridViewAdapter.notifyDataSetChanged();
 					return;
 				case Constants.SUBJECT_FEEDS_DONE_LOADING:
-					if (mEventFlowId != event.getFlowId()) {
+					if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
 						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
-						Log.d("dh.newspaper.DebugClick", "FeedsFragment DONE ignored "+event.getSender().getTag() + " <> currentTag="+mCurrentTag+ " - "+event.getFlowId() + " <> currentFlowId="+mEventFlowId);
+						Log.d(TAG, "FeedsFragment DONE ignored "+event.getSender().getTag() + " <> currentTag="+mCurrentTag);
 						return;
 					}
 
 					if (Constants.DEBUG)
-						Log.d("dh.newspaper.DebugClick", "FeedsFragment DONE ("+swRfle.elapsed(TimeUnit.MILLISECONDS)+" ms) "+event.getSender().getTag() + " - " + mEventFlowId);
+						Log.d(TAG, "FeedsFragment DONE ("+swRfle.elapsed(TimeUnit.MILLISECONDS)+" ms) "+event.getSender().getTag());
 
 					mGridViewAdapter.notifyDataSetChanged();
 					mSwipeRefreshLayout.setRefreshing(false);

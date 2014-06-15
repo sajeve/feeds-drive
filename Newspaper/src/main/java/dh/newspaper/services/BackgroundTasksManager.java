@@ -68,7 +68,7 @@ public class BackgroundTasksManager implements Closeable {
 
 		mTagsListLoader = Executors.newSingleThreadExecutor();
 
-		if (mRefData.isTagsAvailableInMemory()) {
+		if (mRefData.isTagsListReadyInMemory()) {
 			EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_REFRESH));
 		}
 
@@ -158,7 +158,7 @@ public class BackgroundTasksManager implements Closeable {
 	private Runnable lastLoadArticleCall;
 
 	/**
-	 * Use post delayed technique to exeute only the last call, if there are too much consecutive call
+	 * Use post delayed technique to execute only the last call, if there are too much consecutive call
 	 * @param article
 	 */
 	public void loadArticle(final Article article) {
