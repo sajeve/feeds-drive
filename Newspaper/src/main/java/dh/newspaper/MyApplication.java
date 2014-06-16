@@ -8,6 +8,9 @@ import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
 import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
+import com.nostra13.universalimageloader.cache.disc.impl.ext.LruDiscCache;
+import com.nostra13.universalimageloader.core.DefaultConfigurationFactory;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import de.greenrobot.event.EventBus;
@@ -44,7 +47,7 @@ public class MyApplication extends InjectingApplication {
 		}
 
 		ResourceZoneInfoProvider.init(this);
-		initImageLoader();
+		mBackgroundTasksManager.runInitialisationWorkflow();
 
 /*
 		mDb = mDbHelper.getWritableDatabase();
@@ -130,17 +133,6 @@ public class MyApplication extends InjectingApplication {
 	{
 		ErrorDialogFragment dialog = ErrorDialogFragment.newInstance(message, ex);
 		dialog.show(fm, "ReportErrorDialog "+ DateTime.now());
-	}
-
-	private void initImageLoader() {
-		ImageLoaderConfiguration.Builder config = new ImageLoaderConfiguration.Builder(this)
-				.diskCache(new UnlimitedDiscCache(getCacheDir()))
-				.diskCacheSize(100 * 1024 * 1024);
-
-		if (Constants.DEBUG) {
-			config.writeDebugLogs();
-		}
-		ImageLoader.getInstance().init(config.build());
 	}
 
 	@Override

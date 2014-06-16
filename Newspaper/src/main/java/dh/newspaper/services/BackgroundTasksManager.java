@@ -1,8 +1,14 @@
 package dh.newspaper.services;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
+import com.nostra13.universalimageloader.cache.disc.impl.ext.LruDiscCache;
+import com.nostra13.universalimageloader.core.DefaultConfigurationFactory;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
@@ -20,6 +26,7 @@ import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,7 +40,7 @@ public class BackgroundTasksManager implements Closeable {
 	private Context mContext;
 
 	private ExecutorService mTagsListLoader;
-	private ExecutorService mArticlesLoader = PrifoExecutors.newCachedThreadExecutor(1, 1);
+	private ExecutorService mArticlesLoader = PrifoExecutors.newCachedThreadExecutor(1, Constants.THREAD_ARTICLES_LOADER);
 	//private ExecutorService mArticlesLoader = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
 	//private PriorityExecutor mArticlesLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
@@ -47,8 +54,7 @@ public class BackgroundTasksManager implements Closeable {
 	//private ExecutorService mSelectArticleLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
 	//private ExecutorService mSelectArticleLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
-	@Inject
-	RefData mRefData;
+	@Inject RefData mRefData;
 
 	private Handler mMainThreadHandler;
 
@@ -56,6 +62,37 @@ public class BackgroundTasksManager implements Closeable {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		mContext = context;
 		mMainThreadHandler = new Handler();
+	}
+
+	private boolean isInitWorkflowRun = false;
+	private AsyncTask mInitThread;
+	public void runInitialisationWorkflow() {
+		if (isInitWorkflowRun) {
+			throw new IllegalStateException("Initialisation workflow is already run");
+		}
+
+		isInitWorkflowRun = true;
+
+		mInitThread = new AsyncTask<Object, Object, Boolean>() {
+			@Override
+			protected Boolean doInBackground(Object[] params) {
+				EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_START_LOADING));
+				mRefData.setupLruDiscCache(Constants.IMAGE_DISK_CACHE_SIZE);
+				mRefData.loadTags();
+				EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_REFRESH));
+				return true;
+			}
+
+			@Override
+			protected void onPostExecute(Boolean result) {
+				initImageLoader();
+				if (mRefData.getTags().size() > 0) {
+					loadTag(mRefData.getTags().first());
+				}
+			}
+		};
+
+		mInitThread.execute();
 	}
 
 	/**
@@ -239,6 +276,22 @@ public class BackgroundTasksManager implements Closeable {
 		return mSelectArticleWorkflow;
 	}
 
+	private void initImageLoader() {
+		DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
+				.cacheInMemory(true)
+				.cacheOnDisk(true)
+				.build();
+		ImageLoaderConfiguration.Builder config = new ImageLoaderConfiguration.Builder(mContext)
+				.diskCache(mRefData.getLruDiscCache())
+				.diskCacheSize(Constants.IMAGE_DISK_CACHE_SIZE)
+				.defaultDisplayImageOptions(displayImageOptions);
+
+		if (Constants.DEBUG) {
+			config.writeDebugLogs();
+		}
+		ImageLoader.getInstance().init(config.build());
+	}
+
 	@Override
 	public void close() throws IOException {
 		if (mTagsListLoader != null) {
@@ -249,6 +302,9 @@ public class BackgroundTasksManager implements Closeable {
 		}
 		if (mArticlesLoader != null) {
 			mArticlesLoader.shutdownNow();
+		}
+		if (mInitThread != null) {
+			mInitThread.cancel(false);
 		}
 	}
 }

@@ -421,4 +421,18 @@ public class ContentParser {
 		}
 		return elem.attr(attr);
 	}
+
+	public String getHtml(Elements elements) {
+		if (elements==null || elements.isEmpty())
+			return null;
+
+		StringBuilder sb = new StringBuilder();
+		for (Element e : elements) {
+			sb.append("<div>");
+			sb.append(e.html());
+			sb.append("</div>");
+		}
+
+		return sb.toString();
+	}
 }

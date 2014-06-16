@@ -1,6 +1,7 @@
 package dh.newspaper.workflow;
 
 import android.content.Context;
+import android.os.Looper;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
@@ -15,6 +16,10 @@ import dh.newspaper.tools.StrUtils;
 import dh.newspaper.tools.thread.PrifoTask;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -50,7 +55,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 	private Article mArticle;
 	private FeedItem mFeedItem;
 
-	private String mArticleContent;
+	private String mArticleContentDownloaded;
 	private String mArticleLanguage;
 	private PathToContent mPathToContent;
 	private StringBuilder mParseNotice = new StringBuilder();
@@ -167,6 +172,8 @@ public class SelectArticleWorkflow extends PrifoTask {
 					}
 				}
 
+				getArticleContentDocument(); //parse the article content with jsoup if it is not parsed yet
+
 			} finally {
 				if (mCallback!=null) {
 					logSimple("callback done");
@@ -189,11 +196,13 @@ public class SelectArticleWorkflow extends PrifoTask {
 			return;
 		}
 
-		resetStopwatch();
-
-		if (Strings.isNullOrEmpty(mArticleContent)) {
-			mArticleContent = mFeedItem.getDescription();
-			mParseNotice.append(" Use feed description as content");
+		String articleContent;
+		if (StrUtils.tooShort(mArticleContentDownloaded, mFeedItem.getDescription(), Constants.ARTICLE_LENGTH_TOLERANT)) {
+			articleContent = mFeedItem.getDescription();
+			mParseNotice.append(" Downloaded content is too short. Use feed description");
+		}
+		else {
+			articleContent = mArticleContentDownloaded;
 		}
 
 		if (Strings.isNullOrEmpty(mArticleLanguage)) {
@@ -207,7 +216,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 				mFeedItem.getTitle(),
 				mFeedItem.getAuthor(),
 				mFeedItem.getExcerpt(),
-				mArticleContent,
+				articleContent,
 				null, //checksum
 				mArticleLanguage,
 				0L, //openedCount
@@ -219,8 +228,12 @@ public class SelectArticleWorkflow extends PrifoTask {
 				mPathToContent == null ? null : mPathToContent.getXpath(), //xpath
 				mParseNotice.toString().trim());
 
+		computeArticleImage();
+
+		resetStopwatch();
 		mDaoSession.getArticleDao().insert(mArticle);
 		log("Insert new "+mArticle);
+
 		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
 			mCallback.onFinishedUpdateCache(this, getArticle(), true);
@@ -248,19 +261,17 @@ public class SelectArticleWorkflow extends PrifoTask {
 		if (isCancelled()) {
 			return;
 		}
-		resetStopwatch();
 
-		if (Strings.isNullOrEmpty(mArticleContent)) {
-			if (Strings.isNullOrEmpty(mArticle.getContent())) {
-				mArticleContent = mFeedItem.getDescription();
-				mParseNotice.append(" Use feed description as content");
-			}
-			else {
-				mArticleContent = mArticle.getContent();
-				mParseNotice.append(" Keep old content in cache");
-			}
+		String articleContent = Strings.isNullOrEmpty(mArticle.getContent()) ? mFeedItem.getDescription() : mArticle.getContent();
+
+		if (StrUtils.tooShort(mArticleContentDownloaded, articleContent, Constants.ARTICLE_LENGTH_TOLERANT)) {
+			mParseNotice.append(" Downloaded content is too short. Use old content");
 		}
-		mArticle.setContent(mArticleContent);
+		else {
+			articleContent = mArticleContentDownloaded;
+		}
+
+		mArticle.setContent(articleContent);
 
 		if (mPathToContent!=null) {
 			mArticle.setXpath(mPathToContent.getXpath());
@@ -273,8 +284,10 @@ public class SelectArticleWorkflow extends PrifoTask {
 		mArticle.setParseNotice(mParseNotice.toString().trim());
 		mArticle.setLastUpdated(DateTime.now().toDate());
 
-		mDaoSession.getArticleDao().update(mArticle);
+		computeArticleImage();
 
+		resetStopwatch();
+		mDaoSession.getArticleDao().update(mArticle);
 		log("Update article content"+mArticle);
 
 		if (mCallback!=null && !isCancelled()) {
@@ -284,12 +297,58 @@ public class SelectArticleWorkflow extends PrifoTask {
 		}
 	}
 
+
 	/**
-	 * feed mArticleContent, mArticleLanguage, mParseNotice
+	 * put first image on article content to the {@link dh.newspaper.model.generated.Article#imageUrl}
+	 * if there was no image from feeds description.
+	 */
+	private void computeArticleImage() {
+		//if there is no image yet and the content downloaded from web is not null
+		if (Strings.isNullOrEmpty(mArticle.getImageUrl()) && !Strings.isNullOrEmpty(mArticleContentDownloaded)) {
+			if (getArticleContentDocument() != null) {
+				Elements elems = getArticleContentDocument().select("img");
+				if (elems == null) {
+					return;
+				}
+				Element elem = elems.first();
+				if (elem == null) {
+					return;
+				}
+				mArticle.setImageUrl(elem.attr("abs:src"));
+			}
+		}
+	}
+
+
+	Document mDoc;
+
+	/**
+	 * We parse article content only once time during the workflow running
+	 * @return
+	 */
+	public Document getArticleContentDocument() {
+		if (mDoc!=null) {
+			return mDoc;
+		}
+		if (mArticle == null) {
+			throw new IllegalStateException();
+		}
+		checkNotOnMainThread();
+		if (Strings.isNullOrEmpty(mArticle.getContent())) {
+			mDoc = null;
+			logWarn("Null content");
+			return null;
+		}
+		mDoc = Jsoup.parse(mArticle.getContent());
+		return mDoc;
+	}
+
+	/**
+	 * feed articleContent, mArticleLanguage, mParseNotice
 	 */
 	private void downloadArticleContent() {
 		if (!mDownloadFullContent) {
-			mArticleContent = mFeedItem.getDescription();
+			mArticleContentDownloaded = mFeedItem.getDescription();
 			logSimple("Download Full content = false: use Feed Description as content");
 			return;
 		}
@@ -305,7 +364,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 		mArticleLanguage = mPathToContent.getLanguage();
 		try {
 			resetStopwatch();
-			//mArticleContent = mContentParser.extractContent(mFeedItem.getUri(), mPathToContent.getXpath()).html();
+			//articleContent = mContentParser.extractContent(mFeedItem.getUri(), mPathToContent.getXpath()).html();
 
 			InputStream inputStream = NetworkUtils.getStreamFromUrl(mFeedItem.getUri(), NetworkUtils.MOBILE_USER_AGENT, this);
 			if (inputStream == null) {
@@ -313,11 +372,12 @@ public class SelectArticleWorkflow extends PrifoTask {
 				return;
 			}
 
-			mArticleContent = mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri()).html();
+			//articleContent = mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri()).html();
+			mArticleContentDownloaded = mContentParser.getHtml(mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri()));
 
-			log("Download article content: "+StrUtils.glimpse(mArticleContent));
-			if (Strings.isNullOrEmpty(mArticleContent)) {
-				mParseNotice.append(" Empty content. Verify if the xpath matches page source");
+			log("Download article content: "+StrUtils.glimpse(mArticleContentDownloaded));
+			if (Strings.isNullOrEmpty(mArticleContentDownloaded)) {
+				mParseNotice.append(" Empty content. Check if the xpath matches page source.");
 			}
 		} catch (IOException e) {
 			mParseNotice.append(" IOException: "+e.getMessage());
@@ -397,6 +457,9 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 	//<editor-fold desc="Simple Log Utils for Profiler">
 
+	private void logWarn(String message) {
+		Log.w(TAG, message + " - "  + mFeedItem.getUri());
+	}
 	private void logInfo(String message) {
 		Log.d(TAG, message + " - "  + mFeedItem.getUri());
 	}
@@ -421,6 +484,15 @@ public class SelectArticleWorkflow extends PrifoTask {
 	@Override
 	public String getMissionId() {
 		return getArticleUrl();
+	}
+
+	private void checkNotOnMainThread() {
+		if (Looper.myLooper() == Looper.getMainLooper()) {
+			logWarn("should not on main thread");
+			if (Constants.DEBUG) {
+				throw new IllegalStateException("Access disk on main thread");
+			}
+		}
 	}
 
 	public static interface SelectArticleCallback {

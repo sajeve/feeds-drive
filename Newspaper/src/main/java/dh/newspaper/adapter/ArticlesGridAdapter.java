@@ -153,14 +153,14 @@ public class ArticlesGridAdapter extends BaseAdapter {
 				dateLabel.setText(StrUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString()));
 				excerptLabel.setText(article.getExcerpt());
 
+				imageView.setVisibility(View.VISIBLE);
 				String imageUrl = article.getImageUrl();
-				if (Strings.isNullOrEmpty(imageUrl)) {
-					//imageView.setVisibility(View.INVISIBLE);
-				}
-				else {
+				if (!Strings.isNullOrEmpty(imageUrl)) {
 					ImageLoader.getInstance().displayImage(imageUrl, imageView);
-					//imageView.setVisibility(View.VISIBLE);
 				}
+			}
+			else {
+				imageView.setVisibility(View.INVISIBLE);
 			}
 
 			switchView(v, article==null);

@@ -5,6 +5,8 @@ import android.os.Looper;
 import android.util.Log;
 import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
+import com.nostra13.universalimageloader.cache.disc.impl.ext.LruDiscCache;
+import com.nostra13.universalimageloader.core.DefaultConfigurationFactory;
 import dh.newspaper.Constants;
 import dh.newspaper.model.generated.*;
 
@@ -23,7 +25,7 @@ public class RefData {
 	private final DaoSession mDaoSession;
 	private List<PathToContent> mPathToContents;
 	private TreeSet<String> mTags;
-
+	private LruDiscCache mLruDiscCache;
 	private boolean pathToContentsStale = false;
 	private boolean mTagsStale = false;
 	private Context mContext;
@@ -102,5 +104,15 @@ public class RefData {
 				throw new IllegalStateException("Access disk on main thread");
 			}
 		}
+	}
+
+	public synchronized void setupLruDiscCache(int maxSize) {
+		mLruDiscCache = new LruDiscCache(
+				new File(getCachePath()+"/"+Constants.CACHE_IMAGE_FOLDER),
+				DefaultConfigurationFactory.createFileNameGenerator(), maxSize);
+	}
+
+	public LruDiscCache getLruDiscCache() {
+		return mLruDiscCache;
 	}
 }
