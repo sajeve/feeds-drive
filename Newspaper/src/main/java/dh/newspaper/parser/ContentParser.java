@@ -3,8 +3,10 @@ package dh.newspaper.parser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.util.List;
 
 import android.webkit.URLUtil;
+import com.google.common.base.Splitter;
 import dh.newspaper.Constants;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
@@ -35,6 +37,9 @@ import javax.inject.Inject;
 public class ContentParser {
 	private static final String TAG = ContentParser.class.getName();
 
+	public static final int AVATAR_MIN_WIDTH = 50;
+	public static final int AVATAR_MIN_HEIGHT = 50;
+
 	public enum FeedFormat {RSS, ATOM};
 
 	@Inject
@@ -49,7 +54,7 @@ public class ContentParser {
 	 * <li>Clean the html content</li>
 	 * </ul>
 	 *
-	 * @see {@link #extractContent(Document, String)}
+	 * @see {@link #extractContent(Document, String, java.lang.StringBuilder)}
 	 * @see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>
 	 *
 	 * @param addressUrl
@@ -57,26 +62,26 @@ public class ContentParser {
 	 * @return simplify content (keep only basic tag)
 	 * @throws IOException
 	 */
-	public Elements extractContent(String addressUrl, String mainContentQuery) throws IOException {
+	public Elements extractContent(String addressUrl, String mainContentQuery, StringBuilder notice) throws IOException {
 		Connection connection = Jsoup.connect(addressUrl).userAgent(NetworkUtils.MOBILE_USER_AGENT);
 		Document doc = connection.get();
 
 		doc.outputSettings().escapeMode(EscapeMode.xhtml);
-		return extractContent(doc, mainContentQuery);
+		return extractContent(doc, mainContentQuery, notice);
 	}
 
 	/**
 	 * Get the simplify format of the article from a InputStream:
-	 * See {@link #extractContent(String, String)}
+	 * See {@link #extractContent(String, String, java.lang.StringBuilder)}
 	 * @param charSet Encoding - default UTF-8 (if null)
 	 */
-	public Elements extractContent(InputStream input, String charSet, String mainContentQuery, String baseURI) throws IOException {
+	public Elements extractContent(InputStream input, String charSet, String mainContentQuery, String baseURI, StringBuilder notice) throws IOException {
 		if (Strings.isNullOrEmpty(charSet)) {
 			charSet = Constants.DEFAULT_ENCODING;
 		}
 		Document doc = Jsoup.parse(input, charSet, baseURI);
 		doc.outputSettings().escapeMode(EscapeMode.xhtml);
-		return extractContent(doc, mainContentQuery);
+		return extractContent(doc, mainContentQuery, notice);
 	}
 
 	/**
@@ -87,24 +92,37 @@ public class ContentParser {
 	 * <li>Clean the html content</li>
 	 * </ul>
 	 *
-	 * @param mainContentQuery (see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>)
+	 * The mainContentQuery is a combination of <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">JsoupSelector</a> separated by
+	 * <code>{or}</code>, this method will try to use each JsoupSelector so that the returning content is not null
+	 *
+	 * @param mainContentQuery combination of (see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>)
+	 *                         separated by <code>{or}</code>
 	 * @return simplify content (keep only basic tag)
 	 *
-	 * @see {@link #extractContent(String, String)}
+	 * @see {@link #extractContent(String, String, java.lang.StringBuilder)}
 	 * @see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>
 	 */
-	public Elements extractContent(Document doc, String mainContentQuery) throws MalformedURLException {
+	public Elements extractContent(Document doc, String mainContentQuery, StringBuilder notice) throws MalformedURLException {
 		doc.outputSettings().escapeMode(EscapeMode.xhtml);
+
 		Element body = doc.body();
 		if (Strings.isNullOrEmpty(mainContentQuery)) {
 			return new Elements(cleanHtml(body));
 		}
-		Elements elems = body.select(mainContentQuery);
-		for(Element e : elems) {
-			cleanHtml(e);
+		List<String> xpaths = Splitter.on("{or}").omitEmptyStrings().trimResults().splitToList(mainContentQuery);
+
+		for (String xpath : xpaths) {
+			Elements elems = body.select(xpath);
+			for(Element e : elems) {
+				cleanHtml(e);
+			}
+			if (elems!=null && elems.size()>0 && !Strings.isNullOrEmpty(elems.html())) {
+				return elems;
+			}
 		}
 
-		return elems;
+		notice.append("Empty content xpath '"+xpaths+"' not match '"+doc.baseUri()+"'. Display full body.");
+		return new Elements(cleanHtml(body));
 	}
 
 	private void absolutePath(Element content) throws MalformedURLException {
@@ -163,6 +181,18 @@ public class ContentParser {
             }
         }
     }
+
+	public static void removeComments(Node node) {
+		for (int i = 0; i < node.childNodes().size();) {
+			Node child = node.childNode(i);
+			if (child.nodeName().equals("#comment"))
+				child.remove();
+			else {
+				removeComments(child);
+				i++;
+			}
+		}
+	}
 
 	//<editor-fold desc="Feed Parse">
 
@@ -434,5 +464,49 @@ public class ContentParser {
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * find first valid image in the document to use as avatar
+	 */
+	public static String findAvatar(Document doc) {
+		Elements elems = doc.select("img");
+		if (elems == null) {
+			return null;
+		}
+		for(Element e : elems) {
+			if (isValidAvatar(e)) {
+				return e.attr("abs:src");
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The image avatar should be big enough, as we cannot tell how big image is
+	 * we can only guess base on the attribute
+	 */
+	private static boolean isValidAvatar(Element img) {
+		String widthAttr = img.attr("width");
+		if (Strings.isNullOrEmpty(widthAttr)) {
+			try {
+				int width = Integer.parseInt(widthAttr);
+				if (width < AVATAR_MIN_WIDTH) {
+					return false;
+				}
+			}
+			catch (NumberFormatException ex) {}
+		}
+		String heightAttr = img.attr("height");
+		if (Strings.isNullOrEmpty(heightAttr)) {
+			try {
+				int height = Integer.parseInt(heightAttr);
+				if (height < AVATAR_MIN_HEIGHT) {
+					return false;
+				}
+			}
+			catch (NumberFormatException ex) {}
+		}
+		return true;
 	}
 }

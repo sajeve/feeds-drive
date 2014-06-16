@@ -1,22 +1,20 @@
 package dh.newspaper.parser;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+import com.google.common.base.Strings;
+import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.test.TestUtils;
 import dh.newspaper.tools.NetworkUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Entities.EscapeMode;
 
-import dh.newspaper.parser.ContentParser;
-import org.jsoup.select.Elements;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActivity> {
+	private final String TAG = ContentParserTest.class.getName();
 
 	ContentParser contentParser;
 
@@ -28,6 +26,46 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 	protected void setUp() throws Exception {
 		contentParser = new ContentParser();
 	}
+
+	public void runExtractContent(String address, String fileName, String xpath) throws IOException {
+		//download
+		InputStream in = NetworkUtils.getStreamFromUrl(address, NetworkUtils.MOBILE_USER_AGENT, null);
+
+		//parse
+		Document doc = Jsoup.parse(in, Constants.DEFAULT_ENCODING, address);
+
+		//clean a little
+		ContentParser.removeComments(doc);
+		doc.select("script").remove();
+
+		//write to file
+		TestUtils.writeToFile(fileName, doc.html(), false);
+
+		//extract content
+		String content = contentParser.extractContent(doc, xpath, new StringBuilder()).html();
+
+		Log.i(TAG, content);
+		assertFalse(Strings.isNullOrEmpty(content));
+
+		//write content to file
+		TestUtils.writeToFile(fileName+" content.html", content, true);
+	}
+
+	public void testNytimes1() throws IOException {
+		runExtractContent(
+				"http://www.nytimes.com/2014/06/17/business/gm-recalls-3-million-more-cars.html",
+				Constants.DEBUG_DATABASE_PATH + "/test/gm-recalls-3-million-more-cars.html",
+				"p.story-body-text, figure {or} div.article-body"
+		);
+	}
+
+	public void testJsoup() {
+		Jsoup.parse("<img src='abc.htm' width='1' height='10'>", "localhost");
+
+	}
+}
+
+/*
 
 	public void testExtractVnexpressTest() throws IOException {
 		String address = "http://vnexpress.net/tin-tuc/thoi-su/cau-rong-nhan-giai-ky-thuat-xuat-sac-quoc-te-2985651.html";
@@ -74,9 +112,4 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 		assertNotNull(doc);
 		System.out.println(doc.toString());
 	}
-
-	public void testHuffing() throws IOException {
-		String content = contentParser.extractContent("http://m.huffpost.com/us/entry/5462046", "div p").html();
-		Log.i("TestHuffing", content);
-	}
-}
+ */

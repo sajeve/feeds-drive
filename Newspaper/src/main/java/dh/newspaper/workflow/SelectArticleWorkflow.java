@@ -299,22 +299,14 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 
 	/**
-	 * put first image on article content to the {@link dh.newspaper.model.generated.Article#imageUrl}
+	 * Update the avatar: put first valid image on article content to the {@link dh.newspaper.model.generated.Article#imageUrl}
 	 * if there was no image from feeds description.
 	 */
 	private void computeArticleImage() {
 		//if there is no image yet and the content downloaded from web is not null
 		if (Strings.isNullOrEmpty(mArticle.getImageUrl()) && !Strings.isNullOrEmpty(mArticleContentDownloaded)) {
 			if (getArticleContentDocument() != null) {
-				Elements elems = getArticleContentDocument().select("img");
-				if (elems == null) {
-					return;
-				}
-				Element elem = elems.first();
-				if (elem == null) {
-					return;
-				}
-				mArticle.setImageUrl(elem.attr("abs:src"));
+				mArticle.setImageUrl(ContentParser.findAvatar(getArticleContentDocument()));
 			}
 		}
 	}
@@ -373,7 +365,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 			}
 
 			//articleContent = mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri()).html();
-			mArticleContentDownloaded = mContentParser.getHtml(mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri()));
+			mArticleContentDownloaded = mContentParser.getHtml(mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri(), mParseNotice));
 
 			log("Download article content: "+StrUtils.glimpse(mArticleContentDownloaded));
 			if (Strings.isNullOrEmpty(mArticleContentDownloaded)) {

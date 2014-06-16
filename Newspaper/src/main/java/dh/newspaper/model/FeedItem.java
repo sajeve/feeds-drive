@@ -1,7 +1,9 @@
 package dh.newspaper.model;
 
+import android.util.Log;
 import com.google.common.base.Strings;
 import dh.newspaper.Constants;
+import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.StrUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -45,17 +47,8 @@ public class FeedItem implements Serializable {
 		String descriptionTextOnly = doc.text();
 		mExcerpt = descriptionTextOnly.substring(0, Math.min(descriptionTextOnly.length(), Constants.EXCERPT_LENGTH));
 
-		//set image URL
-		Elements elems = doc.select("img");
-		if (elems == null) {
-			return;
-		}
-		Element elem = elems.first();
-		if (elem == null) {
-			return;
-		}
-
-		mImageUrl = elem.attr("abs:src");
+		//find the first valid image to make it avatar
+		mImageUrl = ContentParser.findAvatar(doc);
 	}
 
 	public String getTitle() {

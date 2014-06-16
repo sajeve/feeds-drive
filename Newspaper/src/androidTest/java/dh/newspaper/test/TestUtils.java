@@ -42,7 +42,7 @@ public class TestUtils {
 		BufferedInputStream bis = new BufferedInputStream(content);
 		InputStreamReader sr = new InputStreamReader(bis);
 
-		char[] buffer = new char[100];
+		char[] buffer = new char[1024];
 		while (sr.read(buffer) > 0) {
 			writer.write(buffer);
 		}
