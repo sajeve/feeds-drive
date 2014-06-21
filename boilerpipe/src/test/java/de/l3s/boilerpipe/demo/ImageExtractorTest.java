@@ -8,16 +8,18 @@ import de.l3s.boilerpipe.BoilerpipeExtractor;
 import de.l3s.boilerpipe.document.Image;
 import de.l3s.boilerpipe.extractors.CommonExtractors;
 import de.l3s.boilerpipe.sax.ImageExtractor;
+import org.junit.Test;
 
 /**
  * Demonstrates how to use Boilerpipe to get the images within the main content.
  * 
  * @author Christian Kohlschütter
  */
-public final class ImageExtractorDemo {
+public final class ImageExtractorTest {
+
 	public static void main(String[] args) throws Exception {
 		URL url = new URL(
-				"http://www.spiegel.de/wissenschaft/natur/0,1518,789176,00.html");
+				"http://ngoisao.net/tin-tuc/phong-cach/thoi-trang/hoa-tiet-trai-cay-vui-nhon-goi-he-3006796.html");
 		
 		// choose from a set of useful BoilerpipeExtractors...
 		final BoilerpipeExtractor extractor = CommonExtractors.ARTICLE_EXTRACTOR;

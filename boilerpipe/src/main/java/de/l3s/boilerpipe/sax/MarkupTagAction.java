@@ -1,18 +1,13 @@
 package de.l3s.boilerpipe.sax;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.labels.DefaultLabels;
 import de.l3s.boilerpipe.labels.LabelAction;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Assigns labels for element CSS classes and ids to the corresponding

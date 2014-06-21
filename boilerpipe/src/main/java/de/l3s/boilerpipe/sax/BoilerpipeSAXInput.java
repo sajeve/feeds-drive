@@ -17,14 +17,13 @@
  */
 package de.l3s.boilerpipe.sax;
 
-import java.io.IOException;
-
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
 import de.l3s.boilerpipe.BoilerpipeInput;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextDocument;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import java.io.IOException;
 
 /**
  * Parses an {@link org.xml.sax.InputSource} using SAX and returns a {@link TextDocument}.

@@ -17,13 +17,13 @@
  */
 package de.l3s.boilerpipe.filters.english;
 
-import java.util.List;
-import java.util.ListIterator;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
+
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Classifies {@link TextBlock}s as content/not-content through rules that have

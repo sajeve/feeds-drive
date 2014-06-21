@@ -17,12 +17,11 @@
  */
 package de.l3s.boilerpipe.sax;
 
-import org.apache.xerces.parsers.AbstractSAXParser;
-import org.cyberneko.html.HTMLConfiguration;
-
 import de.l3s.boilerpipe.BoilerpipeDocumentSource;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
+import org.apache.xerces.parsers.AbstractSAXParser;
+import org.cyberneko.html.HTMLConfiguration;
 
 /**
  * A simple SAX Parser, used by {@link BoilerpipeSAXInput}. The parser uses <a

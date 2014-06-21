@@ -17,6 +17,14 @@
  */
 package de.l3s.boilerpipe.sax;
 
+import de.l3s.boilerpipe.BoilerpipeExtractor;
+import de.l3s.boilerpipe.BoilerpipeProcessingException;
+import de.l3s.boilerpipe.document.TextBlock;
+import de.l3s.boilerpipe.document.TextDocument;
+import org.apache.xerces.parsers.AbstractSAXParser;
+import org.cyberneko.html.HTMLConfiguration;
+import org.xml.sax.*;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
@@ -26,19 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.xerces.parsers.AbstractSAXParser;
-import org.cyberneko.html.HTMLConfiguration;
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-
-import de.l3s.boilerpipe.BoilerpipeExtractor;
-import de.l3s.boilerpipe.BoilerpipeProcessingException;
-import de.l3s.boilerpipe.document.TextBlock;
-import de.l3s.boilerpipe.document.TextDocument;
 
 /**
  * Highlights text blocks in an HTML document that have been marked as "content"
@@ -144,11 +139,6 @@ public final class HTMLHighlighter {
 	/**
 	 * Fetches the given {@link java.net.URL} using {@link HTMLFetcher} and processes the
 	 * retrieved HTML using the specified {@link BoilerpipeExtractor}.
-	 * 
-	 * @param doc
-	 *            The processed {@link TextDocument}.
-	 * @param is
-	 *            The original HTML document.
 	 * @return The highlighted HTML.
 	 * @throws BoilerpipeProcessingException
 	 */

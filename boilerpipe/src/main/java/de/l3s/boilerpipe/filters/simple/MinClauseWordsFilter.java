@@ -17,13 +17,13 @@
  */
 package de.l3s.boilerpipe.filters.simple;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Keeps only blocks that have at least one segment fragment ("clause") with at

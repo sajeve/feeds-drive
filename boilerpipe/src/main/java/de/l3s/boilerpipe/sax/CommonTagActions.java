@@ -17,14 +17,13 @@
  */
 package de.l3s.boilerpipe.sax;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import de.l3s.boilerpipe.document.TextBlock;
+import de.l3s.boilerpipe.labels.LabelAction;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import de.l3s.boilerpipe.document.TextBlock;
-import de.l3s.boilerpipe.labels.LabelAction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Defines an action that is to be performed whenever a particular tag occurs during HTML parsing.

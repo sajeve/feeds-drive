@@ -17,13 +17,13 @@
  */
 package de.l3s.boilerpipe.filters.heuristics;
 
-import java.util.Iterator;
-import java.util.List;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Fuses adjacent blocks if their distance (in blocks) does not exceed a certain limit.

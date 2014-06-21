@@ -1,13 +1,13 @@
 package de.l3s.boilerpipe.filters.simple;
 
-import java.util.Iterator;
-import java.util.List;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.conditions.TextBlockCondition;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
+
+import java.util.Iterator;
+import java.util.List;
 
 public class SurroundingToContentFilter implements BoilerpipeFilter {
 	public static final SurroundingToContentFilter INSTANCE_TEXT = new SurroundingToContentFilter(new TextBlockCondition() {

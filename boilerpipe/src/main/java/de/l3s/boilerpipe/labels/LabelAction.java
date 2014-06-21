@@ -17,9 +17,9 @@
  */
 package de.l3s.boilerpipe.labels;
 
-import java.util.Arrays;
-
 import de.l3s.boilerpipe.document.TextBlock;
+
+import java.util.Arrays;
 
 /**
  * Helps adding labels to {@link TextBlock}s.

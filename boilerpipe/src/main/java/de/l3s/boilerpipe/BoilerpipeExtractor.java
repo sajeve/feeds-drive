@@ -1,10 +1,9 @@
 package de.l3s.boilerpipe;
 
-import java.io.Reader;
-
+import de.l3s.boilerpipe.document.TextDocument;
 import org.xml.sax.InputSource;
 
-import de.l3s.boilerpipe.document.TextDocument;
+import java.io.Reader;
 
 /**
  * Describes a complete filter pipeline.

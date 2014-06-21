@@ -17,11 +17,11 @@
  */
 package de.l3s.boilerpipe.document;
 
+import de.l3s.boilerpipe.labels.DefaultLabels;
+
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
-
-import de.l3s.boilerpipe.labels.DefaultLabels;
 
 /**
  * Describes a block of text.

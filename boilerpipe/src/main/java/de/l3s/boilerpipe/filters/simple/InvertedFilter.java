@@ -17,12 +17,12 @@
  */
 package de.l3s.boilerpipe.filters.simple;
 
-import java.util.List;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
+
+import java.util.List;
 
 /**
  * Reverts the "isContent" flag for all {@link TextBlock}s

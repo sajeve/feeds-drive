@@ -27,17 +27,17 @@ import de.l3s.boilerpipe.filters.simple.BoilerplateBlockFilter;
 
 /**
  * A full-text extractor which is tuned towards news articles. In this scenario
- * it achieves higher accuracy than {@link DefaultExtractor}.
- * 
+ * it achieves higher accuracy than {@link de.l3s.boilerpipe.extractors.DefaultExtractor}.
+ *
  * @author Christian Kohlschütter
  */
-public final class ArticleExtractor extends ExtractorBase {
-    public static final ArticleExtractor INSTANCE = new ArticleExtractor();
+public final class ArticleContentExtractor extends ExtractorBase {
+    public static final ArticleContentExtractor INSTANCE = new ArticleContentExtractor();
 
     /**
-     * Returns the singleton instance for {@link de.l3s.boilerpipe.extractors.ArticleExtractor}.
+     * Returns the singleton instance for {@link de.l3s.boilerpipe.extractors.ArticleContentExtractor}.
      */
-    public static ArticleExtractor getInstance() {
+    public static ArticleContentExtractor getInstance() {
         return INSTANCE;
     }
     
@@ -46,7 +46,7 @@ public final class ArticleExtractor extends ExtractorBase {
         return
 
         TerminatingBlocksFinder.INSTANCE.process(doc)
-                | new DocumentTitleMatchClassifier(doc.getTitle()).process(doc)
+                //| new DocumentTitleMatchClassifier(doc.getTitle()).process(doc)
                 | NumWordsRulesClassifier.INSTANCE.process(doc)
                 | IgnoreBlocksAfterContentFilter.DEFAULT_INSTANCE.process(doc)
                 | TrailingHeadlineToBoilerplateFilter.INSTANCE.process(doc)

@@ -1,9 +1,9 @@
 package de.l3s.boilerpipe.sax;
 
+import org.xml.sax.InputSource;
+
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
-
-import org.xml.sax.InputSource;
 
 /**
  * An {@link InputSourceable} for {@link HTMLFetcher}.

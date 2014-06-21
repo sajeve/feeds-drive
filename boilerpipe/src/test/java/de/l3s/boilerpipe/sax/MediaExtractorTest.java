@@ -3,10 +3,7 @@ package de.l3s.boilerpipe.sax;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -31,7 +28,7 @@ public class MediaExtractorTest {
 	
 			final MediaExtractor ie = MediaExtractor.INSTANCE;
 			
-			urls = ie.process(this.getFileAsString("/hardwareluxx.html"), extractor);
+			urls = ie.process(this.getFileAsString("./boilerpipe/src/test/resources/hardwareluxx.html"), extractor);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -66,12 +63,14 @@ public class MediaExtractorTest {
 	
 	@Test
 	public void shouldGetOnlyImageUrls() {
+		System.out.println(System.getProperty("user.dir"));
 		URL url;
 		List<Media> urls = null;
 		try {
 			final BoilerpipeExtractor extractor = CommonExtractors.ARTICLE_EXTRACTOR;
 			final MediaExtractor ie = MediaExtractor.INSTANCE;
-			urls = ie.process(this.getFileAsString("/blogspot.html"), extractor);
+			urls = ie.process(this.getFileAsString("./boilerpipe/src/test/resources/blogspot.html"), extractor);
+			//urls = ie.process(this.getFileAsString("/blogspot.html"), extractor);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -93,9 +92,8 @@ public class MediaExtractorTest {
 	}
 	
 	
-	public String getFileAsString(String file) {
-		InputStream stream = getClass().getResourceAsStream(file);
-		BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+	public String getFileAsString(String file) throws FileNotFoundException {
+		BufferedReader br = new BufferedReader(new FileReader(file));
     	StringBuilder sb = new StringBuilder();
     	String line = "";
     	

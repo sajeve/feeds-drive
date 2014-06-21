@@ -17,14 +17,14 @@
  */
 package de.l3s.boilerpipe.filters.english;
 
-import java.util.List;
-import java.util.ListIterator;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.labels.DefaultLabels;
+
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Marks all blocks as "non-content" that occur after blocks that have been

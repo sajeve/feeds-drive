@@ -17,14 +17,14 @@
  */
 package de.l3s.boilerpipe.extractors;
 
-import java.util.List;
-import java.util.ListIterator;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.estimators.SimpleEstimator;
+
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * A full-text extractor trained on <a href="http://krdwrd.org/">krdwrd</a> <a

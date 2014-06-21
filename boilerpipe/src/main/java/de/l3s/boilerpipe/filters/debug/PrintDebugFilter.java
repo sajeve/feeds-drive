@@ -17,11 +17,11 @@
  */
 package de.l3s.boilerpipe.filters.debug;
 
-import java.io.PrintWriter;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextDocument;
+
+import java.io.PrintWriter;
 
 /**
  * Prints debug information about the current state of the TextDocument. (=

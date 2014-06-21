@@ -16,18 +16,8 @@
 
 package org.cyberneko.html;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.xerces.util.XMLAttributesImpl;
-import org.apache.xerces.xni.Augmentations;
-import org.apache.xerces.xni.NamespaceContext;
-import org.apache.xerces.xni.QName;
-import org.apache.xerces.xni.XMLAttributes;
-import org.apache.xerces.xni.XMLDocumentHandler;
-import org.apache.xerces.xni.XMLLocator;
-import org.apache.xerces.xni.XMLResourceIdentifier;
-import org.apache.xerces.xni.XMLString;
-import org.apache.xerces.xni.XNIException;
+import org.apache.xerces.xni.*;
 import org.apache.xerces.xni.parser.XMLComponentManager;
 import org.apache.xerces.xni.parser.XMLConfigurationException;
 import org.apache.xerces.xni.parser.XMLDocumentFilter;
@@ -35,6 +25,9 @@ import org.apache.xerces.xni.parser.XMLDocumentSource;
 import org.cyberneko.html.HTMLElements.Element;
 import org.cyberneko.html.filters.NamespaceBinder;
 import org.cyberneko.html.xercesbridge.XercesBridge;
+
+import java.util.ArrayList;
+import java.util.List;
 @SuppressWarnings("all")
 /**
  * Balances tags in an HTML document. This component receives document events

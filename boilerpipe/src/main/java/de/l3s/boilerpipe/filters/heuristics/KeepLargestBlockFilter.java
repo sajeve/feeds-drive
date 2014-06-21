@@ -17,14 +17,14 @@
  */
 package de.l3s.boilerpipe.filters.heuristics;
 
-import java.util.List;
-import java.util.ListIterator;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.labels.DefaultLabels;
+
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Keeps the largest {@link TextBlock} only (by the number of words). In case of

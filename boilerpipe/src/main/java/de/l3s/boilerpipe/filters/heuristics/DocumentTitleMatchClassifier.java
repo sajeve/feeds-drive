@@ -17,15 +17,15 @@
  */
 package de.l3s.boilerpipe.filters.heuristics;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Pattern;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.labels.DefaultLabels;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Marks {@link TextBlock}s which contain parts of the HTML

@@ -17,14 +17,14 @@
  */
 package de.l3s.boilerpipe.filters.heuristics;
 
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
-
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
+
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
 
 /**
  * Adds the labels of the preceding block to the current block, optionally adding a prefix.
