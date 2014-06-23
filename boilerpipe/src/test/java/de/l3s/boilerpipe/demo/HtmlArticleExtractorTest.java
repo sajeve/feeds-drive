@@ -28,9 +28,8 @@ public final class HtmlArticleExtractorTest {
 		URL url = new URL("http://ngoisao.net/tin-tuc/phong-cach/thoi-trang/hoa-tiet-trai-cay-vui-nhon-goi-he-3006796.html");
 		String output = "ngoisao1.html";
 
-		final BoilerpipeExtractor extractor = CommonExtractors.ARTICLE_EXTRACTOR;
-		final HtmlArticleExtractor htmlExtr = HtmlArticleExtractor.INSTANCE;
-		String html = htmlExtr.process(extractor, url);
+		String html = HtmlArticleExtractor.INSTANCE.process(CommonExtractors.ARTICLE_EXTRACTOR, url);
+
 		TestUtils.writeToFile(output, html, true);
 	}
 
@@ -44,14 +43,13 @@ public final class HtmlArticleExtractorTest {
 //		final BoilerpipeExtractor extractor = CommonExtractors.DEFAULT_EXTRACTOR;
 //		final BoilerpipeExtractor extractor = CommonExtractors.CANOLA_EXTRACTOR;
 //		final BoilerpipeExtractor extractor = CommonExtractors.LARGEST_CONTENT_EXTRACTOR;
+//		final ImageExtractor ie = ImageExtractor.INSTANCE;
 
-		final ImageExtractor ie = ImageExtractor.INSTANCE;
 		final HTMLHighlighter hh = HTMLHighlighter.newExtractingInstance();
-
 		PrintWriter out = new PrintWriter("ngoisao2.html", "UTF-8");
 		out.println("<base href=\"" + url + "\" >");
 		out.println("<meta http-equiv=\"Content-Type\" content=\"text-html; charset=utf-8\" />");
-		String extractedHtml = hh.process(url, extractor);
+		String extractedHtml = hh.process(url, CommonExtractors.ARTICLE_EXTRACTOR);
 		out.println(extractedHtml);
 		out.close();
 
