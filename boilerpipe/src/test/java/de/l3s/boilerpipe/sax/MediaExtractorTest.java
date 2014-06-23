@@ -24,11 +24,7 @@ public class MediaExtractorTest {
 		URL url;
 		List<Media> urls = null;
 		try {
-			final BoilerpipeExtractor extractor = CommonExtractors.ARTICLE_EXTRACTOR;
-	
-			final MediaExtractor ie = MediaExtractor.INSTANCE;
-			
-			urls = ie.process(this.getFileAsString("./boilerpipe/src/test/resources/hardwareluxx.html"), extractor);
+			urls = MediaExtractor.INSTANCE.process(this.getFileResourceAsString("/hardwareluxx.html"), CommonExtractors.ARTICLE_EXTRACTOR);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -67,10 +63,7 @@ public class MediaExtractorTest {
 		URL url;
 		List<Media> urls = null;
 		try {
-			final BoilerpipeExtractor extractor = CommonExtractors.ARTICLE_EXTRACTOR;
-			final MediaExtractor ie = MediaExtractor.INSTANCE;
-			urls = ie.process(this.getFileAsString("./boilerpipe/src/test/resources/blogspot.html"), extractor);
-			//urls = ie.process(this.getFileAsString("/blogspot.html"), extractor);
+			urls = MediaExtractor.INSTANCE.process(this.getFileResourceAsString("/blogspot.html"), CommonExtractors.ARTICLE_EXTRACTOR);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -90,8 +83,7 @@ public class MediaExtractorTest {
 			}
 		}
 	}
-	
-	
+
 	public String getFileAsString(String file) throws FileNotFoundException {
 		BufferedReader br = new BufferedReader(new FileReader(file));
     	StringBuilder sb = new StringBuilder();
@@ -108,5 +100,23 @@ public class MediaExtractorTest {
     	
 		return sb.toString();
     }
+
+	public String getFileResourceAsString(String file) {
+		InputStream stream = getClass().getResourceAsStream(file);
+		BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+		StringBuilder sb = new StringBuilder();
+		String line = "";
+
+		try {
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+			}
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return sb.toString();
+	}
 
 }

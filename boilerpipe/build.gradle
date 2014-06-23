@@ -4,14 +4,14 @@ sourceSets {
 	main {
 		resources {
 			srcDir 'resources'
-			include '*.properties'
+			include '*.*'
 			output.resourcesDir = "${project.buildDir}/classes/main"
 		}
 	}
 	test {
 		resources {
 			srcDir 'resources'
-			include '*.properties'
+			include '*.*'
 			output.resourcesDir = "${project.buildDir}/classes/test"
 		}
 	}
