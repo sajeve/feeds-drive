@@ -198,7 +198,7 @@ public class HTMLElements {
             // ACRONYM - - (%inline;)*
             new Element(ACRONYM, "ACRONYM", Element.INLINE, BODY, null),
             // ADDRESS - - (%inline;)*
-            new Element(ADDRESS, "ADDRESS", Element.BLOCK, BODY, null),
+            new Element(ADDRESS, "ADDRESS", Element.BLOCK, BODY, new short[] {P}),
             // APPLET
             new Element(APPLET, "APPLET", 0, BODY, null),
             // AREA - O EMPTY
@@ -226,13 +226,13 @@ public class HTMLElements {
             // BR - O EMPTY
             new Element(BR, "BR", Element.EMPTY, BODY, null),
             // BUTTON - - (%flow;)* -(A|%formctrl;|FORM|FIELDSET)
-            new Element(BUTTON, "BUTTON", 0, BODY, null),
+            new Element(BUTTON, "BUTTON", Element.INLINE | Element.BLOCK, BODY, null),
         };
         ELEMENTS_ARRAY['C'-'A'] = new Element[] {
             // CAPTION - - (%inline;)*
             new Element(CAPTION, "CAPTION", Element.INLINE, TABLE, null),
             // CENTER, 
-            new Element(CENTER, "CENTER", 0, BODY, null),
+            new Element(CENTER, "CENTER", 0, BODY, new short[] {P}),
             // CITE - - (%inline;)*
             new Element(CITE, "CITE", Element.INLINE, BODY, null),
             // CODE - - (%inline;)*
@@ -250,15 +250,15 @@ public class HTMLElements {
             // DFN - - (%inline;)*
             new Element(DFN, "DFN", Element.INLINE, BODY, null),
             // DIR
-            new Element(DIR, "DIR", 0, BODY, null),
+            new Element(DIR, "DIR", 0, BODY, new short[] {P}),
             // DIV - - (%flow;)*
-            new Element(DIV, "DIV", Element.BLOCK, BODY, new short[]{P}),
+            new Element(DIV, "DIV", Element.CONTAINER, BODY, new short[]{P}),
             // DD - O (%flow;)*
-            new Element(DD, "DD", 0, DL, new short[]{DT,DD}),
+            new Element(DD, "DD", 0, BODY, new short[]{DT,DD,P}),
             // DL - - (DT|DD)+
-            new Element(DL, "DL", Element.BLOCK, BODY, null),
+            new Element(DL, "DL", Element.BLOCK, BODY, new short[] {P}),
             // DT - O (%inline;)*
-            new Element(DT, "DT", 0, DL, new short[]{DT,DD}),
+            new Element(DT, "DT", 0, BODY, new short[]{DT,DD,P}),
         };
         ELEMENTS_ARRAY['E'-'A'] = new Element[] {
             // EM - - (%inline;)*
@@ -268,7 +268,7 @@ public class HTMLElements {
         };
         ELEMENTS_ARRAY['F'-'A'] = new Element[] {
             // FIELDSET - - (#PCDATA,LEGEND,(%flow;)*)
-            new Element(FIELDSET, "FIELDSET", 0, BODY, null),
+            new Element(FIELDSET, "FIELDSET", 0, BODY, new short[] {P}),
             // FONT
             new Element(FONT, "FONT", Element.CONTAINER, BODY, null),
             // FORM - - (%block;|SCRIPT)+ -(FORM)
@@ -305,7 +305,7 @@ public class HTMLElements {
             // INPUT - O EMPTY
             new Element(INPUT, "INPUT", Element.EMPTY, BODY, null),
             // INS - - (%flow;)*
-            new Element(INS, "INS", 0, BODY, null),
+            new Element(INS, "INS", Element.INLINE, BODY, null),
             // ISINDEX
             new Element(ISINDEX, "ISINDEX", 0, HEAD, null),
         };
@@ -317,17 +317,17 @@ public class HTMLElements {
         };
         ELEMENTS_ARRAY['L'-'A'] = new Element[] {
             // LABEL - - (%inline;)* -(LABEL)
-            new Element(LABEL, "LABEL", 0, BODY, null),
+            new Element(LABEL, "LABEL", Element.INLINE, BODY, null),
             // LAYER
             new Element(LAYER, "LAYER", Element.BLOCK, BODY, null),
             // LEGEND - - (%inline;)*
             new Element(LEGEND, "LEGEND", Element.INLINE, FIELDSET, null),
             // LI - O (%flow;)*
-            new Element(LI, "LI", 0, new short[]{BODY,UL,OL}, new short[]{LI}),
+            new Element(LI, "LI", Element.CONTAINER, new short[]{BODY,UL,OL}, new short[]{LI,P}),
             // LINK - O EMPTY
             new Element(LINK, "LINK", Element.EMPTY, HEAD, null),
             // LISTING
-            new Element(LISTING, "LISTING", 0, BODY, null),
+            new Element(LISTING, "LISTING", 0, BODY, new short[] {P}),
         };
         ELEMENTS_ARRAY['M'-'A'] = new Element[] {
             // MAP - - ((%block;) | AREA)+
@@ -335,7 +335,7 @@ public class HTMLElements {
             // MARQUEE
             new Element(MARQUEE, "MARQUEE", 0, BODY, null),
             // MENU
-            new Element(MENU, "MENU", 0, BODY, null),
+            new Element(MENU, "MENU", 0, BODY, new short[] {P}),
             // META - O EMPTY
             new Element(META, "META", Element.EMPTY, HEAD, new short[]{STYLE,TITLE}),
             // MULTICOL
@@ -349,7 +349,7 @@ public class HTMLElements {
             // NOEMBED
             new Element(NOEMBED, "NOEMBED", 0, BODY, null),
             // NOFRAMES - - (BODY) -(NOFRAMES)
-            new Element(NOFRAMES, "NOFRAMES", 0, FRAMESET, null),
+            new Element(NOFRAMES, "NOFRAMES", 0, null, null),
             // NOLAYER
             new Element(NOLAYER, "NOLAYER", 0, BODY, null),
             // NOSCRIPT - - (%block;)+
@@ -359,7 +359,7 @@ public class HTMLElements {
             // OBJECT - - (PARAM | %flow;)*
             new Element(OBJECT, "OBJECT", 0, BODY, null),
             // OL - - (LI)+
-            new Element(OL, "OL", Element.BLOCK, BODY, null),
+            new Element(OL, "OL", Element.BLOCK, BODY, new short[] {P}),
             // OPTGROUP - - (OPTION)+
             new Element(OPTGROUP, "OPTGROUP", 0, SELECT, new short[]{OPTION}),
             // OPTION - O (#PCDATA)
@@ -373,7 +373,7 @@ public class HTMLElements {
             // PLAINTEXT
             new Element(PLAINTEXT, "PLAINTEXT", Element.SPECIAL, BODY, null),
             // PRE - - (%inline;)* -(%pre.exclusion;)
-            new Element(PRE, "PRE", 0, BODY, null),
+            new Element(PRE, "PRE", 0, BODY, new short[] {P}),
         };
         ELEMENTS_ARRAY['Q'-'A'] = new Element[] {
             // Q - - (%inline;)*
@@ -425,21 +425,21 @@ public class HTMLElements {
             // TABLE - - (CAPTION?, (COL*|COLGROUP*), THEAD?, TFOOT?, TBODY+)
             new Element(TABLE, "TABLE", Element.BLOCK|Element.CONTAINER, BODY, null),
             // TBODY O O (TR)+
-            new Element(TBODY, "TBODY", 0, TABLE, new short[]{THEAD,TD,TH,TR,COLGROUP}),
+            new Element(TBODY, "TBODY", 0, TABLE, new short[]{THEAD,TBODY,TFOOT,TD,TH,TR,COLGROUP}),
             // TD - O (%flow;)*
             new Element(TD, "TD", Element.CONTAINER, TR, TABLE, new short[]{TD,TH}),
             // TEXTAREA - - (#PCDATA)
             new Element(TEXTAREA, "TEXTAREA", Element.SPECIAL, BODY, null),
             // TFOOT - O (TR)+
-            new Element(TFOOT, "TFOOT", 0, TABLE, new short[]{THEAD,TBODY,TD,TH,TR}),
+            new Element(TFOOT, "TFOOT", 0, TABLE, new short[]{THEAD,TBODY,TFOOT,TD,TH,TR}),
             // TH - O (%flow;)*
             new Element(TH, "TH", Element.CONTAINER, TR, TABLE, new short[]{TD,TH}),
             // THEAD - O (TR)+
-            new Element(THEAD, "THEAD", 0, TABLE, new short[]{COLGROUP}),
+            new Element(THEAD, "THEAD", 0, TABLE, new short[]{THEAD,TBODY,TFOOT,TD,TH,TR,COLGROUP}),
             // TITLE - - (#PCDATA) -(%head.misc;)
             new Element(TITLE, "TITLE", Element.SPECIAL, new short[]{HEAD,BODY}, null),
             // TR - O (TH|TD)+
-            new Element(TR, "TR", Element.BLOCK, new short[]{TBODY, THEAD, TFOOT}, TABLE, new short[]{TD,TH,TR,COLGROUP}),
+            new Element(TR, "TR", Element.BLOCK, new short[]{TBODY, THEAD, TFOOT}, TABLE, new short[]{TD,TH,TR,COLGROUP,DIV}),
             // TT - - (%inline;)*
             new Element(TT, "TT", Element.INLINE, BODY, null),
         };
@@ -447,7 +447,7 @@ public class HTMLElements {
             // U, 
             new Element(U, "U", Element.INLINE, BODY, null),
             // UL - - (LI)+
-            new Element(UL, "UL", Element.BLOCK, BODY, null),
+            new Element(UL, "UL", Element.CONTAINER, BODY, new short[] {P}),
         };
         ELEMENTS_ARRAY['V'-'A'] = new Element[] {
             // VAR - - (%inline;)*
@@ -461,7 +461,7 @@ public class HTMLElements {
             // XML
             new Element(XML, "XML", 0, BODY, null),
             // XMP
-            new Element(XMP, "XMP", Element.SPECIAL, BODY, null),
+            new Element(XMP, "XMP", Element.SPECIAL, BODY, new short[] {P}),
         };
 
         // keep contiguous list of elements for lookups by code
@@ -499,7 +499,7 @@ public class HTMLElements {
      *
      * @param code The element code.
      */
-    public static final Element getElement(short code) {
+    public static final Element getElement(final short code) {
         return ELEMENTS.data[code];
     } // getElement(short):Element
 
@@ -508,7 +508,7 @@ public class HTMLElements {
      *
      * @param ename The element name.
      */
-    public static final Element getElement(String ename) {
+    public static final Element getElement(final String ename) {
         return getElement(ename, NO_SUCH_ELEMENT);
     } // getElement(String):Element
 
@@ -518,7 +518,7 @@ public class HTMLElements {
      * @param ename The element name.
      * @param element The default element to return if not found.
      */
-    public static final Element getElement(String ename, Element element) {
+    public static final Element getElement(final String ename, final Element element) {
 
         if (ename.length() > 0) {
             int c = ename.charAt(0);
@@ -595,9 +595,6 @@ public class HTMLElements {
 
         /** List of elements this element can close. */
         public short[] closes;
-        
-        /** If set to true, then this element may not be nested, example: "A" **/
-        boolean nestable = true;
 
         //
         // Constructors
@@ -612,8 +609,8 @@ public class HTMLElements {
          * @param parent Natural closing parent name.
          * @param closes List of elements this element can close.
          */
-        public Element(short code, String name, int flags, 
-                       short parent, short[] closes) {
+        public Element(final short code, final String name, final int flags, 
+        		final short parent, final short[] closes) {
             this(code, name, flags, new short[]{parent}, (short)-1, closes);
         } // <init>(short,String,int,short,short[]);
 
@@ -626,8 +623,8 @@ public class HTMLElements {
          * @param parent Natural closing parent name.
          * @param closes List of elements this element can close.
          */
-        public Element(short code, String name, int flags, 
-                       short parent, short bounds, short[] closes) {
+        public Element(final short code, final String name, final int flags, 
+        		final short parent, final short bounds, final short[] closes) {
             this(code, name, flags, new short[]{parent}, bounds, closes);
         } // <init>(short,String,int,short,short,short[])
 
@@ -640,8 +637,8 @@ public class HTMLElements {
          * @param parents Natural closing parent names.
          * @param closes List of elements this element can close.
          */
-        public Element(short code, String name, int flags, 
-                       short[] parents, short[] closes) {
+        public Element(final short code, final String name, final int flags, 
+        		final short[] parents, final short[] closes) {
             this(code, name, flags, parents, (short)-1, closes);
         } // <init>(short,String,int,short[],short[])
 
@@ -654,8 +651,8 @@ public class HTMLElements {
          * @param parents Natural closing parent names.
          * @param closes List of elements this element can close.
          */
-        public Element(short code, String name, int flags, 
-                       short[] parents, short bounds, short[] closes) {
+        public Element(final short code, final String name, final int flags, 
+        		final short[] parents, final short bounds, final short[] closes) {
             this.code = code;
             this.name = name;
             this.flags = flags;
@@ -663,14 +660,6 @@ public class HTMLElements {
             this.parent = null;
             this.bounds = bounds;
             this.closes = closes;
-            if(closes != null) {
-                for(int i=0;i<closes.length;i++) {
-                    if(closes[i] == code) {
-                        this.nestable = false;
-                        break;
-                    }
-                }
-            }
         } // <init>(short,String,int,short[],short,short[])
 
         //
@@ -710,8 +699,7 @@ public class HTMLElements {
          *
          * @param tag The element.
          */
-        public boolean closes(short tag) {
-
+        public boolean closes(final short tag) {
             if (closes != null) {
                 for (int i = 0; i < closes.length; i++) {
                     if (closes[i] == tag) {
@@ -733,7 +721,7 @@ public class HTMLElements {
         } // hashCode():int
 
         /** Returns true if the objects are equal. */
-        public boolean equals(Object o) {
+        public boolean equals(final Object o) {
             return name.equals(o);
         } // equals(Object):boolean
 
@@ -752,11 +740,9 @@ public class HTMLElements {
 		public boolean isParent(final Element element) {
 			if (parent == null)
 				return false;
-			else {
-				for (int i=0; i<parent.length; ++i) {
-					if (element.code == parent[i].code)
-						return true;
-				}
+			for (int i=0; i<parent.length; ++i) {
+				if (element.code == parent[i].code)
+					return true;
 			}
 			return false;
 		}
@@ -780,7 +766,7 @@ public class HTMLElements {
         //
 
         /** Adds an element to list, resizing if necessary. */
-        public void addElement(Element element) {
+        public void addElement(final Element element) {
             if (size == data.length) {
                 Element[] newarray = new Element[size + 20];
                 System.arraycopy(data, 0, newarray, 0, size);

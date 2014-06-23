@@ -1,13 +1,11 @@
 /**
- * boilerpipe
+ * Copyright (C) 2013 Christian Kohlschütter (ckkohl79@gmail.com)
  *
- * Copyright (c) 2009 Christian Kohlschütter
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The author licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,20 +15,25 @@
  */
 package de.l3s.boilerpipe.sax;
 
-import de.l3s.boilerpipe.document.TextBlock;
-import de.l3s.boilerpipe.document.TextDocument;
-import de.l3s.boilerpipe.labels.LabelAction;
-import de.l3s.boilerpipe.util.UnicodeTokenizer;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import java.util.*;
-import java.util.regex.Pattern;
+import de.l3s.boilerpipe.document.TextBlock;
+import de.l3s.boilerpipe.document.TextDocument;
+import de.l3s.boilerpipe.labels.LabelAction;
+import de.l3s.boilerpipe.util.UnicodeTokenizer;
 
 /**
- * A simple SAX {@link org.xml.sax.ContentHandler}, used by {@link BoilerpipeSAXInput}. Can
+ * A simple SAX {@link org.xml.sax.ContentHandler}, used by {@link de.l3s.boilerpipe.sax.BoilerpipeSAXInput}. Can
  * be used by different parser implementations, e.g. NekoHTML and TagSoup.
  * 
  * @author Christian Kohlschütter
@@ -101,7 +104,7 @@ public class BoilerpipeHTMLContentHandler implements ContentHandler {
 
 	/**
 	 * Constructs a {@link de.l3s.boilerpipe.sax.BoilerpipeHTMLContentHandler} using the
-	 * {@link DefaultTagActionMap}.
+	 * {@link de.l3s.boilerpipe.sax.DefaultTagActionMap}.
 	 */
 	public BoilerpipeHTMLContentHandler() {
 		this(DefaultTagActionMap.INSTANCE);
@@ -109,11 +112,11 @@ public class BoilerpipeHTMLContentHandler implements ContentHandler {
 
 	/**
 	 * Constructs a {@link de.l3s.boilerpipe.sax.BoilerpipeHTMLContentHandler} using the given
-	 * {@link TagActionMap}.
+	 * {@link de.l3s.boilerpipe.sax.TagActionMap}.
 	 * 
 	 * @param tagActions
-	 *            The {@link TagActionMap} to use, e.g.
-	 *            {@link DefaultTagActionMap}.
+	 *            The {@link de.l3s.boilerpipe.sax.TagActionMap} to use, e.g.
+	 *            {@link de.l3s.boilerpipe.sax.DefaultTagActionMap}.
 	 */
 	public BoilerpipeHTMLContentHandler(final TagActionMap tagActions) {
 		this.tagActions = tagActions;

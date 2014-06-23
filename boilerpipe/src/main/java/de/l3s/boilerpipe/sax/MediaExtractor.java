@@ -21,7 +21,7 @@ package de.l3s.boilerpipe.sax;
 import de.l3s.boilerpipe.BoilerpipeExtractor;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.*;
-import org.apache.xerces.parsers.AbstractSAXParser;
+import mf.org.apache.xerces.parsers.AbstractSAXParser;
 import org.cyberneko.html.HTMLConfiguration;
 import org.xml.sax.*;
 
@@ -73,10 +73,6 @@ public final class MediaExtractor {
          * Processes the given {@link TextDocument} and the original HTML text (as an
          * {@link org.xml.sax.InputSource}).
          *
-         * @param doc
-         *            The processed {@link TextDocument}.
-         * @param origHTML
-         *            The original HTML document.
          * @return A List of enclosed {@link Image}s
          * @throws BoilerpipeProcessingException
          */

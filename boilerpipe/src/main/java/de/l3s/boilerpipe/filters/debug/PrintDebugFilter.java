@@ -1,13 +1,11 @@
 /**
- * boilerpipe
+ * Copyright (C) 2013 Christian Kohlschütter (ckkohl79@gmail.com)
  *
- * Copyright (c) 2012 Christian Kohlschütter
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The author licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,11 +15,11 @@
  */
 package de.l3s.boilerpipe.filters.debug;
 
+import java.io.PrintWriter;
+
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextDocument;
-
-import java.io.PrintWriter;
 
 /**
  * Prints debug information about the current state of the TextDocument. (=
@@ -30,40 +28,40 @@ import java.io.PrintWriter;
  * @author Christian Kohlschütter
  */
 public final class PrintDebugFilter implements BoilerpipeFilter {
-	/**
-	 * Returns the default instance for {@link de.l3s.boilerpipe.filters.debug.PrintDebugFilter},
-	 * which dumps debug information to <code>System.out</code>
-	 */
-	public static final PrintDebugFilter INSTANCE = new PrintDebugFilter(
-			new PrintWriter(System.out, true));
-	private final PrintWriter out;
+    /**
+     * Returns the default instance for {@link de.l3s.boilerpipe.filters.debug.PrintDebugFilter},
+     * which dumps debug information to <code>System.out</code>
+     */
+    public static final PrintDebugFilter INSTANCE = new PrintDebugFilter(
+                                                                                new PrintWriter(System.out, true));
+    private final PrintWriter out;
 
-	/**
-	 * Returns the default instance for {@link de.l3s.boilerpipe.filters.debug.PrintDebugFilter},
-	 * which dumps debug information to <code>System.out</code>
-	 */
-	public static PrintDebugFilter getInstance() {
-		return INSTANCE;
-	}
+    /**
+     * Returns the default instance for {@link de.l3s.boilerpipe.filters.debug.PrintDebugFilter},
+     * which dumps debug information to <code>System.out</code>
+     */
+    public static PrintDebugFilter getInstance() {
+        return INSTANCE;
+    }
 
-	/**
-	 * Creates a new instance of {@link de.l3s.boilerpipe.filters.debug.PrintDebugFilter}.
-	 * 
-	 * Only use this method if you are not going to dump 
-	 * the debug information to <code>System.out</code> --
-	 * for this case, use {@link #getInstance()} instead. 
-	 * 
-	 * @param out The target {@link java.io.PrintWriter}. Will not be closed
-	 */
-	public PrintDebugFilter(final PrintWriter out) {
-		this.out = out;
+    /**
+     * Creates a new instance of {@link de.l3s.boilerpipe.filters.debug.PrintDebugFilter}.
+     *
+     * Only use this method if you are not going to dump
+     * the debug information to <code>System.out</code> --
+     * for this case, use {@link #getInstance()} instead.
+     *
+     * @param out The target {@link java.io.PrintWriter}. Will not be closed
+     */
+    public PrintDebugFilter(final PrintWriter out) {
+        this.out = out;
 
-	}
+    }
 
-	public boolean process(TextDocument doc)
-			throws BoilerpipeProcessingException {
-		out.println(doc.debugString());
+    public boolean process(TextDocument doc)
+            throws BoilerpipeProcessingException {
+        out.println(doc.debugString());
 
-		return false;
-	}
+        return false;
+    }
 }

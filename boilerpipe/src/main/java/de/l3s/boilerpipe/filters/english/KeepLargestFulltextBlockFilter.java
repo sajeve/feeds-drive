@@ -1,13 +1,11 @@
 /**
- * boilerpipe
+ * Copyright (C) 2013 Christian Kohlschütter (ckkohl79@gmail.com)
  *
- * Copyright (c) 2009 Christian Kohlschütter
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The author licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +15,8 @@
  */
 package de.l3s.boilerpipe.filters.english;
 
+import java.util.List;
+
 import de.l3s.boilerpipe.BoilerpipeFilter;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextBlock;
@@ -24,16 +24,14 @@ import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.filters.heuristics.KeepLargestBlockFilter;
 import de.l3s.boilerpipe.labels.DefaultLabels;
 
-import java.util.List;
-
 /**
  * Keeps the largest {@link TextBlock} only (by the number of words). In case of
  * more than one block with the same number of words, the first block is chosen.
  * All discarded blocks are marked "not content" and flagged as
- * {@link DefaultLabels#MIGHT_BE_CONTENT}.
+ * {@link de.l3s.boilerpipe.labels.DefaultLabels#MIGHT_BE_CONTENT}.
  * 
  * As opposed to {@link KeepLargestBlockFilter}, the number of words are
- * computed using {@link HeuristicFilterBase#getNumFullTextWords(TextBlock)}, which only counts
+ * computed using {@link de.l3s.boilerpipe.filters.english.HeuristicFilterBase#getNumFullTextWords(TextBlock)}, which only counts
  * words that occur in text elements with at least 9 words and are thus believed to be full text.
  * 
  * NOTE: Without language-specific fine-tuning (i.e., running the default instance), this filter

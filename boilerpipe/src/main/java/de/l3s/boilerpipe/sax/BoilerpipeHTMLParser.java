@@ -1,13 +1,11 @@
 /**
- * boilerpipe
+ * Copyright (C) 2013 Christian Kohlschütter (ckkohl79@gmail.com)
  *
- * Copyright (c) 2009 Christian Kohlschütter
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The author licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,14 +15,15 @@
  */
 package de.l3s.boilerpipe.sax;
 
+import mf.org.apache.xerces.parsers.AbstractSAXParser;
+import org.cyberneko.html.HTMLConfiguration;
+
 import de.l3s.boilerpipe.BoilerpipeDocumentSource;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
-import org.apache.xerces.parsers.AbstractSAXParser;
-import org.cyberneko.html.HTMLConfiguration;
 
 /**
- * A simple SAX Parser, used by {@link BoilerpipeSAXInput}. The parser uses <a
+ * A simple SAX Parser, used by {@link de.l3s.boilerpipe.sax.BoilerpipeSAXInput}. The parser uses <a
  * href="http://nekohtml.sourceforge.net/">CyberNeko</a> to parse HTML content.
  * 
  * @author Christian Kohlschütter

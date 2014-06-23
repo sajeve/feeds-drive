@@ -1,18 +1,42 @@
+/**
+ * Copyright (C) 2013 Christian Kohlschütter (ckkohl79@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.l3s.boilerpipe.sax;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import mf.org.apache.xerces.parsers.AbstractSAXParser;
+import org.cyberneko.html.HTMLConfiguration;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
 import de.l3s.boilerpipe.BoilerpipeExtractor;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.Image;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
-import org.apache.xerces.parsers.AbstractSAXParser;
-import org.cyberneko.html.HTMLConfiguration;
-import org.xml.sax.*;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URL;
-import java.util.*;
 
 /**
  * Extracts the images that are enclosed by extracted content. 
@@ -25,7 +49,7 @@ public final class ImageExtractor {
 	/**
 	 * Returns the singleton instance of {@link de.l3s.boilerpipe.sax.ImageExtractor}.
 	 * 
-	 * @return
+	 * @return the singleton instance of {@link de.l3s.boilerpipe.sax.ImageExtractor}.
 	 */
 	public static ImageExtractor getInstance() {
 		return INSTANCE;
@@ -57,7 +81,6 @@ public final class ImageExtractor {
 	 * 
 	 * @param doc
 	 *            The processed {@link TextDocument}.
-	 * @param is
 	 *            The original HTML document.
 	 * @return A List of enclosed {@link Image}s
 	 * @throws BoilerpipeProcessingException
@@ -71,8 +94,11 @@ public final class ImageExtractor {
 	}
 	
 	/**
-	 * Fetches the given {@link java.net.URL} using {@link HTMLFetcher} and processes the
+	 * Fetches the given {@link java.net.URL} using {@link de.l3s.boilerpipe.sax.HTMLFetcher} and processes the
 	 * retrieved HTML using the specified {@link BoilerpipeExtractor}.
+	 * 
+	 *            The processed {@link TextDocument}.
+	 *            The original HTML document.
 	 * @return A List of enclosed {@link Image}s
 	 * @throws BoilerpipeProcessingException
 	 */

@@ -1,13 +1,11 @@
 /**
- * boilerpipe
+ * Copyright (C) 2013 Christian Kohlschütter (ckkohl79@gmail.com)
  *
- * Copyright (c) 2009 Christian Kohlschütter
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The author licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +23,7 @@ import de.l3s.boilerpipe.labels.DefaultLabels;
 
 /**
  * Marks all {@link TextBlock}s "content" which are between the headline and the part that
- * has already been marked content, if they are marked {@link DefaultLabels#MIGHT_BE_CONTENT}.
+ * has already been marked content, if they are marked {@link de.l3s.boilerpipe.labels.DefaultLabels#MIGHT_BE_CONTENT}.
  * 
  * This filter is quite specific to the news domain.
  * 

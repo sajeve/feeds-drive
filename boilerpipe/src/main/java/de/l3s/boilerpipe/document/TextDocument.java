@@ -1,13 +1,11 @@
 /**
- * boilerpipe
+ * Copyright (C) 2013 Christian Kohlschütter (ckkohl79@gmail.com)
  *
- * Copyright (c) 2009 Christian Kohlschütter
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The author licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A text document, consisting of one or more {@link TextBlock}s.
+ * A text document, consisting of one or more {@link de.l3s.boilerpipe.document.TextBlock}s.
  * 
  * @author Christian Kohlschütter
  */
@@ -30,7 +28,7 @@ public class TextDocument implements Cloneable {
     String title;
 
     /**
-     * Creates a new {@link de.l3s.boilerpipe.document.TextDocument} with given {@link TextBlock}s, and no
+     * Creates a new {@link de.l3s.boilerpipe.document.TextDocument} with given {@link de.l3s.boilerpipe.document.TextBlock}s, and no
      * title.
      * 
      * @param textBlocks
@@ -41,7 +39,7 @@ public class TextDocument implements Cloneable {
     }
 
     /**
-     * Creates a new {@link de.l3s.boilerpipe.document.TextDocument} with given {@link TextBlock}s and
+     * Creates a new {@link de.l3s.boilerpipe.document.TextDocument} with given {@link de.l3s.boilerpipe.document.TextBlock}s and
      * given title.
      * 
      * @param title
@@ -55,9 +53,9 @@ public class TextDocument implements Cloneable {
     }
 
     /**
-     * Returns the {@link TextBlock}s of this document.
+     * Returns the {@link de.l3s.boilerpipe.document.TextBlock}s of this document.
      * 
-     * @return A list of {@link TextBlock}s, in sequential order of appearance.
+     * @return A list of {@link de.l3s.boilerpipe.document.TextBlock}s, in sequential order of appearance.
      */
     public List<TextBlock> getTextBlocks() {
         return textBlocks;
@@ -118,7 +116,7 @@ public class TextDocument implements Cloneable {
     }
     
     /**
-     * Returns detailed debugging information about the contained {@link TextBlock}s.
+     * Returns detailed debugging information about the contained {@link de.l3s.boilerpipe.document.TextBlock}s.
      *  
      * @return Debug information.
      */

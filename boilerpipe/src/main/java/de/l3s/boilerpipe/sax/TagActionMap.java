@@ -1,13 +1,11 @@
 /**
- * boilerpipe
+ * Copyright (C) 2013 Christian Kohlschütter (ckkohl79@gmail.com)
  *
- * Copyright (c) 2009, 2010 Christian Kohlschütter
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The author licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +18,7 @@ package de.l3s.boilerpipe.sax;
 import java.util.HashMap;
 
 /**
- * Base class for definition a set of {@link TagAction}s that are to be used for the
+ * Base class for definition a set of {@link de.l3s.boilerpipe.sax.TagAction}s that are to be used for the
  * HTML parsing process.
  * 
  * @see DefaultTagActionMap
@@ -30,11 +28,11 @@ public abstract class TagActionMap extends HashMap<String, TagAction> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Sets a particular {@link TagAction} for a given tag. Any existing TagAction for that tag
+     * Sets a particular {@link de.l3s.boilerpipe.sax.TagAction} for a given tag. Any existing TagAction for that tag
      * will be removed and overwritten.
      * 
      * @param tag The tag (will be stored internally 1. as it is, 2. lower-case, 3. upper-case)
-     * @param action The {@link TagAction}
+     * @param action The {@link de.l3s.boilerpipe.sax.TagAction}
      */
     protected void setTagAction(final String tag, final TagAction action) {
         put(tag.toUpperCase(), action);
@@ -43,11 +41,11 @@ public abstract class TagActionMap extends HashMap<String, TagAction> {
     }
 
     /**
-     * Adds a particular {@link TagAction} for a given tag. If a TagAction already exists for that tag,
-     * a chained action, consisting of the previous and the new {@link TagAction} is created.
+     * Adds a particular {@link de.l3s.boilerpipe.sax.TagAction} for a given tag. If a TagAction already exists for that tag,
+     * a chained action, consisting of the previous and the new {@link de.l3s.boilerpipe.sax.TagAction} is created.
      * 
      * @param tag The tag (will be stored internally 1. as it is, 2. lower-case, 3. upper-case)
-     * @param action The {@link TagAction}
+     * @param action The {@link de.l3s.boilerpipe.sax.TagAction}
      */
     protected void addTagAction(final String tag, final TagAction action) {
         TagAction previousAction = get(tag);
