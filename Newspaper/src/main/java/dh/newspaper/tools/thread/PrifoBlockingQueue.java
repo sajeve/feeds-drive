@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class PrifoBlockingQueue<E extends IPrifosable> extends AbstractQueue<E> implements BlockingQueue<E> {
 
-	private final PrifoQueue<E> queue = new PrifoQueue<>();
+	private final PrifoQueue<E> queue = new PrifoQueue<E>();
 
 	/**
 	 * Lock used for all public operations

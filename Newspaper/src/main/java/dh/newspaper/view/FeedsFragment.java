@@ -192,45 +192,43 @@ public class FeedsFragment extends Fragment {
 			return;
 		}
 		try {
-			switch (event.getSubject()) {
-				case Constants.SUBJECT_FEEDS_START_LOADING:
-					if (Constants.DEBUG) {
-						swRfle = Stopwatch.createStarted();
-						Log.d(TAG, "FeedsFragment START " + event.getSender().getTag());
-					}
 
-					//Save the identity of the current running workflow recognise future events coming from the same workflow
-					setData(event.getSender());
+			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_FEEDS_START_LOADING)) {
+				if (Constants.DEBUG) {
+					swRfle = Stopwatch.createStarted();
+					Log.d(TAG, "FeedsFragment START " + event.getSender().getTag());
+				}
 
+				//Save the identity of the current running workflow recognise future events coming from the same workflow
+				setData(event.getSender());
+				return;
+			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_FEEDS_REFRESH)) {
+				if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
+					//this event is fired by a sender which is no more concerning by this fragment -> do nothing
 					return;
-				case Constants.SUBJECT_FEEDS_REFRESH:
-					if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
-						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
-						return;
-					}
+				}
 
-					if (Constants.DEBUG) {
-						Log.d(TAG, "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag());
-						swRfle.reset().start();
-					}
+				if (Constants.DEBUG) {
+					Log.d(TAG, "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag());
+					swRfle.reset().start();
+				}
 
-					mGridViewAdapter.notifyDataSetChanged();
+				mGridViewAdapter.notifyDataSetChanged();
+				return;
+			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_FEEDS_DONE_LOADING)) {
+				if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
+					//this event is fired by a sender which is no more concerning by this fragment -> do nothing
+					Log.d(TAG, "FeedsFragment DONE ignored " + event.getSender().getTag() + " <> currentTag=" + mCurrentTag);
 					return;
-				case Constants.SUBJECT_FEEDS_DONE_LOADING:
-					if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
-						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
-						Log.d(TAG, "FeedsFragment DONE ignored "+event.getSender().getTag() + " <> currentTag="+mCurrentTag);
-						return;
-					}
+				}
 
-					if (Constants.DEBUG)
-						Log.d(TAG, "FeedsFragment DONE ("+swRfle.elapsed(TimeUnit.MILLISECONDS)+" ms) "+event.getSender().getTag());
+				if (Constants.DEBUG)
+					Log.d(TAG, "FeedsFragment DONE (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag());
 
-					mGridViewAdapter.notifyDataSetChanged();
-					mSwipeRefreshLayout.setRefreshing(false);
-					return;
+				mGridViewAdapter.notifyDataSetChanged();
+				mSwipeRefreshLayout.setRefreshing(false);
+				return;
 			}
-
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
 			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);

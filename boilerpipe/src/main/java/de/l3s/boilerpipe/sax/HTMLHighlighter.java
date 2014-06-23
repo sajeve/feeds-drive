@@ -139,9 +139,8 @@ public final class HTMLHighlighter {
     private static final Pattern PAT_TAG_NO_TEXT = Pattern.compile("<[^/][^>]*></[^>]*>");
     private static final Pattern PAT_SUPER_TAG = Pattern.compile("^<[^>]*>(<.*?>)</[^>]*>$");
 
-    public String process(final URL url, final BoilerpipeExtractor extractor)
+    public String process(final HTMLDocument htmlDoc, final BoilerpipeExtractor extractor)
             throws IOException, BoilerpipeProcessingException, SAXException {
-        final HTMLDocument htmlDoc = HTMLFetcher.fetch(url);
 
         // Added to fix bug with unicode characters not being recognized by SAX parser on AppEngine (bug while appending chars to StringBuffer by offset)
         htmlDoc.encodeEscapedCharsAsText();
@@ -168,6 +167,47 @@ public final class HTMLHighlighter {
         return finalHtml;
     }
 
+	public String process(final URL url, final BoilerpipeExtractor extractor)
+			throws IOException, BoilerpipeProcessingException, SAXException {
+		return process(HTMLFetcher.fetch(url), extractor);
+	}
+
+	public String process(final HTMLDocument htmlDoc, final BoilerpipeExtractor[] extractor)
+			throws IOException, BoilerpipeProcessingException, SAXException {
+
+		// Added to fix bug with unicode characters not being recognized by SAX parser on AppEngine (bug while appending chars to StringBuffer by offset)
+		htmlDoc.encodeEscapedCharsAsText();
+
+		// Added to support including images in extracted HTML output
+		if (includeImages)
+			htmlDoc.encodeImageTagsAsText();
+
+		TextDocument doc = new BoilerpipeSAXInput(htmlDoc.toInputSource())
+				.getTextDocument();
+
+		//find first effective extractor
+		for (int i=0; i<extractor.length; i++) {
+			final TextDocument d = doc.clone();
+			extractor[i].process(d);
+			if (d.getTextBlocks()!=null && d.getTextBlocks().size()>0) {
+				doc = d;
+				break;
+			}
+		}
+
+		final InputSource is = htmlDoc.toInputSource();
+
+		String finalHtml = process(doc, is);
+
+		// Added to fix bug with unicode characters not being recognized by SAX parser on AppEngine (bug while appending chars to StringBuffer by offset)
+		finalHtml = HTMLDocument.restoreTextEncodedEscapedChars(finalHtml, htmlDoc.getCharset().name());
+
+		// Added to support including images in extracted HTML output
+		if (includeImages)
+			finalHtml = HTMLDocument.restoreTextEncodedImageTags(finalHtml, htmlDoc.getCharset().name());
+
+		return finalHtml;
+	}
 
     private boolean outputHighlightOnly = false;
     private boolean includeImages = false;

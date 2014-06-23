@@ -24,6 +24,7 @@ import dh.newspaper.event.BaseEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.tools.ArrayAdapterCompat;
+import dh.newspaper.tools.StrUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -199,14 +200,14 @@ public class TagsFragment extends Fragment {
 			if (!isAdded()) {
 				return;
 			}
-			switch (event.getSubject()) {
-				case Constants.SUBJECT_TAGS_START_LOADING:
-					mSwipeRefreshLayout.setRefreshing(true);
-					return;
-				case Constants.SUBJECT_TAGS_REFRESH:
-					refreshTagsList();
-					mSwipeRefreshLayout.setRefreshing(false);
-					return;
+			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_TAGS_START_LOADING)) {
+				mSwipeRefreshLayout.setRefreshing(true);
+				return;
+			}
+			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_TAGS_REFRESH)) {
+				refreshTagsList();
+				mSwipeRefreshLayout.setRefreshing(false);
+				return;
 			}
 		}
 		catch (Exception ex) {

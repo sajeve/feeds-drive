@@ -158,41 +158,41 @@ public class ArticleFragment extends Fragment {
 			return;
 		}
 		try {
-			switch (event.getSubject()) {
-				case Constants.SUBJECT_ARTICLE_START_LOADING:
-					if (Constants.DEBUG) {
-						swRae = Stopwatch.createStarted();
-						Log.d(TAG, "ArticleFragment START " + event.getSender().getArticleUrl());
-					}
+			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_START_LOADING)) {
+				if (Constants.DEBUG) {
+					swRae = Stopwatch.createStarted();
+					Log.d(TAG, "ArticleFragment START " + event.getSender().getArticleUrl());
+				}
 
-					mSwipeRefreshLayout.setRefreshing(true);
-					refreshGUI(event.getSender());
+				mSwipeRefreshLayout.setRefreshing(true);
+				refreshGUI(event.getSender());
 
+				return;
+			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_REFRESH)) {
+
+				if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
+					//this event is fired by a sender which is no more concerning by this fragment -> do nothing
 					return;
-				case Constants.SUBJECT_ARTICLE_REFRESH:
-					if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
-						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
-						return;
-					}
+				}
 
-					if (Constants.DEBUG) {
-						Log.d(TAG, "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
-						swRae.reset().start();
-					}
+				if (Constants.DEBUG) {
+					Log.d(TAG, "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
+					swRae.reset().start();
+				}
 
-					refreshGUI(event.getSender());
+				refreshGUI(event.getSender());
+				return;
+			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_DONE_LOADING)) {
+				if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
+					//this event is fired by a sender which is no more concerning by this fragment -> do nothing
 					return;
-				case Constants.SUBJECT_ARTICLE_DONE_LOADING:
-					if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
-						//this event is fired by a sender which is no more concerning by this fragment -> do nothing
-						return;
-					}
+				}
 
-					if (Constants.DEBUG)
-						Log.d(TAG, "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
+				if (Constants.DEBUG)
+					Log.d(TAG, "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
 
-					mSwipeRefreshLayout.setRefreshing(false);
-					return;
+				mSwipeRefreshLayout.setRefreshing(false);
+				return;
 			}
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
@@ -235,7 +235,7 @@ public class ArticleFragment extends Fragment {
 		mWebView.loadDataWithBaseURL(mArticle.getArticleUrl(), mArticle.getContent(), "text/html", encoding, mArticle.getParentUrl());
 
 		if (!Strings.isNullOrEmpty(mArticle.getParseNotice())) {
-			mTxtNotice.setText(mArticle.getParseNotice() + "-" + mArticle.getArticleUrl());
+			mTxtNotice.setText(mArticle.getParseNotice() + " - " + mArticle.getArticleUrl());
 			mPanelNotice.setVisibility(View.VISIBLE);
 		}
 		else {

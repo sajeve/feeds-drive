@@ -29,12 +29,11 @@ public class HTMLFetcher {
      * @return
      * @throws IOException
      */
-    public static HTMLDocument fetch(final URL url) throws IOException {
+    public static HTMLDocument fetch(final URL url, String charSet) throws IOException {
         final URLConnection conn = url.openConnection();
         final String ct = conn.getContentType();
 
-//		Charset cs = Charset.forName("Cp1252");
-        Charset cs = Charset.forName("UTF-8");
+        Charset cs = Charset.forName(charSet);
         if (ct != null) {
             Matcher m = PAT_CHARSET.matcher(ct);
             if(m.find()) {
@@ -83,4 +82,8 @@ public class HTMLFetcher {
 
         return new HTMLDocument(data, cs);
     }
+
+	public static HTMLDocument fetch(final URL url) throws IOException {
+		return fetch(url, "utf-8");
+	}
 }

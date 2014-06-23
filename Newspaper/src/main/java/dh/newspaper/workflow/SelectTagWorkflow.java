@@ -77,9 +77,9 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	 * to run {@link dh.newspaper.workflow.SelectArticleWorkflow} on the same thread as this workflow.
 	 */
 	private SelectArticleWorkflow mCurrentLoadArticleWorkflow;
-	private List<SelectArticleWorkflow> mPendingLoadArticleWorkflow = new ArrayList<>();
+	private List<SelectArticleWorkflow> mPendingLoadArticleWorkflow = new ArrayList<SelectArticleWorkflow>();
 
-	private List<String> mNotices = new ArrayList<>();
+	private List<String> mNotices = new ArrayList<String>();
 	private Stopwatch mStopwatch;
 
 	private volatile boolean used = false;
@@ -167,7 +167,7 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 		if (mSubscriptions == null || mSubscriptions.isEmpty()) {
 			resetStopwatch();
 
-			mSubscriptions = new HashMap<>();
+			mSubscriptions = new HashMap<Subscription, Feeds>();
 
 			for (Subscription sub : getSubscriptions(mTag)) {
 				if (sub!=null) {

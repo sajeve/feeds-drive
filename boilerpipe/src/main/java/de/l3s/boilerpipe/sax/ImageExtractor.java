@@ -92,6 +92,14 @@ public final class ImageExtractor {
 		
 		return implementation.linksHighlight;
 	}
+
+	public String extractContent(final TextDocument doc,
+							   final InputSource is) throws BoilerpipeProcessingException {
+		final Implementation implementation = new Implementation();
+		implementation.process(doc, is);
+
+		return implementation.allContent.toString();
+	}
 	
 	/**
 	 * Fetches the given {@link java.net.URL} using {@link de.l3s.boilerpipe.sax.HTMLFetcher} and processes the
@@ -114,7 +122,20 @@ public final class ImageExtractor {
 
 		return process(doc, is);
 	}
-	
+
+
+	public String extractContent(final URL url, final BoilerpipeExtractor extractor)
+			throws IOException, BoilerpipeProcessingException, SAXException {
+		final HTMLDocument htmlDoc = HTMLFetcher.fetch(url);
+
+		final TextDocument doc = new BoilerpipeSAXInput(htmlDoc.toInputSource())
+				.getTextDocument();
+		extractor.process(doc);
+
+		final InputSource is = htmlDoc.toInputSource();
+
+		return extractContent(doc, is);
+	}
 
 	private final class Implementation extends AbstractSAXParser implements
 			ContentHandler {
@@ -126,6 +147,8 @@ public final class ImageExtractor {
 		private final BitSet contentBitSet = new BitSet();
 		
 		private boolean inHighlight = false;
+
+		private StringBuilder allContent = new StringBuilder();
 
 		Implementation() {
 			super(new HTMLConfiguration());
@@ -216,6 +239,7 @@ public final class ImageExtractor {
 			}
 		}
 
+		@Override
 		public void characters(char[] ch, int start, int length)
 				throws SAXException {
 			characterElementIdx++;
@@ -240,6 +264,9 @@ public final class ImageExtractor {
 
 				inHighlight = highlight;
 				if(inHighlight) {
+
+					allContent.append(ch);
+
 					linksHighlight.addAll(linksBuffer);
 					linksBuffer.clear();
 				}

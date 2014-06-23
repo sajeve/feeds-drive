@@ -31,13 +31,13 @@ import de.l3s.boilerpipe.filters.simple.BoilerplateBlockFilter;
  *
  * @author Christian Kohlschütter
  */
-public final class ArticleContentExtractor extends ExtractorBase {
-    public static final ArticleContentExtractor INSTANCE = new ArticleContentExtractor();
+public final class ArticleExtractorNoTitle extends ExtractorBase {
+    public static final ArticleExtractorNoTitle INSTANCE = new ArticleExtractorNoTitle();
 
     /**
-     * Returns the singleton instance for {@link de.l3s.boilerpipe.extractors.ArticleContentExtractor}.
+     * Returns the singleton instance for {@link ArticleExtractorNoTitle}.
      */
-    public static ArticleContentExtractor getInstance() {
+    public static ArticleExtractorNoTitle getInstance() {
         return INSTANCE;
     }
     

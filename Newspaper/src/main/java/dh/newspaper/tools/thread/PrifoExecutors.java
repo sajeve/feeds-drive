@@ -1,8 +1,5 @@
 package dh.newspaper.tools.thread;
 
-import dh.newspaper.tools.BumpBlockingQueue;
-
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;

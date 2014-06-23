@@ -7,6 +7,10 @@ import java.util.List;
 
 import android.webkit.URLUtil;
 import com.google.common.base.Splitter;
+import de.l3s.boilerpipe.BoilerpipeExtractor;
+import de.l3s.boilerpipe.extractors.ArticleExtractorNoTitle;
+import de.l3s.boilerpipe.extractors.CommonExtractors;
+import de.l3s.boilerpipe.sax.HTMLHighlighter;
 import dh.newspaper.Constants;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
@@ -36,6 +40,9 @@ import javax.inject.Inject;
  */
 public class ContentParser {
 	private static final String TAG = ContentParser.class.getName();
+
+	public static final HTMLHighlighter HTML_HIGHLIGHTER = HTMLHighlighter.newExtractingInstance(true, false);
+	public static final BoilerpipeExtractor[] EXTRACTORS = new BoilerpipeExtractor[] {ArticleExtractorNoTitle.INSTANCE, CommonExtractors.DEFAULT_EXTRACTOR, CommonExtractors.KEEP_EVERYTHING_EXTRACTOR};
 
 	public static final int AVATAR_MIN_WIDTH = 50;
 	public static final int AVATAR_MIN_HEIGHT = 50;

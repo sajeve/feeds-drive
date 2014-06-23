@@ -17,7 +17,7 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 	private transient TreeSet<E> queue;
 
 	public PrifoQueue(Comparator<? super E> comparator) {
-		this.queue = new TreeSet<>(comparator);
+		this.queue = new TreeSet<E>(comparator);
 	}
 	public PrifoQueue() {
 		this(null);

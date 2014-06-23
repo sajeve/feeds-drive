@@ -5,6 +5,10 @@ import android.os.Looper;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import de.l3s.boilerpipe.extractors.ArticleExtractorNoTitle;
+import de.l3s.boilerpipe.sax.HTMLDocument;
+import de.l3s.boilerpipe.sax.HTMLFetcher;
+import de.l3s.boilerpipe.sax.HTMLHighlighter;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
@@ -18,12 +22,11 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -49,7 +52,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 	@Inject RefData refData;
 
 	private final Duration mArticleTimeToLive;
-	private final boolean mDownloadFullContent;
+	private final boolean mOnlineMode;
 	private final SelectArticleCallback mCallback;
 
 	private Article mArticle;
@@ -71,7 +74,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		mArticleTimeToLive = articleTimeToLive;
 		mCallback = callback;
-		mDownloadFullContent = downloadFullContent;
+		mOnlineMode = downloadFullContent;
 	}
 
 	/**
@@ -122,7 +125,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 				mParentSubscription = mDaoSession.getSubscriptionDao().queryBuilder()
 						.where(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()))
 						.unique();
-				log("Find Parent subscription: "+mArticle);
+				log("Find Parent subscription", mArticle);
 				if (isCancelled()) {
 					return;
 				}
@@ -131,7 +134,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 					//find mArticle from database
 					mArticle = mDaoSession.getArticleDao().queryBuilder()
 							.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
-					log("Find Article in cache: "+mArticle);
+					log("Find Article in cache", mArticle);
 					if (isCancelled()) {
 						return;
 					}
@@ -153,7 +156,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 				else { //mArticle is not null, refresh it from database
 					try {
 						mDaoSession.getArticleDao().refresh(mArticle);
-						log("Refresh cached Article from database: "+mArticle);
+						log("Refresh cached Article from database", mArticle);
 						if (isCancelled()) {
 							return;
 						}
@@ -191,7 +194,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 	 * mArticle=null
 	 */
 	private void insertNewToCache() {
-		downloadArticleContent();
+		downloadAndExtractArticleContent();
 		if (isCancelled()) {
 			return;
 		}
@@ -232,7 +235,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 		resetStopwatch();
 		mDaoSession.getArticleDao().insert(mArticle);
-		log("Insert new "+mArticle);
+		log("Insert new", mArticle);
 
 		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
@@ -256,7 +259,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 	}
 
 	private void updateArticleContent() {
-		downloadArticleContent();
+		downloadAndExtractArticleContent();
 
 		if (isCancelled()) {
 			return;
@@ -288,7 +291,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 		resetStopwatch();
 		mDaoSession.getArticleDao().update(mArticle);
-		log("Update article content"+mArticle);
+		log("Update article content", mArticle);
 
 		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
@@ -331,45 +334,48 @@ public class SelectArticleWorkflow extends PrifoTask {
 			logWarn("Null content");
 			return null;
 		}
+		resetStopwatch();
 		mDoc = Jsoup.parse(mArticle.getContent());
+		log("Jsoup parse", StrUtils.glimpse(mArticle.getContent()));
 		return mDoc;
 	}
 
 	/**
 	 * feed articleContent, mArticleLanguage, mParseNotice
 	 */
-	private void downloadArticleContent() {
-		if (!mDownloadFullContent) {
+	private void downloadAndExtractArticleContent() {
+		if (!mOnlineMode) {
 			mArticleContentDownloaded = mFeedItem.getDescription();
 			logSimple("Download Full content = false: use Feed Description as content");
 			return;
 		}
 
-		findFirstMatchingPathToContent();
 		if (isCancelled()) {
 			return;
 		}
-		if (mPathToContent == null) {
-			mParseNotice.append(" XPath not found in "+PathToContentDao.TABLENAME);
-			return;
-		}
-		mArticleLanguage = mPathToContent.getLanguage();
+
 		try {
 			resetStopwatch();
-			//articleContent = mContentParser.extractContent(mFeedItem.getUri(), mPathToContent.getXpath()).html();
 
-			InputStream inputStream = NetworkUtils.getStreamFromUrl(mFeedItem.getUri(), NetworkUtils.MOBILE_USER_AGENT, this);
-			if (inputStream == null) {
-				log("Download article content Cancelled");
+			//download content
+			byte[] data = NetworkUtils.downloadContent(mFeedItem.getUri(), NetworkUtils.MOBILE_USER_AGENT, this);
+			if (data == null || data.length==0) {
+				mParseNotice.append(" Raw content is null.");
 				return;
 			}
+			log("Raw content downloaded");
+
+			final HTMLDocument htmlDoc = new HTMLDocument(data, Charset.forName(Constants.DEFAULT_ENCODING));
+			mArticleContentDownloaded = ContentParser.HTML_HIGHLIGHTER.process(htmlDoc, ContentParser.EXTRACTORS);
+
+			log("Extract content done", StrUtils.glimpse(mArticleContentDownloaded));
 
 			//articleContent = mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri()).html();
-			mArticleContentDownloaded = mContentParser.getHtml(mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri(), mParseNotice));
+			//mArticleContentDownloaded = mContentParser.getHtml(mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri(), mParseNotice));
+			//log("Download article content: "+StrUtils.glimpse(mArticleContentDownloaded));
 
-			log("Download article content: "+StrUtils.glimpse(mArticleContentDownloaded));
 			if (Strings.isNullOrEmpty(mArticleContentDownloaded)) {
-				mParseNotice.append(" Empty content. Check if the xpath matches page source.");
+				mParseNotice.append(" boilerpipe returns empty content.");
 			}
 		} catch (IOException e) {
 			mParseNotice.append(" IOException: "+e.getMessage());
@@ -460,6 +466,10 @@ public class SelectArticleWorkflow extends PrifoTask {
 	}
 	private void log(String message) {
 		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mFeedItem.getUri());
+		mStopwatch.reset().start();
+	}
+	private void log(String message, Object data) {
+		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms): "+data+" - " + mFeedItem.getUri());
 		mStopwatch.reset().start();
 	}
 	private void resetStopwatch() {
