@@ -1,1 +1,1 @@
-include ':Newspaper', ':Generator', ':SqliteAssetHelper', ':AndroidUniversalImageLoader', ':boilerpipe'
+include ':Newspaper', ':Generator', ':SqliteAssetHelper', ':AndroidUniversalImageLoader', ':boilerpipe', ':boilerpipe-test', ':JusText'
