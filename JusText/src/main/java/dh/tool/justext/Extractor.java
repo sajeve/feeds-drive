@@ -6,10 +6,11 @@ import org.jsoup.nodes.*;
 import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class Extractor {
-	Configuration conf;
+	private final Configuration conf;
 
 	public Extractor() {
 		this(Configuration.DEFAULT);
@@ -18,17 +19,134 @@ public class Extractor {
 		this.conf = conf;
 	}
 
-	List<Paragraph> paragraphs;
-
-	public String parse(Document document) {
+	public Document removeBoilerplate(Document document) {
 		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
 		cleanUselessContent(document);
-		paragraphs = computeParagraphs(document);
-		return null;
+		LinkedList<Paragraph> paragraphs = computeParagraphs(document);
+		new QualityComputation(paragraphs, conf).process();
+
+		for (Paragraph p : paragraphs) {
+			p.colorizeParagraph();
+		}
+
+		return document;
 	}
 
-	public List<Paragraph> getParagraphs() {
-		return paragraphs;
+	public static class QualityComputation {
+		private LinkedList<Paragraph> paragraphs;
+		private Configuration conf;
+
+		public QualityComputation(LinkedList<Paragraph> paragraphs, Configuration conf) {
+			this.paragraphs = paragraphs;
+			this.conf = conf;
+		}
+
+		public void process() {
+			//performs context-free classification
+
+			for (Paragraph p : paragraphs) {
+				p.initRawInfo();
+			}
+
+			//context-sensitive classification
+
+			processEdges(paragraphs.iterator()); //left edge
+			processEdges(paragraphs.descendingIterator()); //right edge
+
+			int left;
+			for (int i=0; i<paragraphs.size();) {
+				if (paragraphs.get(i).isNearOrShort()) {
+					left = i-1;
+					while (paragraphs.get(i).isNearOrShort() && i<paragraphs.size()) {
+						i++;
+					}
+					processChunk(left, i);
+				}
+				i++;
+			}
+		}
+
+		private void processEdges(Iterator<Paragraph> it) {
+			Paragraph p;
+			while (it.hasNext() && (p = it.next()).isNearOrShort()) {
+				if (conf.isRemoveEdgeContent()) {
+					p.setQuality(Paragraph.Quality.BAD); // content from edge are often boilerplate
+				} else {
+					if (p.getQuality() == Paragraph.Quality.NEAR_GOOD) {
+						p.setQuality(Paragraph.Quality.GOOD); //NEAR_GOOD becomes GOOD
+					}
+					else {
+						p.setQuality(Paragraph.Quality.BAD); //SHORT becomes BAD
+					}
+				}
+			}
+		}
+
+		private void processChunk(int leftPos, int rightPos) {
+			Paragraph left = paragraphs.get(leftPos);
+			Paragraph right = paragraphs.get(rightPos);
+
+			if (sameQuality(leftPos, rightPos, left, right, Paragraph.Quality.GOOD)) {
+				return;
+			}
+			if (sameQuality(leftPos, rightPos, left, right, Paragraph.Quality.BAD)) {
+				return;
+			}
+
+			if (left.getQuality()==Paragraph.Quality.BAD) {
+				/* B, S->B, N->G, ?->G, ?->G, G */
+
+				int i;
+				for (i=leftPos+1; i<rightPos; i++) {
+					Paragraph p = paragraphs.get(i);
+					if (p.getQuality()== Paragraph.Quality.NEAR_GOOD) //found the nearest NEAR_GOOD from the extremity BAD
+						break;
+					if (Configuration.DEBUG) {
+						if (p.getQuality() != Paragraph.Quality.SHORT) {
+							throw new IllegalStateException();
+						}
+					}
+					p.setQuality(Paragraph.Quality.BAD);
+				}
+
+				for (int j=i; j<rightPos; j++) {
+					paragraphs.get(j).setQuality(Paragraph.Quality.GOOD);
+				}
+				return;
+			}
+
+			if (right.getQuality()==Paragraph.Quality.BAD) {
+				/* G, ?->G, ?->G, N->G, S->B, B */
+
+				int i;
+				for (i=rightPos-1; i>leftPos; i--) {
+					Paragraph p = paragraphs.get(i);
+					if (p.getQuality()== Paragraph.Quality.NEAR_GOOD) //found the nearest NEAR_GOOD from the extremity BAD
+						break;
+					if (Configuration.DEBUG) {
+						if (p.getQuality() != Paragraph.Quality.SHORT) {
+							throw new IllegalStateException();
+						}
+					}
+					p.setQuality(Paragraph.Quality.BAD);
+				}
+
+				for (int j=i; j>leftPos; j--) {
+					paragraphs.get(j).setQuality(Paragraph.Quality.GOOD);
+				}
+				return;
+			}
+		}
+
+		private boolean sameQuality(int leftPos, int rightPos, Paragraph left, Paragraph right, Paragraph.Quality q) {
+			if (left.getQuality()==q && right.getQuality()==q) {
+				for (int i=leftPos+1; i<rightPos; i++) {
+					paragraphs.get(i).setQuality(q);
+				}
+				return true;
+			}
+			return false;
+		}
 	}
 
 	/**
@@ -103,7 +221,7 @@ public class Extractor {
 		}).traverse(node);
 	}
 
-	private List<Paragraph> computeParagraphs(Node node) {
+	private LinkedList<Paragraph> computeParagraphs(Node node) {
 		ParagraphsExplorer pe = new ParagraphsExplorer(conf);
 		node.traverse(pe);
 		return pe.getParagraphs();

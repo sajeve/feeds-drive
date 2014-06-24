@@ -21,7 +21,7 @@ public class TestUtils {
 			writer.write("</body></html>");
 		}
 		writer.close();
-		System.out.println("Write String to file OK" + filename);
+		System.out.println("Write String to file OK " + filename);
 	}
 
 	public static void writeToFile(String filename, InputStream content, boolean wrapHtml) throws IOException {
@@ -45,6 +45,6 @@ public class TestUtils {
 			writer.write("</body></html>");
 		}
 		writer.close();
-		System.out.println("Write InputStream to file OK" + filename);
+		System.out.println("Write InputStream to file OK " + filename);
 	}
 }

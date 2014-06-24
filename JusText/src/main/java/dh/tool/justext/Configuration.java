@@ -6,6 +6,7 @@ import java.io.Serializable;
  * Created by hiep on 24/06/2014.
  */
 public class Configuration implements Serializable, Cloneable {
+	public static final boolean DEBUG = true;
 	public static final Configuration DEFAULT = new Configuration();
 
 	private boolean noHeadings = false;
@@ -15,6 +16,7 @@ public class Configuration implements Serializable, Cloneable {
 	private double stopwordsLow = 0.3;
 	private double stopwordsHigh = 0.32;
 	private double maxLinkDensity = 0.2;
+	private boolean removeEdgeContent = true;
 	private String language;
 
 	public boolean isNoHeadings() {
@@ -87,6 +89,14 @@ public class Configuration implements Serializable, Cloneable {
 		this.language = language;
 	}
 
+	public boolean isRemoveEdgeContent() {
+		return removeEdgeContent;
+	}
+
+	private void setRemoveEdgeContent(boolean removeEdgeContent) {
+		this.removeEdgeContent = removeEdgeContent;
+	}
+
 	@Override
 	protected Configuration clone() throws CloneNotSupportedException {
 		Configuration resu = new Configuration();
@@ -98,6 +108,7 @@ public class Configuration implements Serializable, Cloneable {
 		resu.setStopwordsHigh(stopwordsHigh);
 		resu.setMaxLinkDensity(maxLinkDensity);
 		resu.setLanguage(language);
+		resu.setRemoveEdgeContent(removeEdgeContent);
 		return resu;
 	}
 
@@ -153,6 +164,11 @@ public class Configuration implements Serializable, Cloneable {
 
 		public Builder setLanguage(String language) {
 			configuration.setLanguage(language);
+			return this;
+		}
+
+		private Builder setRemoveEdgeContent(boolean removeEdgeContent) {
+			configuration.setRemoveEdgeContent(removeEdgeContent);
 			return this;
 		}
 	}

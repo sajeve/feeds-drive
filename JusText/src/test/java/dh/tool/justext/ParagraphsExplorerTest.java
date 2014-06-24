@@ -1,7 +1,7 @@
 package dh.tool.justext;
 
+import com.google.common.base.Stopwatch;
 import dh.tool.TestUtils;
-import dh.tool.jsoup.NodeHelper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Node;
@@ -9,8 +9,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by hiep on 24/06/2014.
@@ -73,12 +73,17 @@ public class ParagraphsExplorerTest {
 
 	@Test
 	public void testFreeContextClassify() throws IOException {
-		Extractor extractor = new Extractor();
+		Stopwatch sw = Stopwatch.createStarted();
 		Document document = Jsoup.parse(new URL("http://dantri.com.vn/phap-luat/phat-hien-chan-dong-hon-14000-so-dien-thoai-bi-nghe-len-theo-doi-891664.htm"), Integer.MAX_VALUE);
-		extractor.parse(document);
-		for (Paragraph p : extractor.getParagraphs()) {
-			p.colorizeParagraph();
-		}
-		TestUtils.writeToFile("vnexpress1.html", document.html(), false);
+		System.out.println("Download and parse "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms");
+
+		TestUtils.writeToFile("vnexpress1-origin.html", document.html(), false);
+
+		sw.reset().start();
+		Extractor extractor = new Extractor();
+		extractor.removeBoilerplate(document);
+		System.out.println("Remove boilerplate "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms");
+
+		TestUtils.writeToFile("vnexpress1-final.html", document.html(), false);
 	}
 }
