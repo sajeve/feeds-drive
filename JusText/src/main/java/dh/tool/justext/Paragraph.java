@@ -1,11 +1,15 @@
 package dh.tool.justext;
 
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import dh.tool.jsoup.NodeHelper;
-import org.jsoup.helper.StringUtil;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.SortedSet;
 
 /**
  * A block of text node (leaf node, no-children nodes).
@@ -23,12 +27,21 @@ public class Paragraph extends LinkedList<Node> {
 	private Quality quality;
 	private String rawText;
 	private int linksLength;
+	private int countWords;
+	private int countStopwords;
 	private double linkDensity;
 	private boolean isHeading;
 	private double stopwordsDensity;
 	private String message;
+	private int id;
 
-	public Paragraph(Node firstNode, Configuration conf) {
+	/**
+	 * true only if we has stopwords list of the configured language
+	 */
+	private boolean stopwordsChecking = false;
+
+	public Paragraph(Node firstNode, int id, Configuration conf) {
+		this.id = id;
 		this.conf = conf;
 		add(firstNode);
 	}
@@ -38,16 +51,19 @@ public class Paragraph extends LinkedList<Node> {
 	 */
 	private Quality computeContextFreeQuality() {
 		int rawTextLength = rawText.length();
+		double stopwordsHigh = stopwordsChecking ? conf.getStopwordsHigh() : 0;
+		double stopwordsLow = stopwordsChecking ? conf.getStopwordsLow() : 0;
 
 		if (linkDensity > conf.getMaxLinkDensity()) {
 			if (Configuration.DEBUG)
-				message = String.format("Context-free BAD: Too much links density=%.3g > %.3g", linkDensity, conf.getMaxLinkDensity());
+				message = String.format("Context-free BAD: Too much links density=%.3g > %.3g. %s",
+						linkDensity, conf.getMaxLinkDensity(), message);
 			return Quality.BAD;
 		}
 
 		if (rawText.contains("©") || rawText.contains("&copy;")) {
 			if (Configuration.DEBUG)
-				message = "Context-free BAD: Contains copyright symbol";
+				message = "Context-free BAD: Contains copyright symbol"+message;
 			return Quality.BAD;
 		}
 
@@ -55,37 +71,41 @@ public class Paragraph extends LinkedList<Node> {
 		if (rawTextLength < conf.getLengthLow()) {
 			if (linkDensity > 0) {
 				if (Configuration.DEBUG)
-					message = String.format("Context-free BAD: Short paragraph (length=%d < %d) with links density=%.3g > 0", rawTextLength, conf.getLengthLow(), linkDensity);
+					message = String.format("Context-free BAD: Short paragraph (length=%d < %d) with links density=%.3g > 0. %s",
+							rawTextLength, conf.getLengthLow(), linkDensity, message);
 				return Quality.BAD;
 			}
 			else {
 				if (Configuration.DEBUG)
-					message = String.format("Context-free SHORT: Too short (length=%d < %d) to make decision", rawTextLength, conf.getLengthLow());
+					message = String.format("Context-free SHORT: Too short (length=%d < %d) to make decision. %s",
+							rawTextLength, conf.getLengthLow(), message);
 				return Quality.SHORT;
 			}
 		}
 
 		//medium and long block
-		if (stopwordsDensity >= conf.getStopwordsHigh()) {
+		if (stopwordsDensity >= stopwordsHigh) {
 			if (rawTextLength > conf.getLengthHigh()) {
 				if (Configuration.DEBUG)
-					message = String.format("Context-free GOOD: High stop words (density=%.3g >= %.3g) on long paragraph (length=%d > %d)", stopwordsDensity, conf.getStopwordsHigh(), rawTextLength, conf.getLengthHigh());
+					message = String.format("Context-free GOOD: High stop words (density=%.3g >= %.3g) on long paragraph (length=%d > %d). %s",
+							stopwordsDensity, stopwordsHigh, rawTextLength, conf.getLengthHigh(), message);
 				return Quality.GOOD;
 			}
 			else {
 				if (Configuration.DEBUG)
-					message = String.format("Context-free NEAR_GOOD: High stop words (density=%.3g >= %.3g) on medium block (length=%d <= %d)", stopwordsDensity, conf.getStopwordsHigh(), rawTextLength, conf.getLengthHigh());
+					message = String.format("Context-free NEAR_GOOD: High stop words (density=%.3g >= %.3g) on medium block (length=%d <= %d). %s",
+							stopwordsDensity, stopwordsHigh, rawTextLength, conf.getLengthHigh(), message);
 				return Quality.NEAR_GOOD;
 			}
 		}
 
-		if (stopwordsDensity >= conf.getStopwordsLow()) {
+		if (stopwordsDensity >= stopwordsLow) {
 			if (Configuration.DEBUG)
-				message = String.format("Context-free NEAR_GOOD: Medium/High stop words (density=%.3g >= %.3g) on paragraph)", stopwordsDensity, conf.getStopwordsHigh());
+				message = String.format("Context-free NEAR_GOOD: Medium/High stop words (density=%.3g >= %.3g) on paragraph. %s", stopwordsDensity, stopwordsHigh, message);
 			return Quality.NEAR_GOOD;
 		} else {
 			if (Configuration.DEBUG)
-				message = String.format("Context-free BAD: Low stop words (density=%.3g < %.3g) on paragraph)", stopwordsDensity, conf.getStopwordsLow());
+				message = String.format("Context-free BAD: Low stop words (density=%.3g < %.3g) on paragraph. %s", stopwordsDensity, stopwordsLow, message);
 			return Quality.BAD;
 		}
 	}
@@ -105,14 +125,14 @@ public class Paragraph extends LinkedList<Node> {
 		return contextFreeQuality;
 	}
 
-	public int getLinksLength() {
-		initRawInfo();
-		return linksLength;
-	}
-
 	public double getLinkDensity() {
 		initRawInfo();
 		return linkDensity;
+	}
+
+	public int getLength() {
+		initRawInfo();
+		return rawText.length();
 	}
 
 	public boolean isHeading() {
@@ -127,13 +147,18 @@ public class Paragraph extends LinkedList<Node> {
 		return quality;
 	}
 
-	public void setQuality(Quality quality) {
-		if (Configuration.DEBUG)
-			if (message.startsWith("Context-sensitive ")) {
-				message += " ";
-			}
-			message = "Context-sensitive "+quality+". "+message;
+	void setQuality(Quality quality, String reason) {
+		if (Configuration.DEBUG) {
+			message = reason+" " + quality + ". " + message;
+		}
 		this.quality = quality;
+	}
+
+	void setContextFreeQuality(Quality contextFreeQuality, String reason) {
+		if (Configuration.DEBUG) {
+			message = reason+" change context-free Quality to " + contextFreeQuality + ". " + message;
+		}
+		this.contextFreeQuality = contextFreeQuality;
 	}
 
 	/**
@@ -154,17 +179,13 @@ public class Paragraph extends LinkedList<Node> {
 
 		StringBuilder sb = new StringBuilder();
 		for (Node n : this) {
-			String nodeRawText;
-			if (n instanceof TextNode)
-				nodeRawText = ((TextNode) n).text();
-			else
-				nodeRawText = n.outerHtml();
+			if (n instanceof TextNode) {
+				String nodeRawText = ((TextNode) n).text();
+				sb.append(nodeRawText);
 
-			sb.append(nodeRawText);
-
-			if (NodeHelper.isLink(n))
-				linksLength += nodeRawText.length();
-
+				if (NodeHelper.isLink(n))
+					linksLength += nodeRawText.length();
+			}
 			/*
 			if one of node in the fragment is heading, so the fragment is heading
 			example: <h1><span>hello</span> world <img/></h1>
@@ -176,6 +197,33 @@ public class Paragraph extends LinkedList<Node> {
 			}
 		}
 		rawText = sb.toString();
+
+		/*compute stopwords density*/
+
+		if (!Strings.isNullOrEmpty(conf.getLanguage())) {
+			try {
+				SortedSet<String> stopwords = StopwordsManager.getStopwords(conf.getLanguage());
+
+				Iterable<String> words = Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(rawText);
+				Iterator<String> it = words.iterator();
+				this.countWords = 0;
+				this.countStopwords = 0;
+				while (it.hasNext()) {
+					if (stopwords.contains(it.next())) {
+						this.countStopwords++;
+					}
+					this.countWords++;
+				}
+
+				this.stopwordsDensity = 1.0*countStopwords / countWords;
+				this.stopwordsChecking = true;
+			} catch (Exception e) {
+				message += "Failed load stopwords of "+conf.getLanguage()+": "+e.getMessage()+". ";
+				this.stopwordsChecking = false;
+				e.printStackTrace();
+			}
+		}
+
 		linkDensity = (double)linksLength / rawText.length();
 		contextFreeQuality = computeContextFreeQuality();
 	}
@@ -198,16 +246,21 @@ public class Paragraph extends LinkedList<Node> {
 		}
 
 		for (Node n : this) {
-			n.wrap(String.format("<span style=\"background:%s\" title=\"%s\"></span>", color, message));
+			n.wrap(String.format("<span style=\"background:%s\" title=\"%s\"></span>", color, this.toString()));
 		}
 	}
 
 	@Override
 	public String toString() {
 		if (Configuration.DEBUG) {
-			return message;
+			return "["+this.getId()+"] " + message;
 		}
-		return getQuality().toString();
+		return String.format("[%d] %s length=%d link=%.3g stopwords=%.3g", getId(), getQuality(), rawText.length(), getLinkDensity(), getStopwordsDensity());
+	}
+
+
+	public int getId() {
+		return id;
 	}
 
 	/**

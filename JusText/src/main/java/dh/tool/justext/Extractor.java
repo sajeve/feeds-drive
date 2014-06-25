@@ -19,17 +19,42 @@ public class Extractor {
 		this.conf = conf;
 	}
 
-	public Document removeBoilerplate(Document document) {
-		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
-		cleanUselessContent(document);
-		LinkedList<Paragraph> paragraphs = computeParagraphs(document);
-		new QualityComputation(paragraphs, conf).process();
+	public void removeBoilerplate(Document document) {
+		removeBoilerplate(document, false);
+	}
 
-		for (Paragraph p : paragraphs) {
-			p.colorizeParagraph();
+	public void removeBoilerplate(Document document, boolean colorize) {
+		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
+		if (conf.isCleanUselessTag()) {
+			cleanUselessContent(document);
 		}
 
-		return document;
+		LinkedList<Paragraph> paragraphs = conf.isProcessOnlyBody() ?
+				computeParagraphs(document.body()) :
+				computeParagraphs(document);
+
+		new QualityComputation(paragraphs, conf).process();
+
+		if (colorize) {
+			for (Paragraph p : paragraphs) {
+				p.colorizeParagraph();
+			}
+		}
+		else {
+			//remove all BAD node paragraphs
+			for (Paragraph p : paragraphs) {
+				if (p.getQuality()== Paragraph.Quality.BAD) {
+					for (Node n : p) {
+						n.remove();
+					}
+				}
+			}
+
+			//clean empty tags
+			if (conf.isCleanEmptyTag()) {
+				NodeHelper.cleanEmptyElements(document);
+			}
+		}
 	}
 
 	public static class QualityComputation {
@@ -48,6 +73,10 @@ public class Extractor {
 				p.initRawInfo();
 			}
 
+			//pre-process heading
+
+			preProcessHeading();
+
 			//context-sensitive classification
 
 			processEdges(paragraphs.iterator()); //left edge
@@ -64,19 +93,77 @@ public class Extractor {
 				}
 				i++;
 			}
+
+			//post-process heading
+
+			postProcessHeading();
+		}
+
+		public void preProcessHeading() {
+			if (!conf.isProcessHeadings()) {
+				return;
+			}
+			//find all SHORT heading paragraph which is not too far away from the first GOOD paragraph
+			for (int i=0; i<paragraphs.size(); i++) {
+				Paragraph shortHeading = paragraphs.get(i);
+				if (shortHeading.isHeading() && shortHeading.getContextFreeQuality()==Paragraph.Quality.SHORT) {
+					int distanceToFirstGood = 0;
+					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.getMaxHeadingDistance(); j++) {
+						Paragraph p = paragraphs.get(j);
+						if (p.getContextFreeQuality() == Paragraph.Quality.GOOD) {
+							shortHeading.setContextFreeQuality(Paragraph.Quality.NEAR_GOOD, "Pre-heading");
+							break;
+						}
+						distanceToFirstGood += p.getLength();
+					}
+				}
+			}
+		}
+
+		public void postProcessHeading() {
+			if (!conf.isProcessHeadings()) {
+				return;
+			}
+
+			//find all heading paragraph NON-BAD in Context-free which is not too far away from the first GOOD paragraph
+			for (int i=0; i<paragraphs.size(); i++) {
+				Paragraph nonBadHeading = paragraphs.get(i);
+				if (nonBadHeading.isHeading() && nonBadHeading.getContextFreeQuality()!=Paragraph.Quality.BAD) {
+					int distanceToFirstGood = 0;
+					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.getMaxHeadingDistance(); j++) {
+						Paragraph p = paragraphs.get(j);
+						if (p.getContextFreeQuality() == Paragraph.Quality.GOOD) {
+							nonBadHeading.setQuality(Paragraph.Quality.GOOD, "Post-heading");
+							break;
+						}
+						distanceToFirstGood += p.getLength();
+					}
+				}
+			}
+
+			if (conf.isRemoveTitle()) {
+				//remove first good heading
+				for (int i=0; i<paragraphs.size(); i++) {
+					Paragraph p = paragraphs.get(i);
+					if (p.isHeading() && p.getQuality()== Paragraph.Quality.GOOD) {
+						p.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
+						return;
+					}
+				}
+			}
 		}
 
 		private void processEdges(Iterator<Paragraph> it) {
 			Paragraph p;
 			while (it.hasNext() && (p = it.next()).isNearOrShort()) {
 				if (conf.isRemoveEdgeContent()) {
-					p.setQuality(Paragraph.Quality.BAD); // content from edge are often boilerplate
+					p.setQuality(Paragraph.Quality.BAD, "ProcessEdge"); // content from edge are often boilerplate
 				} else {
 					if (p.getQuality() == Paragraph.Quality.NEAR_GOOD) {
-						p.setQuality(Paragraph.Quality.GOOD); //NEAR_GOOD becomes GOOD
+						p.setQuality(Paragraph.Quality.GOOD, "ProcessEdge"); //NEAR_GOOD becomes GOOD
 					}
 					else {
-						p.setQuality(Paragraph.Quality.BAD); //SHORT becomes BAD
+						p.setQuality(Paragraph.Quality.BAD, "ProcessEdge"); //SHORT becomes BAD
 					}
 				}
 			}
@@ -106,11 +193,11 @@ public class Extractor {
 							throw new IllegalStateException();
 						}
 					}
-					p.setQuality(Paragraph.Quality.BAD);
+					p.setQuality(Paragraph.Quality.BAD, "Context-sensitive-dif");
 				}
 
 				for (int j=i; j<rightPos; j++) {
-					paragraphs.get(j).setQuality(Paragraph.Quality.GOOD);
+					paragraphs.get(j).setQuality(Paragraph.Quality.GOOD, "Context-sensitive-dif");
 				}
 				return;
 			}
@@ -128,11 +215,11 @@ public class Extractor {
 							throw new IllegalStateException();
 						}
 					}
-					p.setQuality(Paragraph.Quality.BAD);
+					p.setQuality(Paragraph.Quality.BAD, "Context-sensitive-dif");
 				}
 
 				for (int j=i; j>leftPos; j--) {
-					paragraphs.get(j).setQuality(Paragraph.Quality.GOOD);
+					paragraphs.get(j).setQuality(Paragraph.Quality.GOOD, "Context-sensitive-dif");
 				}
 				return;
 			}
@@ -141,7 +228,7 @@ public class Extractor {
 		private boolean sameQuality(int leftPos, int rightPos, Paragraph left, Paragraph right, Paragraph.Quality q) {
 			if (left.getQuality()==q && right.getQuality()==q) {
 				for (int i=leftPos+1; i<rightPos; i++) {
-					paragraphs.get(i).setQuality(q);
+					paragraphs.get(i).setQuality(q, "Context-sensitive-eq");
 				}
 				return true;
 			}

@@ -86,7 +86,7 @@ class ParagraphsExplorer implements NodeVisitor {
 	}
 
 	private void insertAsNewParagraph(Node node) {
-		paragraphs.add(new Paragraph(node, conf));
+		paragraphs.add(new Paragraph(node, paragraphs.size(), conf));
 	}
 	private void appendToLastParagraph(Node node) {
 		paragraphs.getLast().add(node);

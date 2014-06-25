@@ -1,10 +1,9 @@
 package dh.tool.jsoup;
 
 import com.google.common.base.Function;
-import org.jsoup.nodes.Comment;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.FormElement;
-import org.jsoup.nodes.Node;
+import org.jsoup.helper.StringUtil;
+import org.jsoup.nodes.*;
+import org.jsoup.select.NodeVisitor;
 
 import java.util.HashMap;
 
@@ -102,7 +101,6 @@ public class NodeHelper {
 		put("embed", TagType.IGNORABLE);
 		put("applet", TagType.IGNORABLE);
 		put("link", TagType.IGNORABLE);
-		put("head", TagType.IGNORABLE);
 		put("button", TagType.IGNORABLE);
 		put("select", TagType.IGNORABLE);
 		put("input", TagType.IGNORABLE);
@@ -190,8 +188,118 @@ public class NodeHelper {
 		return "img".equalsIgnoreCase(tag.nodeName());
 	}
 
+	public static boolean isEmptyElement(Node node) {
+		if (node == null || !(node instanceof Element)) {
+			return false;
+		}
+		boolean isEmptyTag = ((Element)node).tag().isEmpty();
+		return !isEmptyTag && hasEmptyChidren(node);
+	}
+
+	public static boolean hasEmptyChidren(Node node) {
+		if (node.childNodeSize() == 0)
+			return true;
+		for (Node n : node.childNodes()) {
+			if (!(n instanceof TextNode)) {
+				return false;
+			}
+
+			if (!StringUtil.isBlank(((TextNode) n).text())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public static boolean isIgnorableTagNode(Node node) {
 		return node instanceof Comment || isIgnorableTag(node);
 	}
 
+//	public static class DivUnwrapper implements NodeVisitor {
+//
+//		private boolean modified = false;
+//		private Node root;
+//
+//		public DivUnwrapper(Node root) {
+//			this.root = root;
+//		}
+//
+//		@Override
+//		public void head(Node node, int depth) {
+//			for (int i = 0; i < node.childNodes().size();) {
+//				Node child = node.childNode(i);
+//
+//				//remove empty elements
+//				if (isBlockTag(child) && child.childNodes().size()==1) {
+//					child.childNode(0).unwrap();
+//					modified = true;
+//				}
+//				else {
+//					i++;
+//				}
+//			}
+//		}
+//
+//		@Override
+//		public void tail(Node node, int depth) {
+//
+//		}
+//
+//		public boolean isModified() {
+//			return modified;
+//		}
+//	}
+
+	public static class EmptyNodeCleaner implements NodeVisitor {
+
+		private boolean modified = false;
+		private Node root;
+
+		public EmptyNodeCleaner(Node root) {
+			this.root = root;
+		}
+
+		@Override
+		public void head(Node node, int depth) {
+			for (int i = 0; i < node.childNodes().size();) {
+				Node child = node.childNode(i);
+
+				//remove empty elements
+				if (isEmptyElement(child)) {
+					child.remove();
+					modified = true;
+				}
+				else {
+					i++;
+				}
+			}
+		}
+
+		@Override
+		public void tail(Node node, int depth) {
+
+		}
+
+		public boolean isModified() {
+			return modified;
+		}
+	}
+
+	public static void cleanEmptyElements(Node node) {
+		EmptyNodeCleaner enc;
+		do {
+			enc = new EmptyNodeCleaner(node);
+			node.traverse(enc);
+		}
+		while (enc.isModified());
+	}
+
+//	public static void divUnwrap(Node node) {
+//		DivUnwrapper enc;
+//		do {
+//			enc = new DivUnwrapper(node);
+//			node.traverse(enc);
+//		}
+//		while (enc.isModified());
+//	}
 }

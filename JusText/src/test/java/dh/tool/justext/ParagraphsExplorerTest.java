@@ -2,6 +2,7 @@ package dh.tool.justext;
 
 import com.google.common.base.Stopwatch;
 import dh.tool.TestUtils;
+import dh.tool.jsoup.NodeHelper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Node;
@@ -80,8 +81,14 @@ public class ParagraphsExplorerTest {
 		TestUtils.writeToFile("vnexpress1-origin.html", document.html(), false);
 
 		sw.reset().start();
-		Extractor extractor = new Extractor();
-		extractor.removeBoilerplate(document);
+
+		Configuration conf = new Configuration.Builder()
+				.setLanguage("vn")
+				.setRemoveTitle(true)
+				.getConfiguration();
+		Extractor extractor = new Extractor(conf);
+		extractor.removeBoilerplate(document, false);
+
 		System.out.println("Remove boilerplate "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms");
 
 		TestUtils.writeToFile("vnexpress1-final.html", document.html(), false);
