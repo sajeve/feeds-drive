@@ -1,7 +1,5 @@
 package dh.tool.justext;
 
-import sun.plugin.dom.exception.InvalidStateException;
-
 import java.io.Serializable;
 
 /**
@@ -166,7 +164,7 @@ public class Configuration implements Serializable, Cloneable {
 			} catch (CloneNotSupportedException e) {
 				e.printStackTrace();
 			}
-			throw new InvalidStateException("cannot clone");
+			throw new IllegalStateException("cannot clone");
 		}
 
 		private Builder setNoHeadings(boolean noHeadings) {

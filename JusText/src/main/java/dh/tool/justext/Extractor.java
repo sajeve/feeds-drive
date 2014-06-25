@@ -20,10 +20,13 @@ public class Extractor {
 	}
 
 	public void removeBoilerplate(Document document) {
-		removeBoilerplate(document, false);
+		process(document, false);
+	}
+	public void decorateBoilerplate(Document document) {
+		process(document, true);
 	}
 
-	public void removeBoilerplate(Document document, boolean colorize) {
+	private void process(Document document, boolean colorize) {
 		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
 		if (conf.isCleanUselessTag()) {
 			cleanUselessContent(document);

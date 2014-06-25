@@ -88,7 +88,7 @@ public class ParagraphsExplorerTest {
 				.setRemoveTitle(true)
 				.build();
 		Extractor extractor = new Extractor(conf);
-		extractor.removeBoilerplate(document, false);
+		extractor.decorateBoilerplate(document);
 
 		System.out.println("Remove boilerplate " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
