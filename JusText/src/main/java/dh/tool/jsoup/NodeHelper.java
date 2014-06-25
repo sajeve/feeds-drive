@@ -106,6 +106,7 @@ public class NodeHelper {
 		put("input", TagType.IGNORABLE);
 		put("textarea", TagType.IGNORABLE);
 		put("keygen", TagType.IGNORABLE);
+
 		put("blockquote", TagType.BLOCKLEVEL);
 		put("caption", TagType.BLOCKLEVEL);
 		put("center", TagType.BLOCKLEVEL);
@@ -119,17 +120,16 @@ public class NodeHelper {
 		put("form", TagType.BLOCKLEVEL);
 		put("legend", TagType.BLOCKLEVEL);
 		put("optgroup", TagType.BLOCKLEVEL);
-		put("option", TagType.BLOCKLEVEL);
 		put("p", TagType.BLOCKLEVEL);
 		put("pre", TagType.BLOCKLEVEL_CONTENT);
 		put("table", TagType.BLOCKLEVEL);
 		put("td", TagType.BLOCKLEVEL);
-		put("textarea", TagType.BLOCKLEVEL);
 		put("tfoot", TagType.BLOCKLEVEL);
 		put("th", TagType.BLOCKLEVEL);
 		put("thead", TagType.BLOCKLEVEL);
 		put("tr", TagType.BLOCKLEVEL);
 		put("ul", TagType.BLOCKLEVEL);
+		put("ol", TagType.BLOCKLEVEL);
 		put("li", TagType.BLOCKLEVEL);
 		put("h1", TagType.BLOCKLEVEL_TITLE);
 		put("h2", TagType.BLOCKLEVEL_TITLE);
@@ -142,7 +142,6 @@ public class NodeHelper {
 		put("u", TagType.INNERTEXT); //count as text inside block
 		put("i", TagType.INNERTEXT);//count as text inside block
 		put("br", TagType.INNERTEXT); //count as text inside block
-		//put("img", TagType.INNERTEXT_ONLY); //count as text inside block
 	}};
 
 	public static boolean isIgnorableTag(Node tag) {

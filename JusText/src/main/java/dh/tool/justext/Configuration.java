@@ -1,5 +1,7 @@
 package dh.tool.justext;
 
+import sun.plugin.dom.exception.InvalidStateException;
+
 import java.io.Serializable;
 
 /**
@@ -142,19 +144,29 @@ public class Configuration implements Serializable, Cloneable {
 		return resu;
 	}
 
-	static public class Builder {
+	public static class Builder implements Cloneable {
 		Configuration configuration;
 
 		public Builder() {
 			configuration = new Configuration();
 		}
 
-		public Builder(Configuration configuration) throws CloneNotSupportedException {
-			this.configuration = configuration.clone();
+		public Builder(Configuration fromConfiguration) throws CloneNotSupportedException {
+			this.configuration = configuration;
 		}
 
-		Configuration getConfiguration() {
-			return configuration;
+		@Override
+		protected Object clone() throws CloneNotSupportedException {
+			return new Builder(configuration.clone());
+		}
+
+		public Configuration build() {
+			try {
+				return configuration.clone();
+			} catch (CloneNotSupportedException e) {
+				e.printStackTrace();
+			}
+			throw new InvalidStateException("cannot clone");
 		}
 
 		private Builder setNoHeadings(boolean noHeadings) {

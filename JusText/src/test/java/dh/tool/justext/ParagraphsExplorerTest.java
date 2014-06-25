@@ -5,6 +5,7 @@ import dh.tool.TestUtils;
 import dh.tool.jsoup.NodeHelper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.junit.Assert;
 import org.junit.Test;
@@ -85,12 +86,53 @@ public class ParagraphsExplorerTest {
 		Configuration conf = new Configuration.Builder()
 				.setLanguage("vn")
 				.setRemoveTitle(true)
-				.getConfiguration();
+				.build();
 		Extractor extractor = new Extractor(conf);
 		extractor.removeBoilerplate(document, false);
 
-		System.out.println("Remove boilerplate "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms");
+		System.out.println("Remove boilerplate " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
 
 		TestUtils.writeToFile("vnexpress1-final.html", document.html(), false);
+	}
+
+	@Test
+	public void testFreeContextClassify2() throws IOException {
+		Stopwatch sw = Stopwatch.createStarted();
+		Document document = Jsoup.parse(new URL("http://www.huffingtonpost.fr/2014/06/24/italie-uruguay-but-morsure-huitiemes-de-finale_n_5526485.html?utm_hp_ref=france"), Integer.MAX_VALUE);
+		System.out.println("Download and parse "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms");
+
+		TestUtils.writeToFile("nyt-origin.html", document.html(), false);
+
+//		Extractor.cleanUselessContent(document);
+//		TestUtils.writeToFile("nyt-clean.html", document.html(), false);
+
+		sw.reset().start();
+
+		Configuration conf = new Configuration.Builder()
+				.setLanguage("fr")
+				.setRemoveTitle(false)
+				.build();
+		Extractor extractor = new Extractor(conf);
+		extractor.removeBoilerplate(document);
+
+		System.out.println("Remove boilerplate "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms");
+
+		TestUtils.writeToFile("nyt-final.html", document.html(), false);
+	}
+
+	@Test
+	public void testCleanUselessContent() {
+		Document document = Jsoup.parse("<div><textarea class=\"hp-slideshow-share-url\" rows=\"3\" cols=\"70\" spellcheck=\"false\"></textarea></div>");
+
+		Element e = document.select("textarea").first();
+
+		Assert.assertTrue(NodeHelper.isIgnorableTag(e));
+
+		System.out.println(document);
+
+		System.out.println("Cleaning..");
+		Extractor.cleanUselessContent(document);
+
+		System.out.println(document);
 	}
 }

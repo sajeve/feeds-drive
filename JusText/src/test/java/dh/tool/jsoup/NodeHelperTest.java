@@ -2,7 +2,9 @@ package dh.tool.jsoup;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.parser.Parser;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -54,5 +56,12 @@ public class NodeHelperTest {
 		Document doc = Jsoup.parse("<a><b><c/><e/></b><d/></a><img/>");
 		NodeHelper.cleanEmptyElements(doc);
 		System.out.println(doc);
+	}
+
+	@Test
+	public void testWrap() {
+		Document doc = Jsoup.parse("<textarea>hello</textarea>");
+		Element e = doc.select("textarea").first();
+		Parser.parseFragment("<span></span>", e, "localhost");
 	}
 }
