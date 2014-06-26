@@ -1,6 +1,7 @@
 package dh.tool.justext;
 
 import com.google.common.base.Strings;
+import dh.tool.common.ICancellation;
 import dh.tool.jsoup.NodeHelper;
 import org.jsoup.nodes.*;
 import org.jsoup.select.NodeTraversor;
@@ -11,12 +12,17 @@ import java.util.LinkedList;
 
 public class Extractor {
 	private Configuration conf;
+	private final ICancellation cancellation;
 
 	public Extractor() {
-		this(Configuration.DEFAULT);
+		this(Configuration.DEFAULT, null);
 	}
 	public Extractor(Configuration conf) {
+		this(conf, null);
+	}
+	public Extractor(Configuration conf, ICancellation cancellation) {
 		this.conf = conf;
+		this.cancellation = cancellation;
 	}
 
 	public void removeBoilerplate(Document document) {
@@ -27,6 +33,8 @@ public class Extractor {
 	}
 
 	private void process(Document document, boolean colorize) {
+		if (cancellation!=null && cancellation.isCancelled()) return;
+
 		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
 
 		String lang = null;
@@ -51,15 +59,23 @@ public class Extractor {
 			}
 		}
 
+		if (cancellation!=null && cancellation.isCancelled()) return;
+
 		if (conf.preCleanUselessContent()) {
 			cleanUselessContent(document);
 		}
+
+		if (cancellation!=null && cancellation.isCancelled()) return;
 
 		LinkedList<Paragraph> paragraphs = conf.processOnlyBody() ?
 				computeParagraphs(document.body()) :
 				computeParagraphs(document);
 
+		if (cancellation!=null && cancellation.isCancelled()) return;
+
 		new QualityComputation(paragraphs, conf).process();
+
+		if (cancellation!=null && cancellation.isCancelled()) return;
 
 		if (colorize) {
 			for (Paragraph p : paragraphs) {
@@ -76,6 +92,8 @@ public class Extractor {
 				}
 			}
 
+			if (cancellation!=null && cancellation.isCancelled()) return;
+
 			//clean empty tags
 			if (conf.postCleanBoilerplateTags()) {
 				NodeHelper.cleanEmptyElements(document);
@@ -84,7 +102,7 @@ public class Extractor {
 		}
 	}
 
-	public static class QualityComputation {
+	private static class QualityComputation {
 		private LinkedList<Paragraph> paragraphs;
 		private Configuration conf;
 
@@ -102,7 +120,12 @@ public class Extractor {
 
 			//pre-process heading
 
-			preProcessHeading();
+			if (conf.contentAlwaysHasTitle()) {
+				preProcessHeading2();
+			}
+			else {
+				preProcessHeading();
+			}
 
 			//context-sensitive classification
 
@@ -124,8 +147,27 @@ public class Extractor {
 			//post-process heading
 
 			postProcessHeading();
+
+			if (conf.contentAlwaysHasTitle()) {
+				findTitle();
+			}
+
+			if (conf.removeTitle()) {
+				//remove first good heading
+				for (int i=0; i<paragraphs.size(); i++) {
+					Paragraph p = paragraphs.get(i);
+					if (p.isHeading() && p.getQuality()== Paragraph.Quality.GOOD) {
+						p.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
+						return;
+					}
+				}
+			}
 		}
 
+		/**
+		 * jusText algorithm find all SHORT heading paragraph which is not too far away from the first GOOD paragraph
+		 * promote these heading from SHORT to NEAR_GOOD
+		 */
 		public void preProcessHeading() {
 			if (!conf.processHeadings()) {
 				return;
@@ -144,6 +186,72 @@ public class Extractor {
 						distanceToFirstGood += p.getLength();
 					}
 				}
+			}
+		}
+
+		/**
+		 * enhance by Hiep after trying: http://www.huffingtonpost.com/2014/06/25/googles-massive-plan-to-t_n_5530653.html
+		 * give more tolerance for NEAR-GOOD text after a heading paragraph.
+		 *
+		 * After heading, we often have a small resume paragraph (excerpt) which is sometimes NEAR_GOOD
+		 * In this case, we will force it to GOOD (context-free) and promote SHORT heading to NEAR_GOOD
+		 */
+		public void preProcessHeading2() {
+			if (!conf.processHeadings()) {
+				return;
+			}
+			//find all SHORT heading paragraph which is not too far away from the first GOOD or NEAR_GOOD paragraph
+			for (int i=0; i<paragraphs.size(); i++) {
+				Paragraph shortHeading = paragraphs.get(i);
+				if (shortHeading.isHeading() && shortHeading.getContextFreeQuality()!=Paragraph.Quality.BAD) {
+					int distanceToFirstGood = 0;
+					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.maxHeadingDistance(); j++) {
+						Paragraph p = paragraphs.get(j);
+						if (p.getContextFreeQuality() == Paragraph.Quality.GOOD) {
+							//a SHORT heading near a GOOD paragraph: normal jusText processing
+							shortHeading.setContextFreeQuality(Paragraph.Quality.NEAR_GOOD, "Pre-heading");
+							break;
+						}
+						if (p.getContextFreeQuality() == Paragraph.Quality.NEAR_GOOD) {
+							//a SHORT heading near a NEAR_GOOD paragraph: excerpt detected
+							shortHeading.setContextFreeQuality(Paragraph.Quality.NEAR_GOOD, "Pre-heading-tolerance");
+							p.setContextFreeQuality(Paragraph.Quality.GOOD, "Pre-heading-excerpt");
+						}
+						distanceToFirstGood += p.getLength();
+					}
+				}
+			}
+		}
+
+		/**
+		 * make sure that we has a title in article
+		 * if we did not have any heading GOOD paragraph, so
+		 * we will find the nearest context-free NEAR_GOOD heading before the first GOOD paragraph.
+		 * We will use this paragraph as Title, so promote it to GOOD.
+		 */
+		public void findTitle() {
+			for (Paragraph p : paragraphs) {
+				if (p.isHeading() && p.getQuality() == Paragraph.Quality.GOOD) {
+					//we already has a GOOD heading paragraph, nothing to do here
+					return;
+				}
+			}
+
+			//find the nearest NEAR_GOOD heading before the first GOOD paragraph
+			Paragraph lastNearGoodHeading = null;
+			for (int i=0; i<paragraphs.size(); i++) {
+				Paragraph p = paragraphs.get(i);
+				if (p.isHeading() && p.getContextFreeQuality() == Paragraph.Quality.NEAR_GOOD) {
+					lastNearGoodHeading = p;
+				}
+				if (p.getQuality() == Paragraph.Quality.GOOD) {
+					break;
+				}
+			}
+
+			//promote it to GOOD (so we will have title)
+			if (lastNearGoodHeading != null) {
+				lastNearGoodHeading.setQuality(Paragraph.Quality.GOOD, "FindTitle");
 			}
 		}
 
@@ -168,16 +276,7 @@ public class Extractor {
 				}
 			}
 
-			if (conf.removeTitle()) {
-				//remove first good heading
-				for (int i=0; i<paragraphs.size(); i++) {
-					Paragraph p = paragraphs.get(i);
-					if (p.isHeading() && p.getQuality()== Paragraph.Quality.GOOD) {
-						p.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
-						return;
-					}
-				}
-			}
+
 		}
 
 		private void processEdges(Iterator<Paragraph> it) {
@@ -308,10 +407,14 @@ public class Extractor {
 					}
 				}
 				//remove useless Attributes
-				Attributes atts = node.attributes();
-				for (Attribute a : atts) {
-					if (a.getKey().equalsIgnoreCase("class"))
-						node.removeAttr(a.getKey());
+				if (node instanceof Element) {
+					Iterator<Attribute> it = node.attributes().iterator();
+					while (it.hasNext()) {
+						Attribute a = it.next();
+						if (NodeHelper.isIgnorableAttribute(a.getKey())) {
+							node.removeAttr(a.getKey());
+						}
+					}
 				}
 
 				//convert to absolute path

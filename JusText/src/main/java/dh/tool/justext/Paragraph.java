@@ -1,6 +1,7 @@
 package dh.tool.justext;
 
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.html.HtmlEscapers;
@@ -31,7 +32,7 @@ public class Paragraph extends LinkedList<Node> {
 	private int countWords;
 	private int countStopwords;
 	private double linkDensity;
-	private boolean isHeading;
+	private boolean heading;
 	private double stopwordsDensity;
 	private String message;
 	private int id;
@@ -145,7 +146,7 @@ public class Paragraph extends LinkedList<Node> {
 
 	public boolean isHeading() {
 		initRawInfo();
-		return isHeading;
+		return heading;
 	}
 
 	public Quality getQuality() {
@@ -172,7 +173,7 @@ public class Paragraph extends LinkedList<Node> {
 	/**
 	 * Perform context-free classification. Compute only once.
 	 * - {@link #rawText}
-	 * - {@link #isHeading}
+	 * - {@link #heading}
 	 * - {@link #linkDensity}
 	 * - {@link #contextFreeQuality}
 	 * The second invocation of this method won't do anything
@@ -182,7 +183,7 @@ public class Paragraph extends LinkedList<Node> {
 			return;
 		}
 
-		isHeading = false;
+		heading = false;
 		linksLength = 0;
 
 		StringBuilder sb = new StringBuilder();
@@ -198,13 +199,17 @@ public class Paragraph extends LinkedList<Node> {
 			if one of node in the fragment is heading, so the fragment is heading
 			example: <h1><span>hello</span> world <img/></h1>
 			 */
-			if (!isHeading) {
+			if (!heading) {
 				if (NodeHelper.isHeading(n)) {
-					isHeading = true;
+					heading = true;
 				}
 			}
 		}
 		rawText = sb.toString();
+
+		if (Configuration.DEBUG) {
+			message = (message == null ? "" : message) + (isHeading() ? "Heading" : "");
+		}
 
 		/*compute stopwords density*/
 
@@ -271,6 +276,7 @@ public class Paragraph extends LinkedList<Node> {
 		if (Configuration.DEBUG) {
 			return "["+this.getId()+"] " + message;
 		}
+
 		return String.format("[%d] %s length=%d link=%.3g stopwords=%.3g", getId(), getQuality(), rawText.length(), getLinkDensity(), getStopwordsDensity());
 	}
 

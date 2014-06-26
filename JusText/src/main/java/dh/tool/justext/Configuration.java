@@ -25,6 +25,7 @@ public class Configuration implements Serializable, Cloneable {
 	private boolean processOnlyBody = true;
 	private String language;
 	private boolean autoDetectLanguage = true;
+	private boolean contentAlwaysHasTitle = true;
 
 	public boolean processHeadings() {
 		return processHeadings;
@@ -91,6 +92,10 @@ public class Configuration implements Serializable, Cloneable {
 		return autoDetectLanguage;
 	}
 
+	public boolean contentAlwaysHasTitle() {
+		return contentAlwaysHasTitle;
+	}
+
 	@Override
 	protected Configuration clone() throws CloneNotSupportedException {
 		Configuration resu = new Configuration();
@@ -108,6 +113,7 @@ public class Configuration implements Serializable, Cloneable {
 		resu.postCleanBoilerplateTags = postCleanBoilerplateTags;
 		resu.processOnlyBody = processOnlyBody;
 		resu.autoDetectLanguage = autoDetectLanguage;
+		resu.contentAlwaysHasTitle = contentAlwaysHasTitle;
 		return resu;
 	}
 
@@ -119,7 +125,7 @@ public class Configuration implements Serializable, Cloneable {
 		}
 
 		public Builder(Configuration fromConfiguration) throws CloneNotSupportedException {
-			this.configuration = fromConfiguration;
+			this.configuration = fromConfiguration.clone();
 		}
 
 		@Override
@@ -200,6 +206,10 @@ public class Configuration implements Serializable, Cloneable {
 		}
 		public Builder autoDetectLanguage(boolean autoDetectLanguage) {
 			configuration.autoDetectLanguage = autoDetectLanguage;
+			return this;
+		}
+		public Builder contentAlwaysHasTitle(boolean contentAlwaysHasTitle) {
+			configuration.contentAlwaysHasTitle = contentAlwaysHasTitle;
 			return this;
 		}
 	}

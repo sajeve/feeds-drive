@@ -11,6 +11,12 @@ import java.util.HashMap;
  * Created by hiep on 24/06/2014.
  */
 public class NodeHelper {
+
+	/**
+	 * return the nearest common ancestor of node1 and node2
+	 * @throws java.lang.IllegalStateException if node1 and node2 has no common ancestor
+	 * to make sure that node1 and node2 should inside the same document
+	 */
 	public static Node nearestCommonAncestor(Node node1, Node node2) {
 		Node ancestor=node1;
 		while (ancestor!=null) {
@@ -142,6 +148,22 @@ public class NodeHelper {
 		put("br", TagType.INNERTEXT); //count as text inside block
 	}};
 
+	/**
+	 * Keep only some attribute (src, href, style) remove all other
+	 * @param attrName
+	 * @return
+	 */
+	public static boolean isIgnorableAttribute(String attrName) {
+		return !"src".equalsIgnoreCase(attrName)
+				&& !"href".equalsIgnoreCase(attrName)
+				&& !"style".equalsIgnoreCase(attrName)
+				&& !"lang".equalsIgnoreCase(attrName)
+				&& !"content".equalsIgnoreCase(attrName)
+				&& !"title".equalsIgnoreCase(attrName)
+				&& !"charset".equalsIgnoreCase(attrName)
+				&& !"http-equiv".equalsIgnoreCase(attrName)
+				;
+	}
 	public static boolean isIgnorableTag(Node tag) {
 		if (tag == null || !(tag instanceof Element)) {
 			return false;
@@ -227,8 +249,10 @@ public class NodeHelper {
 			if (node.childNodeSize()==1) {
 				Node child = node.childNode(0);
 				if (child.childNodeSize()==1 && child.nodeName().equalsIgnoreCase(node.nodeName())) {
-					child.unwrap();
-					modified = true;
+					if (child.attributes().size()==0) {
+						child.unwrap();
+						modified = true;
+					}
 				}
 			}
 		}
