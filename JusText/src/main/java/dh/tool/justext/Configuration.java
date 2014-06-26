@@ -20,125 +20,94 @@ public class Configuration implements Serializable, Cloneable {
 	private double maxLinkDensity = 0.2;
 	private boolean removeEdgeContent = true;
 	private boolean removeTitle = false;
-	private boolean cleanUselessTag = true;
-	private boolean cleanEmptyTag = true;
+	private boolean preCleanUselessContent = true;
+	private boolean postCleanBoilerplateTags = true;
 	private boolean processOnlyBody = true;
 	private String language;
+	private boolean autoDetectLanguage = true;
 
-	public boolean isProcessHeadings() {
+	public boolean processHeadings() {
 		return processHeadings;
 	}
 
-	private void setProcessHeadings(boolean processHeadings) {
-		this.processHeadings = processHeadings;
-	}
-
-	public int getMaxHeadingDistance() {
+	public int maxHeadingDistance() {
 		return maxHeadingDistance;
 	}
 
-	private void setMaxHeadingDistance(int maxHeadingDistance) {
-		this.maxHeadingDistance = maxHeadingDistance;
-	}
-
-	public int getLengthLow() {
+	public int lengthLow() {
 		return lengthLow;
 	}
 
-	private void setLengthLow(int lengthLow) {
-		this.lengthLow = lengthLow;
-	}
-
-	public int getLengthHigh() {
+	public int lengthHigh() {
 		return lengthHigh;
 	}
 
-	private void setLengthHigh(int lengthHigh) {
-		this.lengthHigh = lengthHigh;
-	}
-
-	public double getStopwordsLow() {
+	public double stopwordsLow() {
 		if (language==null) {
 			return 0;
 		}
 		return stopwordsLow;
 	}
 
-	private void setStopwordsLow(double stopwordsLow) {
-		this.stopwordsLow = stopwordsLow;
-	}
-
-	public double getStopwordsHigh() {
+	public double stopwordsHigh() {
 		if (language==null) {
 			return 0;
 		}
 		return stopwordsHigh;
 	}
 
-	private void setStopwordsHigh(double stopwordsHigh) {
-		this.stopwordsHigh = stopwordsHigh;
-	}
-
-	public double getMaxLinkDensity() {
+	public double maxLinkDensity() {
 		return maxLinkDensity;
 	}
 
-	private void setMaxLinkDensity(double maxLinkDensity) {
-		this.maxLinkDensity = maxLinkDensity;
-	}
-
-	public String getLanguage() {
+	public String language() {
 		return language;
 	}
 
-	private void setLanguage(String language) {
-		this.language = language;
-	}
-
-	public boolean isRemoveEdgeContent() {
+	public boolean removeEdgeContent() {
 		return removeEdgeContent;
 	}
 
-	private void setRemoveEdgeContent(boolean removeEdgeContent) {
-		this.removeEdgeContent = removeEdgeContent;
-	}
-
-	public boolean isRemoveTitle() {
+	public boolean removeTitle() {
 		return removeTitle;
 	}
 
-	private void setRemoveTitle(boolean removeTitle) {
-		this.removeTitle = removeTitle;
+	public boolean preCleanUselessContent() {
+		return preCleanUselessContent;
 	}
 
-	public boolean isCleanUselessTag() {
-		return cleanUselessTag;
+	public boolean postCleanBoilerplateTags() {
+		return postCleanBoilerplateTags;
 	}
 
-	public boolean isCleanEmptyTag() {
-		return cleanEmptyTag;
-	}
-
-	public boolean isProcessOnlyBody() {
+	/**
+	 * Keep head tag out-side of the business
+	 */
+	public boolean processOnlyBody() {
 		return processOnlyBody;
+	}
+
+	public boolean autoDetectLanguage() {
+		return autoDetectLanguage;
 	}
 
 	@Override
 	protected Configuration clone() throws CloneNotSupportedException {
 		Configuration resu = new Configuration();
-		resu.setProcessHeadings(processHeadings);
-		resu.setMaxHeadingDistance(maxHeadingDistance);
-		resu.setLengthLow(lengthLow);
-		resu.setLengthHigh(lengthHigh);
-		resu.setStopwordsLow(stopwordsLow);
-		resu.setStopwordsHigh(stopwordsHigh);
-		resu.setMaxLinkDensity(maxLinkDensity);
-		resu.setLanguage(language);
-		resu.setRemoveEdgeContent(removeEdgeContent);
-		resu.setRemoveTitle(removeTitle);
-		resu.cleanUselessTag = this.cleanUselessTag;
-		resu.cleanEmptyTag = this.cleanEmptyTag;
-		resu.processOnlyBody = this.processOnlyBody;
+		resu.processHeadings = processHeadings;
+		resu.maxHeadingDistance = maxHeadingDistance;
+		resu.lengthLow = lengthLow;
+		resu.lengthHigh = lengthHigh;
+		resu.stopwordsLow = stopwordsLow;
+		resu.stopwordsHigh = stopwordsHigh;
+		resu.maxLinkDensity = maxLinkDensity;
+		resu.language = language;
+		resu.removeEdgeContent = removeEdgeContent;
+		resu.removeTitle = removeTitle;
+		resu.preCleanUselessContent = preCleanUselessContent;
+		resu.postCleanBoilerplateTags = postCleanBoilerplateTags;
+		resu.processOnlyBody = processOnlyBody;
+		resu.autoDetectLanguage = autoDetectLanguage;
 		return resu;
 	}
 
@@ -150,7 +119,7 @@ public class Configuration implements Serializable, Cloneable {
 		}
 
 		public Builder(Configuration fromConfiguration) throws CloneNotSupportedException {
-			this.configuration = configuration;
+			this.configuration = fromConfiguration;
 		}
 
 		@Override
@@ -167,66 +136,70 @@ public class Configuration implements Serializable, Cloneable {
 			throw new IllegalStateException("cannot clone");
 		}
 
-		private Builder setNoHeadings(boolean noHeadings) {
-			configuration.setProcessHeadings(noHeadings);
+		private Builder processHeadings(boolean processHeadings) {
+			configuration.processHeadings = processHeadings;
 			return this;
 		}
 
-		public Builder setMaxHeadingDistance(int maxHeadingDistance) {
-			configuration.setMaxHeadingDistance(maxHeadingDistance);
+		public Builder maxHeadingDistance(int maxHeadingDistance) {
+			configuration.maxHeadingDistance = maxHeadingDistance;
 			return this;
 		}
 
-		public Builder setLengthLow(int lengthLow) {
-			configuration.setLengthLow(lengthLow);
+		public Builder lengthLow(int lengthLow) {
+			configuration.lengthLow = lengthLow;
 			return this;
 		}
 
-		public Builder setLengthHigh(int lengthHigh) {
-			configuration.setLengthHigh(lengthHigh);
+		public Builder lengthHigh(int lengthHigh) {
+			configuration.lengthHigh = lengthHigh;
 			return this;
 		}
 
-		public Builder setStopwordsLow(double stopwordsLow) {
-			configuration.setStopwordsLow(stopwordsLow);
+		public Builder stopwordsLow(double stopwordsLow) {
+			configuration.stopwordsLow = stopwordsLow;
 			return this;
 		}
 
-		public Builder setStopwordsHigh(double stopwordsHigh) {
-			configuration.setStopwordsHigh(stopwordsHigh);
+		public Builder stopwordsHigh(double stopwordsHigh) {
+			configuration.stopwordsHigh = stopwordsHigh;
 			return this;
 		}
 
-		public Builder setMaxLinkDensity(double maxLinkDensity) {
-			configuration.setMaxLinkDensity(maxLinkDensity);
+		public Builder maxLinkDensity(double maxLinkDensity) {
+			configuration.maxLinkDensity = maxLinkDensity;
 			return this;
 		}
 
-		public Builder setLanguage(String language) {
-			configuration.setLanguage(StopwordsManager.getLanguage(language));
+		public Builder language(String language) {
+			configuration.language = StopwordsManager.getLanguage(language);
 			return this;
 		}
 
-		public Builder setRemoveEdgeContent(boolean removeEdgeContent) {
-			configuration.setRemoveEdgeContent(removeEdgeContent);
+		public Builder removeEdgeContent(boolean removeEdgeContent) {
+			configuration.removeEdgeContent = removeEdgeContent;
 			return this;
 		}
 
-		public Builder setRemoveTitle(boolean removeTitle) {
-			configuration.setRemoveTitle(removeTitle);
+		public Builder removeTitle(boolean removeTitle) {
+			configuration.removeTitle = removeTitle;
 			return this;
 		}
 
-		public Builder setCleanUselessTag(boolean cleanUselessTag) {
-			configuration.cleanUselessTag = cleanUselessTag;
+		public Builder cleanUselessTag(boolean cleanUselessTag) {
+			configuration.preCleanUselessContent = cleanUselessTag;
 			return this;
 		}
-		public Builder setCleanEmptyTag(boolean cleanEmptyTag) {
-			configuration.cleanEmptyTag = cleanEmptyTag;
+		public Builder cleanBoilerplatesTags(boolean cleanEmptyTag) {
+			configuration.postCleanBoilerplateTags = cleanEmptyTag;
 			return this;
 		}
-		public Builder setProcessOnlyBody(boolean processOnlyBody) {
+		public Builder processOnlyBody(boolean processOnlyBody) {
 			configuration.processOnlyBody = processOnlyBody;
+			return this;
+		}
+		public Builder autoDetectLanguage(boolean autoDetectLanguage) {
+			configuration.autoDetectLanguage = autoDetectLanguage;
 			return this;
 		}
 	}

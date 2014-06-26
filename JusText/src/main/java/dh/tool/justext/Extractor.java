@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Extractor {
-	private final Configuration conf;
+	private Configuration conf;
 
 	public Extractor() {
 		this(Configuration.DEFAULT);
@@ -28,11 +28,34 @@ public class Extractor {
 
 	private void process(Document document, boolean colorize) {
 		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
-		if (conf.isCleanUselessTag()) {
+
+		String lang = null;
+		if (conf.autoDetectLanguage() && Strings.isNullOrEmpty(conf.language())) {
+			//auto detect language only if user did not configured language
+			lang = NodeHelper.detectLanguage(document);
+
+			if (!Strings.isNullOrEmpty(lang)) {
+				//found language, check if we have stop words list on this language
+				lang = StopwordsManager.getLanguage(lang.toLowerCase());
+				if (!Strings.isNullOrEmpty(lang)) {
+					/*
+					client did not configured the language but we detected the language of the page and we have stop words list on it
+					so we will exceptionally change the language configuration by cloning the actual config that the client gave us
+					*/
+					try {
+						conf = (new Configuration.Builder(conf)).language(lang).build();
+					} catch (CloneNotSupportedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
+		if (conf.preCleanUselessContent()) {
 			cleanUselessContent(document);
 		}
 
-		LinkedList<Paragraph> paragraphs = conf.isProcessOnlyBody() ?
+		LinkedList<Paragraph> paragraphs = conf.processOnlyBody() ?
 				computeParagraphs(document.body()) :
 				computeParagraphs(document);
 
@@ -54,8 +77,9 @@ public class Extractor {
 			}
 
 			//clean empty tags
-			if (conf.isCleanEmptyTag()) {
+			if (conf.postCleanBoilerplateTags()) {
 				NodeHelper.cleanEmptyElements(document);
+				NodeHelper.unwrapRedundancyTags(document);
 			}
 		}
 	}
@@ -103,7 +127,7 @@ public class Extractor {
 		}
 
 		public void preProcessHeading() {
-			if (!conf.isProcessHeadings()) {
+			if (!conf.processHeadings()) {
 				return;
 			}
 			//find all SHORT heading paragraph which is not too far away from the first GOOD paragraph
@@ -111,7 +135,7 @@ public class Extractor {
 				Paragraph shortHeading = paragraphs.get(i);
 				if (shortHeading.isHeading() && shortHeading.getContextFreeQuality()==Paragraph.Quality.SHORT) {
 					int distanceToFirstGood = 0;
-					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.getMaxHeadingDistance(); j++) {
+					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.maxHeadingDistance(); j++) {
 						Paragraph p = paragraphs.get(j);
 						if (p.getContextFreeQuality() == Paragraph.Quality.GOOD) {
 							shortHeading.setContextFreeQuality(Paragraph.Quality.NEAR_GOOD, "Pre-heading");
@@ -124,7 +148,7 @@ public class Extractor {
 		}
 
 		public void postProcessHeading() {
-			if (!conf.isProcessHeadings()) {
+			if (!conf.processHeadings()) {
 				return;
 			}
 
@@ -133,7 +157,7 @@ public class Extractor {
 				Paragraph nonBadHeading = paragraphs.get(i);
 				if (nonBadHeading.isHeading() && nonBadHeading.getContextFreeQuality()!=Paragraph.Quality.BAD) {
 					int distanceToFirstGood = 0;
-					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.getMaxHeadingDistance(); j++) {
+					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.maxHeadingDistance(); j++) {
 						Paragraph p = paragraphs.get(j);
 						if (p.getContextFreeQuality() == Paragraph.Quality.GOOD) {
 							nonBadHeading.setQuality(Paragraph.Quality.GOOD, "Post-heading");
@@ -144,7 +168,7 @@ public class Extractor {
 				}
 			}
 
-			if (conf.isRemoveTitle()) {
+			if (conf.removeTitle()) {
 				//remove first good heading
 				for (int i=0; i<paragraphs.size(); i++) {
 					Paragraph p = paragraphs.get(i);
@@ -159,7 +183,7 @@ public class Extractor {
 		private void processEdges(Iterator<Paragraph> it) {
 			Paragraph p;
 			while (it.hasNext() && (p = it.next()).isNearOrShort()) {
-				if (conf.isRemoveEdgeContent()) {
+				if (conf.removeEdgeContent()) {
 					p.setQuality(Paragraph.Quality.BAD, "ProcessEdge"); // content from edge are often boilerplate
 				} else {
 					if (p.getQuality() == Paragraph.Quality.NEAR_GOOD) {

@@ -55,6 +55,11 @@ public class StopwordsManager {
 
 	/**
 	 * map 'vn', 'vietnam', 'vn-vn' to Vietnam
+	 * increase the chance to find the stop words list when user set language such as "it", "yor"..
+	 * Source:
+	 * - http://www.w3schools.com/tags/ref_language_codes.asp
+	 * - http://www.rssboard.org/rss-language-codes
+	 * TODO: add http://www.loc.gov/standards/iso639-2/ISO-639-2_utf-8.txt
 	 */
 	private static final HashMap<String, String> languageMap = new HashMap<String, String>() {{
 		put("vietnamese", "Vietnamese");
@@ -65,8 +70,6 @@ public class StopwordsManager {
 		put("english", "English");
 		put("simple_english", "Simple_English");
 		put("en", "Simple_English");
-		put("uk", "Simple_English");
-		put("us", "Simple_English");
 		put("en-au", "Simple_English");
 		put("en-bz", "Simple_English");
 		put("en-ca", "Simple_English");
@@ -91,12 +94,7 @@ public class StopwordsManager {
 		put("fr-ch", "French");
 
 		put("dutch", "Dutch");
-		put("de", "Dutch");
-		put("de-at", "Dutch");
-		put("de-de", "Dutch");
-		put("de-li", "Dutch");
-		put("de-lu", "Dutch");
-		put("de-ch", "Dutch");
+		put("nl", "Dutch");
 
 		put("italian", "Italian");
 		put("it", "Italian");
@@ -152,87 +150,233 @@ public class StopwordsManager {
 		put("malay", "Malay");
 
 		put("afrikaans", "Afrikaans");
+		put("af", "Afrikaans");
+
 		put("albanian", "Albanian");
+		put("sq", "Albanian");
+
 		put("arabic", "Arabic");
+		put("ar", "Arabic");
+
 		put("aragonese", "Aragonese");
+		put("an", "Aragonese");
+
 		put("armenian", "Armenian");
+		put("hy", "Armenian");
+
 		put("aromanian", "Aromanian");
+
 		put("asturian", "Asturian");
+
 		put("azerbaijani", "Azerbaijani");
+		put("az", "Azerbaijani");
+
 		put("basque", "Basque");
+		put("eu", "Basque");
+
 		put("belarusian", "Belarusian");
 		put("belarusian_taraskievica", "Belarusian_Taraskievica");
+
 		put("bengali", "Bengali");
+		put("bn", "Bengali");
+
 		put("bishnupriya_manipuri", "Bishnupriya_Manipuri");
 		put("bosnian", "Bosnian");
+
 		put("breton", "Breton");
+		put("br", "Breton");
+
 		put("bulgarian", "Bulgarian");
+		put("bg", "Bulgarian");
+
 		put("catalan", "Catalan");
+		put("ca", "Catalan");
+
 		put("cebuano", "Cebuano");
 		put("chuvash", "Chuvash");
+
 		put("croatian", "Croatian");
+		put("hr", "Croatian");
+
 		put("czech", "Czech");
+		put("cs", "Czech");
+
 		put("danish", "Danish");
+		put("da", "Danish");
+
 		put("esperanto", "Esperanto");
+		put("eo", "Esperanto");
+
 		put("estonian", "Estonian");
+		put("et", "Estonian");
+
 		put("finnish", "Finnish");
+		put("fi", "Finnish");
+
 		put("galician", "Galician");
+		put("gl", "Galician");
+
 		put("georgian", "Georgian");
+		put("ka", "Georgian");
+
 		put("german", "German");
+		put("de", "German");
+		put("de-at", "German");
+		put("de-de", "German");
+		put("de-li", "German");
+		put("de-lu", "German");
+		put("de-ch", "German");
+
 		put("greek", "Greek");
+		put("el", "Greek");
+
 		put("gujarati", "Gujarati");
+		put("gu", "Gujarati");
+
 		put("haitian", "Haitian");
+		put("ht", "Haitian");
+
 		put("hebrew", "Hebrew");
+		put("he", "Hebrew");
+		put("iw", "Hebrew");
+
 		put("hindi", "Hindi");
+		put("hi", "Hindi");
+
 		put("hungarian", "Hungarian");
+		put("hu", "Hungarian");
+
 		put("icelandic", "Icelandic");
+		put("is", "Icelandic");
+
 		put("ido", "Ido");
+		put("io", "Ido");
+
 		put("igbo", "Igbo");
+
 		put("irish", "Irish");
+		put("ga", "Irish");
+
 		put("kannada", "Kannada");
+		put("kn", "Kannada");
+
 		put("kurdish", "Kurdish");
+		put("ku", "Kurdish");
+
 		put("latin", "Latin");
+		put("la", "Latin");
+
 		put("latvian", "Latvian");
+		put("lettish", "Latvian");
+		put("lv", "Latvian");
+
 		put("lithuanian", "Lithuanian");
+		put("lt", "Lithuanian");
+
 		put("lombard", "Lombard");
 		put("low_saxon", "Low_Saxon");
 		put("luxembourgish", "Luxembourgish");
+
 		put("macedonian", "Macedonian");
+		put("mk", "Macedonian");
+
 		put("malayalam", "Malayalam");
+
 		put("maltese", "Maltese");
+		put("mt", "Maltese");
+
 		put("marathi", "Marathi");
+		put("mr", "Marathi");
+
 		put("neapolitan", "Neapolitan");
+
 		put("nepali", "Nepali");
+		put("ne", "Nepali");
+
 		put("newar", "Newar");
+
 		put("norwegian_bokmal", "Norwegian_Bokmal");
+		put("no-bo", "Norwegian_Bokmal");
+		put("no", "Norwegian_Bokmal");
+		put("nob", "Norwegian_Bokmal");
+		put("nb", "Norwegian_Bokmal");
 		put("norwegian_nynorsk", "Norwegian_Nynorsk");
+		put("no-ny", "Norwegian_Nynorsk");
+		put("nno", "Norwegian_Nynorsk");
+		put("nn", "Norwegian_Nynorsk");
+
 		put("occitan", "Occitan");
+		put("oc", "Occitan");
+
 		put("persian", "Persian");
 		put("piedmontese", "Piedmontese");
+
 		put("polish", "Polish");
+		put("pl", "Polish");
+
 		put("quechua", "Quechua");
+		put("qu", "Quechua");
+
 		put("romanian", "Romanian");
+		put("ro", "Romanian");
+
 		put("samogitian", "Samogitian");
+
 		put("serbian", "Serbian");
+		put("sr", "Serbian");
+
 		put("serbo_croatian", "Serbo_Croatian");
 		put("sicilian", "Sicilian");
+
 		put("slovak", "Slovak");
+		put("sk", "Slovak");
+
 		put("slovenian", "Slovenian");
+		put("sl", "Slovenian");
+
 		put("sundanese", "Sundanese");
+		put("su", "Sundanese");
+
 		put("swahili", "Swahili");
+		put("kiswahili", "Swahili");
+		put("sw", "Swahili");
+
 		put("swedish", "Swedish");
+		put("sv", "Swedish");
+
 		put("tagalog", "Tagalog");
+		put("tl", "Tagalog");
+
 		put("tamil", "Tamil");
+		put("ta", "Tamil");
+
 		put("telugu", "Telugu");
+		put("te", "Telugu");
+
 		put("turkish", "Turkish");
+		put("tr", "Turkish");
+
 		put("ukrainian", "Ukrainian");
+		put("uk", "Ukrainian");
+
 		put("urdu", "Urdu");
+		put("ur", "Urdu");
+
 		put("volapuk", "Volapuk");
+		put("vo", "Volapuk");
+
 		put("walloon", "Walloon");
+		put("wa", "Walloon");
+
 		put("waray_waray", "Waray_Waray");
+
 		put("welsh", "Welsh");
+		put("cy", "Welsh");
+
 		put("west_frisian", "West_Frisian");
 		put("western_panjabi", "Western_Panjabi");
+
 		put("yoruba", "Yoruba");
+		put("yo", "Yoruba");
 	}};
 }

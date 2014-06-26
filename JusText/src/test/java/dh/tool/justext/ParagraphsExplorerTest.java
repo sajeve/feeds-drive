@@ -84,8 +84,8 @@ public class ParagraphsExplorerTest {
 		sw.reset().start();
 
 		Configuration conf = new Configuration.Builder()
-				.setLanguage("vn")
-				.setRemoveTitle(true)
+				.language("vn")
+				.removeTitle(true)
 				.build();
 		Extractor extractor = new Extractor(conf);
 		extractor.decorateBoilerplate(document);
@@ -109,13 +109,12 @@ public class ParagraphsExplorerTest {
 		sw.reset().start();
 
 		Configuration conf = new Configuration.Builder()
-				.setLanguage("fr")
-				.setRemoveTitle(false)
+				//.language("fr") //no need, language is auto-detected
 				.build();
 		Extractor extractor = new Extractor(conf);
-		extractor.removeBoilerplate(document);
+		extractor.decorateBoilerplate(document);
 
-		System.out.println("Remove boilerplate "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms");
+		System.out.println("decorate boilerplate "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms");
 
 		TestUtils.writeToFile("nyt-final.html", document.html(), false);
 	}

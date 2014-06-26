@@ -89,8 +89,6 @@ public class NodeHelper {
 		return false;
 	}
 
-
-
 	public static enum TagType {IGNORABLE, INNERTEXT, BLOCKLEVEL, BLOCKLEVEL_CONTENT, BLOCKLEVEL_TITLE}
 
 	public static final HashMap<String, TagType> TagsType = new HashMap<String, TagType>(){{
@@ -188,7 +186,13 @@ public class NodeHelper {
 	}
 
 	public static boolean isEmptyElement(Node node) {
-		if (node == null || !(node instanceof Element)) {
+		if (node == null) {
+			return false;
+		}
+		if (node instanceof TextNode) {
+			return StringUtil.isBlank(((TextNode) node).text());
+		}
+		if (!(node instanceof Element)) {
 			return false;
 		}
 		boolean isEmptyTag = ((Element)node).tag().isEmpty();
@@ -214,49 +218,34 @@ public class NodeHelper {
 		return node instanceof Comment || isIgnorableTag(node);
 	}
 
-//	public static class DivUnwrapper implements NodeVisitor {
-//
-//		private boolean modified = false;
-//		private Node root;
-//
-//		public DivUnwrapper(Node root) {
-//			this.root = root;
-//		}
-//
-//		@Override
-//		public void head(Node node, int depth) {
-//			for (int i = 0; i < node.childNodes().size();) {
-//				Node child = node.childNode(i);
-//
-//				//remove empty elements
-//				if (isBlockTag(child) && child.childNodes().size()==1) {
-//					child.childNode(0).unwrap();
-//					modified = true;
-//				}
-//				else {
-//					i++;
-//				}
-//			}
-//		}
-//
-//		@Override
-//		public void tail(Node node, int depth) {
-//
-//		}
-//
-//		public boolean isModified() {
-//			return modified;
-//		}
-//	}
-
-	public static class EmptyNodeCleaner implements NodeVisitor {
+	private static class TagUnwrapper implements NodeVisitor {
 
 		private boolean modified = false;
-		private Node root;
 
-		public EmptyNodeCleaner(Node root) {
-			this.root = root;
+		@Override
+		public void head(Node node, int depth) {
+			if (node.childNodeSize()==1) {
+				Node child = node.childNode(0);
+				if (child.childNodeSize()==1 && child.nodeName().equalsIgnoreCase(node.nodeName())) {
+					child.unwrap();
+					modified = true;
+				}
+			}
 		}
+
+		@Override
+		public void tail(Node node, int depth) {
+
+		}
+
+		public boolean isModified() {
+			return modified;
+		}
+	}
+
+	private static class EmptyNodeCleaner implements NodeVisitor {
+
+		private boolean modified = false;
 
 		@Override
 		public void head(Node node, int depth) {
@@ -287,18 +276,29 @@ public class NodeHelper {
 	public static void cleanEmptyElements(Node node) {
 		EmptyNodeCleaner enc;
 		do {
-			enc = new EmptyNodeCleaner(node);
+			enc = new EmptyNodeCleaner();
 			node.traverse(enc);
 		}
 		while (enc.isModified());
 	}
 
-//	public static void divUnwrap(Node node) {
-//		DivUnwrapper enc;
-//		do {
-//			enc = new DivUnwrapper(node);
-//			node.traverse(enc);
-//		}
-//		while (enc.isModified());
-//	}
+	public static void unwrapRedundancyTags(Node node) {
+		TagUnwrapper tu;
+		do {
+			tu = new TagUnwrapper();
+			node.traverse(tu);
+		}
+		while (tu.isModified());
+	}
+
+	public static String detectLanguage(Document doc) {
+		Element htmlTag = doc.select("html").first();
+		if (htmlTag.attributes().hasKey("lang")) {
+			return htmlTag.attr("lang");
+		}
+		if (htmlTag.attributes().hasKey("xml:lang")) {
+			return htmlTag.attr("xml:lang");
+		}
+		return null;
+	}
 }

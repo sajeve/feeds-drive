@@ -64,4 +64,11 @@ public class NodeHelperTest {
 		Element e = doc.select("textarea").first();
 		Parser.parseFragment("<span></span>", e, "localhost");
 	}
+
+	@Test
+	public void testUnwrapUniqueTags() {
+		Document doc = Jsoup.parse("<section><section><div><div>hello</div></div>world</section></section>");
+		NodeHelper.unwrapRedundancyTags(doc);
+		System.out.println(doc.html());
+	}
 }
