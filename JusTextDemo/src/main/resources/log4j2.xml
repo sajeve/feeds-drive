@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+	<Properties>
+		<Property name="filename">logs/JusTextDemo.log</Property>
+	</Properties>
+
+	<Appenders>
+		<Console name="STDOUT" target="SYSTEM_OUT">
+			<PatternLayout pattern="%C{1}.%M %m %ex%n"/>
+		</Console>
+		<RollingFile name="RollingFile" fileName="${filename}"
+				filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+			<PatternLayout>
+				<Pattern>%d %-5p %m  [%c{1}][%t]%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="200 MB"/>
+			</Policies>
+		</RollingFile>
+		<Async name="Async">
+			<AppenderRef ref="RollingFile"/>
+		</Async>
+	</Appenders>
+
+	<Loggers>
+		<Root level="DEBUG">
+			<AppenderRef ref="Async"/>
+			<AppenderRef ref="STDOUT"/>
+		</Root>
+	</Loggers>
+</Configuration>
