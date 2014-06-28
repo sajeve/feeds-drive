@@ -9,6 +9,7 @@ import org.jsoup.select.NodeVisitor;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.concurrent.CancellationException;
 
 public class Extractor {
 	private Configuration conf;
@@ -25,15 +26,26 @@ public class Extractor {
 		this.cancellation = cancellation;
 	}
 
+	/**
+	 * The document will be at dirty state if cancel happen
+	 * throws CancellationException
+	 */
 	public void removeBoilerplate(Document document) {
 		process(document, false);
 	}
+	/**
+	 * The document will be at dirty state if cancel happen
+	 * throws CancellationException
+	 */
 	public void decorateBoilerplate(Document document) {
 		process(document, true);
 	}
 
+	/**
+	 * throws CancellationException
+	 */
 	private void process(Document document, boolean colorize) {
-		if (cancellation!=null && cancellation.isCancelled()) return;
+		checkCancellation();
 
 		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
 
@@ -59,23 +71,23 @@ public class Extractor {
 			}
 		}
 
-		if (cancellation!=null && cancellation.isCancelled()) return;
+		checkCancellation();
 
 		if (conf.preCleanUselessContent()) {
 			cleanUselessContent(document);
 		}
 
-		if (cancellation!=null && cancellation.isCancelled()) return;
+		checkCancellation();
 
 		LinkedList<Paragraph> paragraphs = conf.processOnlyBody() ?
 				computeParagraphs(document.body()) :
 				computeParagraphs(document);
 
-		if (cancellation!=null && cancellation.isCancelled()) return;
+		checkCancellation();
 
-		new QualityComputation(paragraphs, conf).process();
+		new QualityComputation(paragraphs, conf, cancellation).process();
 
-		if (cancellation!=null && cancellation.isCancelled()) return;
+		checkCancellation();
 
 		if (colorize) {
 			for (Paragraph p : paragraphs) {
@@ -92,7 +104,7 @@ public class Extractor {
 				}
 			}
 
-			if (cancellation!=null && cancellation.isCancelled()) return;
+			checkCancellation();
 
 			//clean empty tags
 			if (conf.postCleanBoilerplateTags()) {
@@ -102,23 +114,91 @@ public class Extractor {
 		}
 	}
 
-	private static class QualityComputation {
-		private LinkedList<Paragraph> paragraphs;
-		private Configuration conf;
+	private void checkCancellation() {
+		if (cancellation!=null && cancellation.isCancelled()) {
+			throw new CancellationException();
+		}
+	}
 
-		public QualityComputation(LinkedList<Paragraph> paragraphs, Configuration conf) {
+	/**
+	 * Clean useless tags, attributes and replace absolute path
+	 * @param node
+	 */
+	public static void cleanUselessContent(Node node) {
+		new NodeTraversor(new NodeVisitor() {
+			@Override
+			public void head(Node node, int depth) {
+				for (int i = 0; i < node.childNodes().size();) {
+					Node child = node.childNode(i);
+
+					//remove useless Tags
+					if (NodeHelper.isIgnorableTagNode(child)) {
+						child.remove();
+					}
+					else {
+						i++;
+					}
+				}
+				//remove useless Attributes
+				if (node instanceof Element) {
+					Iterator<Attribute> it = node.attributes().iterator();
+					while (it.hasNext()) {
+						Attribute a = it.next();
+						if (NodeHelper.isIgnorableAttribute(a.getKey())) {
+							node.removeAttr(a.getKey());
+						}
+					}
+				}
+
+				//convert to absolute path
+				if (NodeHelper.isLinkTag(node)) {
+					String absolutePath = node.attr("abs:href");
+					if (!Strings.isNullOrEmpty(absolutePath)) {
+						node.attr("href", absolutePath);
+					}
+				} else if (NodeHelper.isImgTag(node)) {
+					String absolutePath = node.attr("abs:src");
+					if (!Strings.isNullOrEmpty(absolutePath)) {
+						node.attr("src", absolutePath);
+					}
+				}
+			}
+
+			@Override
+			public void tail(Node node, int depth) {
+
+			}
+		}).traverse(node);
+	}
+
+	private LinkedList<Paragraph> computeParagraphs(Node node) {
+		ParagraphsExplorer pe = new ParagraphsExplorer(conf);
+		node.traverse(pe);
+		return pe.getParagraphs();
+	}
+
+	private static class QualityComputation {
+		private final LinkedList<Paragraph> paragraphs;
+		private final Configuration conf;
+		private final ICancellation cancellation;
+
+		public QualityComputation(LinkedList<Paragraph> paragraphs, Configuration conf, ICancellation cancellation) {
 			this.paragraphs = paragraphs;
 			this.conf = conf;
+			this.cancellation = cancellation;
 		}
 
 		public void process() {
 			//performs context-free classification
 
 			for (Paragraph p : paragraphs) {
+				checkCancellation();
 				p.initRawInfo();
 			}
 
 			//pre-process heading
+
+			checkCancellation();
 
 			if (conf.contentAlwaysHasTitle()) {
 				preProcessHeading2();
@@ -134,6 +214,7 @@ public class Extractor {
 
 			int left;
 			for (int i=0; i<paragraphs.size();) {
+				checkCancellation();
 				if (paragraphs.get(i).isNearOrShort()) {
 					left = i-1;
 					while (paragraphs.get(i).isNearOrShort() && i<paragraphs.size()) {
@@ -155,6 +236,8 @@ public class Extractor {
 			if (conf.removeTitle()) {
 				//remove first good heading
 				for (int i=0; i<paragraphs.size(); i++) {
+					checkCancellation();
+
 					Paragraph p = paragraphs.get(i);
 					if (p.isHeading() && p.getQuality()== Paragraph.Quality.GOOD) {
 						p.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
@@ -230,6 +313,8 @@ public class Extractor {
 		 * We will use this paragraph as Title, so promote it to GOOD.
 		 */
 		public void findTitle() {
+			checkCancellation();
+
 			for (Paragraph p : paragraphs) {
 				if (p.isHeading() && p.getQuality() == Paragraph.Quality.GOOD) {
 					//we already has a GOOD heading paragraph, nothing to do here
@@ -256,6 +341,8 @@ public class Extractor {
 		}
 
 		public void postProcessHeading() {
+			checkCancellation();
+
 			if (!conf.processHeadings()) {
 				return;
 			}
@@ -280,6 +367,7 @@ public class Extractor {
 		}
 
 		private void processEdges(Iterator<Paragraph> it) {
+			checkCancellation();
 			Paragraph p;
 			while (it.hasNext() && (p = it.next()).isNearOrShort()) {
 				if (conf.removeEdgeContent()) {
@@ -360,87 +448,11 @@ public class Extractor {
 			}
 			return false;
 		}
-	}
 
-	/**
-	 * @deprecated Replaced by {@link #cleanUselessContent(org.jsoup.nodes.Node)}
-	 * Remove all comments, useless tag (script, style..), useless attributes (class)
-	 */
-	public static void cleanUselessContentNonOptimize(Node node) {
-		for (int i = 0; i < node.childNodes().size(); i++) {
-			Node child = node.childNode(i);
-
-			//remove useless Tags
-			if (NodeHelper.isIgnorableTagNode(child)) {
-				child.remove();
-			} else {
-				cleanUselessContent(child);
-				i++;
-			}
-
-			//remove useless Attributes
-			Attributes atts = child.attributes();
-			for (Attribute a : atts) {
-				if (a.getKey().equalsIgnoreCase("class"))
-					child.removeAttr(a.getKey());
+		private void checkCancellation() {
+			if (cancellation!=null && cancellation.isCancelled()) {
+				throw new CancellationException();
 			}
 		}
-	}
-
-	/**
-	 * Clean useless tags, attributes and replace absolute path
-	 * @param node
-	 */
-	public static void cleanUselessContent(Node node) {
-		new NodeTraversor(new NodeVisitor() {
-			@Override
-			public void head(Node node, int depth) {
-				for (int i = 0; i < node.childNodes().size();) {
-					Node child = node.childNode(i);
-
-					//remove useless Tags
-					if (NodeHelper.isIgnorableTagNode(child)) {
-						child.remove();
-					}
-					else {
-						i++;
-					}
-				}
-				//remove useless Attributes
-				if (node instanceof Element) {
-					Iterator<Attribute> it = node.attributes().iterator();
-					while (it.hasNext()) {
-						Attribute a = it.next();
-						if (NodeHelper.isIgnorableAttribute(a.getKey())) {
-							node.removeAttr(a.getKey());
-						}
-					}
-				}
-
-				//convert to absolute path
-				if (NodeHelper.isLinkTag(node)) {
-					String absolutePath = node.attr("abs:href");
-					if (!Strings.isNullOrEmpty(absolutePath)) {
-						node.attr("href", absolutePath);
-					}
-				} else if (NodeHelper.isImgTag(node)) {
-					String absolutePath = node.attr("abs:src");
-					if (!Strings.isNullOrEmpty(absolutePath)) {
-						node.attr("src", absolutePath);
-					}
-				}
-			}
-
-			@Override
-			public void tail(Node node, int depth) {
-
-			}
-		}).traverse(node);
-	}
-
-	private LinkedList<Paragraph> computeParagraphs(Node node) {
-		ParagraphsExplorer pe = new ParagraphsExplorer(conf);
-		node.traverse(pe);
-		return pe.getParagraphs();
 	}
 }
