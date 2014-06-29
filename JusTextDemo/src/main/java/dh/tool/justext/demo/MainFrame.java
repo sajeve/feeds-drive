@@ -224,7 +224,7 @@ public class MainFrame extends JFrame {
 	private void downloadAndRequestExtraction(final String address, final Configuration config) {
 		final boolean asMobileAgent = mobileAgent.isSelected();
 		downloadRequest++;
-		downloadStatus.setText(String.format("Downloading... (%d in request in queue). Last request is %s", downloadRequest, address));
+		downloadStatus.setText(String.format("Downloading... (%d request in queue). Last request is %s", downloadRequest, address));
 		downloadStatus.setCaretPosition(0);
 
 		new SwingWorker<Void, Void>() {
@@ -246,7 +246,7 @@ public class MainFrame extends JFrame {
 				finally {
 					downloadRequest--;
 					if (downloadRequest>0) {
-						downloadStatus.setText(String.format("Downloading... (%d in request in queue). Just finished for %s", downloadRequest, address));
+						downloadStatus.setText(String.format("Downloading... (%d request in queue). Just finished for %s", downloadRequest, address));
 						downloadStatus.setCaretPosition(0);
 					}
 					else {
