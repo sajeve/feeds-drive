@@ -75,14 +75,14 @@ public abstract class WebBrowser extends JPanel {
 						statusMessage.setText(extractionReply.getStatusMessage());
 					}
 					catch (Exception ex) {
-						Log.error("Failed", ex);
+						Log.error("Failed display ExtractionReply", ex);
 						statusMessage.setText(ex.getMessage());
 					}
 				}
 			}.execute();
 		}
 		catch (Exception ex) {
-			Log.error("Failed", ex);
+			Log.error("Failed onReceiveExtractionRequest", ex);
 		}
 	}
 

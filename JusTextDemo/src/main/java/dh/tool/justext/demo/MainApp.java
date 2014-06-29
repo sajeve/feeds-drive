@@ -36,7 +36,7 @@ public class MainApp {
 					window.frmMain_.setVisible(true);
 					Log.info("Application Started");
 				} catch (Exception e) {
-					Log.error("Failed", e);
+					Log.error("Failed start application", e);
 				}
 			}
 		});

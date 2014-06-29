@@ -9,23 +9,6 @@ repositories {
 	}
 }
 
-sourceSets {
-	main {
-		resources {
-			srcDir 'resources'
-			include '*.*'
-			output.resourcesDir = "${project.buildDir}/classes/main"
-		}
-	}
-//	test {
-//		resources {
-//			srcDir 'resources'
-//			include '*.*'
-//			output.resourcesDir = "${project.buildDir}/classes/test"
-//		}
-//	}
-}
-
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar', '*.xml'])
 	compile project(':JusText')
@@ -47,3 +30,26 @@ dependencies {
 	 org.eclipse.swt.cocoa.macosx.x86_64
 	 */
 }
+
+/**
+ * Comment this when building jar to avoid duplicate file on archive (Bug gradle)
+ * - This code is necessary only when debugging from IDE
+ * - other way to debugging from IDE without this code:
+ *   manually copy resources to build/classes/maine
+ */
+sourceSets {
+	main {
+		resources {
+			srcDir 'resources'
+			include '*.*'
+			output.resourcesDir = "${project.buildDir}/classes/main"
+		}
+	}
+}
+
+/*
+// Uncomment this to Build fat jar
+jar {
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	manifest { attributes 'Main-Class': 'dh.tool.justext.demo.MainApp' }
+}*/

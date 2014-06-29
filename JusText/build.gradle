@@ -6,3 +6,19 @@ dependencies {
 	compile 'com.google.guava:guava:15.0'
 	testCompile ('junit:junit:4.4+')
 }
+
+/**
+ * Comment this when building jar to avoid duplicate file on archive (Bug gradle)
+ * - This code is necessary only when debugging from IDE (run unit test or demo from IDE)
+ * - other way to debugging from IDE without this code:
+ *   manually copy resources to build/classes/maine
+ */
+//sourceSets {
+//	main {
+//		resources {
+//			srcDir 'resources'
+//			include '*.*'
+//			output.resourcesDir = "${project.buildDir}/classes/main"
+//		}
+//	}
+//}

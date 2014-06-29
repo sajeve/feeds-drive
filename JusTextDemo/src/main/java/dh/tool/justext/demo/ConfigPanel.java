@@ -41,8 +41,8 @@ public class ConfigPanel extends JPanel {
 					MainApp.EVENT_BUS.post(config);
 				}
 				catch (Exception ex) {
-					Log.error("Failed", ex);
-					JOptionPane.showMessageDialog(ConfigPanel.this, ex.getMessage());
+					Log.error("Failed Apply clicked", ex);
+					JOptionPane.showMessageDialog(ConfigPanel.this, "Failed apply config: "+ex.getMessage(), "Failed apply config", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -54,7 +54,7 @@ public class ConfigPanel extends JPanel {
 					configEditor.setText(defaultConfigStr);
 				}
 				catch (Exception ex) {
-					Log.error("Failed", ex);
+					Log.error("Failed Reset clicked", ex);
 					JOptionPane.showMessageDialog(ConfigPanel.this, ex.getMessage());
 				}
 			}

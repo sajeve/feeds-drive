@@ -38,6 +38,7 @@ public class MainFrame extends JFrame {
 	}
 
 	private final JComboBox comboAddress = new JComboBox();
+	private final JCheckBox mobileAgent = new JCheckBox("Mobile Agent", false);
 	private final JButton buttonGo = new JButton("Go");
 	private final ConfigPanel configPanel1 = new ConfigPanel();
 	private final ConfigPanel configPanel2 = new ConfigPanel();
@@ -56,7 +57,7 @@ public class MainFrame extends JFrame {
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), doc);
 			} catch (Exception ex) {
 				sw.stop();
-				Log.error("Failed", ex);
+				Log.error("Failed removeBoilerplate", ex);
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
 			}
 		}
@@ -72,7 +73,7 @@ public class MainFrame extends JFrame {
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), doc);
 			} catch (Exception ex) {
 				sw.stop();
-				Log.error("Failed", ex);
+				Log.error("Failed decorateBoilerplate", ex);
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
 			}
 		}
@@ -88,7 +89,7 @@ public class MainFrame extends JFrame {
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), doc);
 			} catch (Exception ex) {
 				sw.stop();
-				Log.error("Failed", ex);
+				Log.error("Failed cleanUselessContent", ex);
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
 			}
 		}
@@ -111,7 +112,7 @@ public class MainFrame extends JFrame {
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), doc);
 			} catch (Exception ex) {
 				sw.stop();
-				Log.error("Failed", ex);
+				Log.error("Failed removeBoilerplate NoLang", ex);
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
 			}
 		}
@@ -128,17 +129,9 @@ public class MainFrame extends JFrame {
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), doc);
 			} catch (Exception ex) {
 				sw.stop();
-				Log.error("Failed", ex);
+				Log.error("Failed decorateBoilerplate NoLang", ex);
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
 			}
-		}
-	};
-
-	private final ActionListener loadAddress = new ActionListener() {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			final String address = comboAddress.getSelectedItem().toString();
-			downloadAndRequestExtraction(address, null);
 		}
 	};
 
@@ -154,7 +147,7 @@ public class MainFrame extends JFrame {
 		comboAddress.addItem("http://www.lesechos.fr/finance-marches/banque-assurances/0203602724767-bnp-paribas-aux-etats-unis-bonnafe-reconnait-des-dysfonctionnements-et-des-erreurs-1019225.php");
 		comboAddress.addItem("http://business.lesechos.fr/directions-ressources-humaines/partenaire/partenaire-160-enjeux-de-la-reforme-sur-la-formation-professionnelle-100753.php");
 		comboAddress.addItem("http://vietnamnet.vn/vn/xa-hoi/183308/nhat-hoa-cuoi-roi-giua-duong-tai-xe-bi-thuong-nang.html");
-		comboAddress.addActionListener(loadAddress);
+		//comboAddress.addActionListener(loadAddress);
 
 		buttonGo.addActionListener(loadAddress);
 		//buttonGo.setMaximumSize(new Dimension(100, buttonGo.getMaximumSize().height));
@@ -171,7 +164,12 @@ public class MainFrame extends JFrame {
 		{
 			addressPanel.setLayout(new BorderLayout());
 			addressPanel.add(comboAddress, BorderLayout.CENTER);
-			addressPanel.add(buttonGo, BorderLayout.EAST);
+			JPanel p1 = new JPanel();
+			{
+				p1.add(mobileAgent);
+				p1.add(buttonGo);
+			}
+			addressPanel.add(p1, BorderLayout.EAST);
 		}
 		JPanel configsPanel = new JPanel();
 		{
@@ -193,34 +191,56 @@ public class MainFrame extends JFrame {
 	@Subscribe
 	public void onConfigurationChanged(final Configuration config) {
 		Log.debug(MainApp.EventBusMarker, "onConfigurationChanged", config);
+		process(config);
+	}
+
+	/**
+	 * click GO
+	 */
+	private final ActionListener loadAddress = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			process(null);
+		}
+	};
+
+	/**
+	 * add address to history and process it
+	 * use the last config if the config is null
+	 * @param config
+	 */
+	private void process(Configuration config) {
 		final String address = comboAddress.getSelectedItem().toString();
 		addUrlHistory(address);
 		downloadAndRequestExtraction(address, config);
 	}
 
 	private void downloadAndRequestExtraction(final String address, final Configuration config) {
+		final boolean asMobileAgent = mobileAgent.isSelected();
 		new SwingWorker<Void, Void>() {
 			@Override
 			protected Void doInBackground() throws Exception {
-				downloadPage(address);
+				downloadPage(address, asMobileAgent);
 				return null;
 			}
 			@Override
 			protected void done() {
 				try {
+					get();
 					MainApp.EVENT_BUS.post(new ExtractionRequest(document_, config));
 				}
 				catch (Exception ex) {
-					Log.error("Failed", ex);
+					Log.error("Failed download "+address, ex);
+					JOptionPane.showMessageDialog(MainFrame.this,"Failed download page "+address+":\n"+ex.getMessage(), "Failed download page", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		}.execute();
 	}
 
-	private void downloadPage(String address) throws IOException {
+	private void downloadPage(String address, boolean asMobileAgent) throws IOException {
 		Stopwatch sw = Stopwatch.createStarted();
 		Connection con = HttpConnection.connect(new URL(address));
-		con.userAgent(MainApp.MOBILE_USER_AGENT);
+		con.userAgent(asMobileAgent ? MainApp.MOBILE_USER_AGENT : MainApp.DESKTOP_USER_AGENT);
 		document_ = con.get();
 		sw.stop();
 		Log.info(String.format("Download and parse: %d ms - '%s'", sw.elapsed(TimeUnit.MILLISECONDS), address));
