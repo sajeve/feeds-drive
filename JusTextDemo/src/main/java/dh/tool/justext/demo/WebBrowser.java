@@ -28,7 +28,7 @@ public abstract class WebBrowser extends JPanel {
 
 	public WebBrowser() {
 		webBrowser.setBarsVisible(false);
-		webBrowser.setStatusBarVisible(true);
+		webBrowser.setStatusBarVisible(false);
 
 		JTabbedPane contentPane = new JTabbedPane();
 		contentPane.setTabPlacement(JTabbedPane.BOTTOM);

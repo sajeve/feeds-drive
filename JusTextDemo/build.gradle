@@ -47,9 +47,11 @@ sourceSets {
 	}
 }
 
-/*
+
 // Uncomment this to Build fat jar
+/*
 jar {
 	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 	manifest { attributes 'Main-Class': 'dh.tool.justext.demo.MainApp' }
-}*/
+}
+*/

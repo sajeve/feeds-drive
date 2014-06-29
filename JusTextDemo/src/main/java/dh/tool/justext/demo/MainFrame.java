@@ -43,6 +43,7 @@ public class MainFrame extends JFrame {
 	private final ConfigPanel configPanel1 = new ConfigPanel();
 	private final ConfigPanel configPanel2 = new ConfigPanel();
 	private final ConfigPanel configPanel3 = new ConfigPanel();
+	private final JTextField downloadStatus = new JTextField();
 
 	private Document document_;
 
@@ -100,36 +101,36 @@ public class MainFrame extends JFrame {
 			return new ExtractionReply(doc.baseUri(), 0, doc);
 		}
 	};
-	private final WebBrowser webResultIgnoreLang = new WebBrowser() {
+	private final WebBrowser webResultLangAware = new WebBrowser() {
 		@Override
 		public ExtractionReply extract(Document doc, Configuration conf) {
-			Configuration confIgnoresLang = (new Configuration.Builder(conf)).autoDetectLanguage(false).language(null).build();
+			Configuration confIgnoresLang = (new Configuration.Builder(conf)).autoDetectLanguage(true).build();
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
 				new Extractor(confIgnoresLang).removeBoilerplate(doc);
 				sw.stop();
-				Log.info(String.format("removeBoilerplate NoLang - %d ms: %s", sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
+				Log.info(String.format("removeBoilerplate LangAware - %d ms: %s", sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), doc);
 			} catch (Exception ex) {
 				sw.stop();
-				Log.error("Failed removeBoilerplate NoLang", ex);
+				Log.error("Failed removeBoilerplate LangAware", ex);
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
 			}
 		}
 	};
-	private final WebBrowser webResultIgnoreLangDecorated = new WebBrowser() {
+	private final WebBrowser webResultLangAwareDecorated = new WebBrowser() {
 		@Override
 		public ExtractionReply extract(Document doc, Configuration conf) {
-			Configuration confIgnoresLang = (new Configuration.Builder(conf)).autoDetectLanguage(false).language(null).build();
+			Configuration confIgnoresLang = (new Configuration.Builder(conf)).autoDetectLanguage(true).build();
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
 				new Extractor(confIgnoresLang).decorateBoilerplate(doc);
 				sw.stop();
-				Log.info(String.format("decorateBoilerplate NoLang - %d ms: %s", sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
+				Log.info(String.format("decorateBoilerplate LangAware - %d ms: %s", sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), doc);
 			} catch (Exception ex) {
 				sw.stop();
-				Log.error("Failed decorateBoilerplate NoLang", ex);
+				Log.error("Failed decorateBoilerplate LangAware", ex);
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
 			}
 		}
@@ -157,8 +158,10 @@ public class MainFrame extends JFrame {
 		tabbedWebResult.addTab("Decoration", webResultDecorated);
 		tabbedWebResult.addTab("Original", webOriginal);
 		tabbedWebResult.addTab("Pre-Process", webPreProcess);
-		tabbedWebResult.addTab("Ignore Lang", webResultIgnoreLang);
-		tabbedWebResult.addTab("Ignore Lang Decoration ", webResultIgnoreLangDecorated);
+		tabbedWebResult.addTab("Lang Auto-detect", webResultLangAware);
+		tabbedWebResult.addTab("Lang Auto-detect Decoration ", webResultLangAwareDecorated);
+
+		downloadStatus.setEditable(false);
 
 		JPanel addressPanel = new JPanel();
 		{
@@ -175,6 +178,7 @@ public class MainFrame extends JFrame {
 		{
 			DesignGridLayout layout = new DesignGridLayout(configsPanel);
 			layout.row().grid().add(configPanel1, configPanel2, configPanel3);
+			layout.row().grid().add(downloadStatus);
 		}
 		JSplitPane splitPanel = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		{
@@ -215,8 +219,14 @@ public class MainFrame extends JFrame {
 		downloadAndRequestExtraction(address, config);
 	}
 
+	private int downloadRequest = 0;
+
 	private void downloadAndRequestExtraction(final String address, final Configuration config) {
 		final boolean asMobileAgent = mobileAgent.isSelected();
+		downloadRequest++;
+		downloadStatus.setText(String.format("Downloading... (%d in request in queue). Last request is %s", downloadRequest, address));
+		downloadStatus.setCaretPosition(0);
+
 		new SwingWorker<Void, Void>() {
 			@Override
 			protected Void doInBackground() throws Exception {
@@ -232,6 +242,17 @@ public class MainFrame extends JFrame {
 				catch (Exception ex) {
 					Log.error("Failed download "+address, ex);
 					JOptionPane.showMessageDialog(MainFrame.this,"Failed download page "+address+":\n"+ex.getMessage(), "Failed download page", JOptionPane.ERROR_MESSAGE);
+				}
+				finally {
+					downloadRequest--;
+					if (downloadRequest>0) {
+						downloadStatus.setText(String.format("Downloading... (%d in request in queue). Just finished for %s", downloadRequest, address));
+						downloadStatus.setCaretPosition(0);
+					}
+					else {
+						downloadRequest = 0; //pre-caution if it is negative
+						downloadStatus.setText("Completed");
+					}
 				}
 			}
 		}.execute();
