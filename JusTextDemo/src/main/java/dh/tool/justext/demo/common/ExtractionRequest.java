@@ -1,4 +1,4 @@
-package dh.tool.justext.demo.event;
+package dh.tool.justext.demo.common;
 
 import dh.tool.justext.Configuration;
 import org.jsoup.nodes.Document;

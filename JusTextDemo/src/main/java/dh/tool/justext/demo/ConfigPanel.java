@@ -1,14 +1,11 @@
 package dh.tool.justext.demo;
 
 import dh.tool.justext.Configuration;
-import dh.tool.justext.Extractor;
+import dh.tool.swing.CodeEditor;
 import net.java.dev.designgridlayout.DesignGridLayout;
-import net.java.dev.designgridlayout.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
-import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,7 +16,7 @@ import java.awt.event.ActionListener;
  */
 public class ConfigPanel extends JPanel {
 	private static final Logger Log = LogManager.getLogger(ConfigPanel.class.getName());
-	private final RSyntaxTextArea txaConfig = new RSyntaxTextArea(10,10);
+	private final CodeEditor configEditor = new CodeEditor(10, 10, SyntaxConstants.SYNTAX_STYLE_JAVA);
 	private final JButton btnApply = new JButton("Apply");
 	private final JButton btnReset = new JButton("Reset");
 
@@ -30,12 +27,7 @@ public class ConfigPanel extends JPanel {
 
 	private void initGui() {
 		DesignGridLayout layout = new DesignGridLayout(this);
-
-		txaConfig.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
-		txaConfig.setCodeFoldingEnabled(true);
-		RTextScrollPane txsConfig = new RTextScrollPane(txaConfig);
-
-		layout.row().grid().add(txsConfig);
+		layout.row().grid().add(configEditor);
 		layout.row().center().add(btnApply, btnReset);
 	}
 
@@ -43,8 +35,28 @@ public class ConfigPanel extends JPanel {
 		btnApply.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Log.debug(MainApp.EventBusMarker, "Apply clicked");
-				MainApp.EVENT_BUS.post(Configuration.DEFAULT);
+				try {
+					Log.debug(MainApp.EventBusMarker, "Apply clicked");
+					Configuration config = new Configuration.Builder(configEditor.getText()).build();
+					MainApp.EVENT_BUS.post(config);
+				}
+				catch (Exception ex) {
+					Log.error("Failed", ex);
+					JOptionPane.showMessageDialog(ConfigPanel.this, ex.getMessage());
+				}
+			}
+		});
+		btnReset.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					String defaultConfigStr = Configuration.DEFAULT.toString().replace(";", ";\n");
+					configEditor.setText(defaultConfigStr);
+				}
+				catch (Exception ex) {
+					Log.error("Failed", ex);
+					JOptionPane.showMessageDialog(ConfigPanel.this, ex.getMessage());
+				}
 			}
 		});
 	}

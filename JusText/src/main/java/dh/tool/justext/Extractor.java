@@ -62,11 +62,7 @@ public class Extractor {
 					client did not configured the language but we detected the language of the page and we have stop words list on it
 					so we will exceptionally change the language configuration by cloning the actual config that the client gave us
 					*/
-					try {
-						conf = (new Configuration.Builder(conf)).language(lang).build();
-					} catch (CloneNotSupportedException e) {
-						e.printStackTrace();
-					}
+					conf = (new Configuration.Builder(conf)).language(lang).build();
 				}
 			}
 		}
@@ -209,8 +205,8 @@ public class Extractor {
 
 			//context-sensitive classification
 
-			processEdges(paragraphs.iterator()); //left edge
-			processEdges(paragraphs.descendingIterator()); //right edge
+			processEdges(paragraphs.iterator()); //top edge
+			processEdges(paragraphs.descendingIterator()); //bottom edge
 
 			int left;
 			for (int i=0; i<paragraphs.size();) {
@@ -350,29 +346,34 @@ public class Extractor {
 			//find all heading paragraph NON-BAD in Context-free which is not too far away from the first GOOD paragraph
 			for (int i=0; i<paragraphs.size(); i++) {
 				Paragraph nonBadHeading = paragraphs.get(i);
-				if (nonBadHeading.isHeading() && nonBadHeading.getContextFreeQuality()!=Paragraph.Quality.BAD) {
-					int distanceToFirstGood = 0;
-					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.maxHeadingDistance(); j++) {
-						Paragraph p = paragraphs.get(j);
-						if (p.getContextFreeQuality() == Paragraph.Quality.GOOD) {
-							nonBadHeading.setQuality(Paragraph.Quality.GOOD, "Post-heading");
-							break;
+				if (nonBadHeading.isHeading()) {
+					if (nonBadHeading.getQuality() == Paragraph.Quality.GOOD) {
+						//the title is already here, no need to search further
+						return;
+					}
+					if (nonBadHeading.getContextFreeQuality()!=Paragraph.Quality.BAD) {
+						int distanceToFirstGood = 0;
+						for (int j = i + 1; j < paragraphs.size() && distanceToFirstGood < conf.maxHeadingDistance(); j++) {
+							Paragraph p = paragraphs.get(j);
+							if (p.getContextFreeQuality() == Paragraph.Quality.GOOD) {
+								nonBadHeading.setQuality(Paragraph.Quality.GOOD, "Post-heading");
+								break;
+							}
+							distanceToFirstGood += p.getLength();
 						}
-						distanceToFirstGood += p.getLength();
 					}
 				}
 			}
-
-
 		}
 
 		private void processEdges(Iterator<Paragraph> it) {
 			checkCancellation();
 			Paragraph p;
 			while (it.hasNext() && (p = it.next()).isNearOrShort()) {
-				if (conf.removeEdgeContent()) {
-					p.setQuality(Paragraph.Quality.BAD, "ProcessEdge"); // content from edge are often boilerplate
+				if (conf.strictOnEdgeContent()) {
+					p.setQuality(Paragraph.Quality.BAD, "ProcessEdge"); // strict way: content from edge are often boilerplate
 				} else {
+					//tolerate NEAR_GOOD content on edge, promote it to GOOD
 					if (p.getQuality() == Paragraph.Quality.NEAR_GOOD) {
 						p.setQuality(Paragraph.Quality.GOOD, "ProcessEdge"); //NEAR_GOOD becomes GOOD
 					}

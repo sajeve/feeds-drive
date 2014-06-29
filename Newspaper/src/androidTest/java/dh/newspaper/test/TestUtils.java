@@ -2,6 +2,7 @@ package dh.newspaper.test;
 
 import android.util.Log;
 import com.google.common.base.Stopwatch;
+import org.apache.http.util.ExceptionUtils;
 
 import java.io.*;
 import java.util.concurrent.TimeUnit;

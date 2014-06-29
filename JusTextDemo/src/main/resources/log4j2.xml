@@ -6,7 +6,8 @@
 
 	<Appenders>
 		<Console name="STDOUT" target="SYSTEM_OUT">
-			<PatternLayout pattern="%C{1}.%M %m %ex%n"/>
+			<!--<PatternLayout pattern="%C{1}.%M %m %ex%n"/>-->
+			<PatternLayout pattern="%-5p %m  [%c{1}][%t]%n" />
 		</Console>
 		<RollingFile name="RollingFile" fileName="${filename}"
 				filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
