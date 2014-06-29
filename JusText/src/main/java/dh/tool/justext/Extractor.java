@@ -282,7 +282,7 @@ public class Extractor {
 			//find all SHORT heading paragraph which is not too far away from the first GOOD or NEAR_GOOD paragraph
 			for (int i=0; i<paragraphs.size(); i++) {
 				Paragraph shortHeading = paragraphs.get(i);
-				if (shortHeading.isHeading() && shortHeading.getContextFreeQuality()!=Paragraph.Quality.BAD) {
+				if (shortHeading.isHeading() && shortHeading.getContextFreeQuality()==Paragraph.Quality.SHORT) {
 					int distanceToFirstGood = 0;
 					for (int j=i+1; j<paragraphs.size() && distanceToFirstGood<conf.maxHeadingDistance(); j++) {
 						Paragraph p = paragraphs.get(j);

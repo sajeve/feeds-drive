@@ -3,6 +3,7 @@ package dh.tool.jsoup;
 import com.google.common.base.Function;
 import org.jsoup.helper.StringUtil;
 import org.jsoup.nodes.*;
+import org.jsoup.parser.Tag;
 import org.jsoup.select.NodeVisitor;
 
 import java.util.HashMap;
@@ -64,19 +65,21 @@ public class NodeHelper {
 	}
 
 	/**
-	 * return true if node has a heading ancestor
+	 * return the Tag of the first heading (h1, h2..) ancestor
+	 * otherwise return null if no ancestor is heading
 	 */
-	public static boolean isHeading(Node node) {
+	public static Tag findHeadingAncestor(Node node) {
 		Node ancestor=node;
 
 		while (ancestor!=null) {
-			if (isHeadingTag(ancestor)) {
-				return true;
+			Tag t = getHeadingTag(ancestor);
+			if (t != null) {
+				return t;
 			}
 			ancestor = ancestor.parent();
 		}
 
-		return false;
+		return null;
 	}
 
 	/**
@@ -186,25 +189,31 @@ public class NodeHelper {
 		/*TagType type = TagsType.get(tag.toLowerCase());
 		return type == TagType.INNERTEXT;*/
 	}
-	public static boolean isHeadingTag(Node tag) {
-		if (tag == null || !(tag instanceof Element)) {
-			return false;
+
+	/**
+	 * return the Tag of element if it is a heading h1, h2..
+	 * otherwise return null
+	 */
+	public static Tag getHeadingTag(Node elem) {
+		if (elem == null || !(elem instanceof Element)) {
+			return null;
 		}
-		return TagsType.get(tag.nodeName()) == TagType.BLOCKLEVEL_TITLE;
+		Tag t = ((Element) elem).tag();
+		return TagsType.get(t.getName()) == TagType.BLOCKLEVEL_TITLE ? t : null;
 	}
 
-	public static boolean isLinkTag(Node tag) {
-		if (tag == null || !(tag instanceof Element)) {
+	public static boolean isLinkTag(Node elem) {
+		if (elem == null || !(elem instanceof Element)) {
 			return false;
 		}
-		return "a".equalsIgnoreCase(tag.nodeName());
+		return "a".equalsIgnoreCase(elem.nodeName());
 	}
 
-	public static boolean isImgTag(Node tag) {
-		if (tag == null || !(tag instanceof Element)) {
+	public static boolean isImgTag(Node elem) {
+		if (elem == null || !(elem instanceof Element)) {
 			return false;
 		}
-		return "img".equalsIgnoreCase(tag.nodeName());
+		return "img".equalsIgnoreCase(elem.nodeName());
 	}
 
 	public static boolean isEmptyElement(Node node) {

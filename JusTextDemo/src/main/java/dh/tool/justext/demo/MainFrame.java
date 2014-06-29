@@ -240,7 +240,7 @@ public class MainFrame extends JFrame {
 	private void downloadPage(String address, boolean asMobileAgent) throws IOException {
 		Stopwatch sw = Stopwatch.createStarted();
 		Connection con = HttpConnection.connect(new URL(address));
-		con.userAgent(asMobileAgent ? MainApp.MOBILE_USER_AGENT : MainApp.DESKTOP_USER_AGENT);
+		con.userAgent(asMobileAgent ? MainApp.MOBILE_USER_AGENT : MainApp.DESKTOP_USER_AGENT).timeout(60*1000);
 		document_ = con.get();
 		sw.stop();
 		Log.info(String.format("Download and parse: %d ms - '%s'", sw.elapsed(TimeUnit.MILLISECONDS), address));

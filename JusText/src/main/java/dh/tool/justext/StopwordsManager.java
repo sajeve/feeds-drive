@@ -132,13 +132,13 @@ public class StopwordsManager {
 		put("es-uy", "Spanish");
 		put("es-ve", "Spanish");
 
-		put("chinese", "Chinese");
-		put("zh-cn", "Chinese");
-		put("zh-tw", "Chinese");
+//		put("chinese", "Chinese");
+//		put("zh-cn", "Chinese");
+//		put("zh-tw", "Chinese");
 
-		put("japanese", "Japanese");
-		put("ja", "Japanese");
-		put("jp", "Japanese");
+//		put("japanese", "Japanese");
+//		put("ja", "Japanese");
+//		put("jp", "Japanese");
 
 		put("korean", "Korean");
 		put("ko", "Korean");

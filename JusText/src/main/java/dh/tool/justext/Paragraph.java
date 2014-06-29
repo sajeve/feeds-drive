@@ -1,13 +1,13 @@
 package dh.tool.justext;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.html.HtmlEscapers;
 import dh.tool.jsoup.NodeHelper;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
+import org.jsoup.parser.Tag;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -32,7 +32,7 @@ public class Paragraph extends LinkedList<Node> {
 	private int countWords;
 	private int countStopwords;
 	private double linkDensity;
-	private boolean heading;
+	private Tag heading;
 	private double stopwordsDensity;
 	private String message;
 	private int id;
@@ -61,6 +61,14 @@ public class Paragraph extends LinkedList<Node> {
 			message="";
 		}
 
+		if (this.heading!=null && conf.processHeadings() && conf.contentAlwaysHasTitle()) {
+			if ("h1".equalsIgnoreCase(this.heading.getName()) || "h2".equalsIgnoreCase(this.heading.getName())) {
+				if (Configuration.DEBUG)
+					message = "Context-free GOOD: tolerate heading " + message;
+				return Quality.GOOD;
+			}
+		}
+
 		if (linkDensity > conf.maxLinkDensity()) {
 			if (Configuration.DEBUG)
 				message = String.format("Context-free BAD: Too much links density=%.3g > %.3g. ",
@@ -78,7 +86,7 @@ public class Paragraph extends LinkedList<Node> {
 		if (rawTextLength < conf.lengthLow()) {
 			if (linkDensity > 0) {
 				if (Configuration.DEBUG)
-					message = String.format("Context-free BAD: Short paragraph (length=%d < %d) with links density=%.3g > 0. ",
+					message = String.format("Context-free BAD: Short paragraph (length=%d < %d) contains links (density=%.3g). ",
 							rawTextLength, conf.lengthLow(), linkDensity) + message;
 				return Quality.BAD;
 			}
@@ -146,7 +154,7 @@ public class Paragraph extends LinkedList<Node> {
 
 	public boolean isHeading() {
 		initRawInfo();
-		return heading;
+		return heading != null;
 	}
 
 	public Quality getQuality() {
@@ -180,10 +188,10 @@ public class Paragraph extends LinkedList<Node> {
 	 */
 	public void initRawInfo() {
 		if (rawText != null) {
-			return;
+			return; //already processed
 		}
 
-		heading = false;
+		heading = null;
 		linksLength = 0;
 
 		StringBuilder sb = new StringBuilder();
@@ -199,16 +207,14 @@ public class Paragraph extends LinkedList<Node> {
 			if one of node in the fragment is heading, so the fragment is heading
 			example: <h1><span>hello</span> world <img/></h1>
 			 */
-			if (!heading) {
-				if (NodeHelper.isHeading(n)) {
-					heading = true;
-				}
+			if (heading == null) {
+				heading = NodeHelper.findHeadingAncestor(n);
 			}
 		}
 		rawText = sb.toString();
 
 		if (Configuration.DEBUG) {
-			message = (message == null ? "" : message) + (isHeading() ? "Heading" : "");
+			message = (message == null ? "" : message) + (isHeading() ? "("+heading.getName().toUpperCase()+")" : "");
 		}
 
 		/*compute stopwords density*/
