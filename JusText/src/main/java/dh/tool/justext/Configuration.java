@@ -32,7 +32,7 @@ public class Configuration implements Serializable, Cloneable {
 	private boolean postCleanBoilerplateTags = true;
 	private boolean processOnlyBody = true;
 	private String language;
-	private boolean autoDetectLanguage = true;
+	private boolean autoDetectLanguage = false;
 	private boolean contentAlwaysHasTitle = true;
 
 	public boolean processHeadings() {

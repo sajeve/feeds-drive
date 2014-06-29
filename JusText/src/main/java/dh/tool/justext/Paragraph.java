@@ -149,6 +149,10 @@ public class Paragraph extends LinkedList<Node> {
 		return heading != null;
 	}
 
+	public Tag getHeading() {
+		return heading;
+	}
+
 	public Quality getQuality() {
 		if (quality == null) {
 			return getContextFreeQuality();
@@ -247,9 +251,9 @@ public class Paragraph extends LinkedList<Node> {
 					case SHORT: setContextFreeQuality(Quality.NEAR_GOOD, "tolerate-h1h2"); break;
 					case NEAR_GOOD: setContextFreeQuality(Quality.GOOD, "tolerate-h1h2"); break;
 					case BAD: {
-						//a h1 or h2: not too short and not contains links is likely good.
-						// it is BAD here because of stop word, we will get over it
-						if (linkDensity<conf.maxLinkDensity() && rawText.length() >= conf.lengthLow()) {
+						//h1 or h2 which is not too short and not contains links is likely good.
+						//it is BAD here because of stop word, we will get over it
+						if (linkDensity == 0 && rawText.length() >= conf.lengthLow()) {
 							setContextFreeQuality(Quality.NEAR_GOOD, "tolerate-h1h2");
 							break;
 						}

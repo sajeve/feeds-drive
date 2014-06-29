@@ -300,6 +300,25 @@ public class Extractor {
 					}
 				}
 			}
+
+			//last chance for title: promote nearest NOT_BAD h1 to GOOD
+			Paragraph nearestH1 = null;
+			for (int i=0; i<paragraphs.size(); i++) {
+				Paragraph pf = paragraphs.get(i);
+
+				if (pf.isHeading() && "h1".equalsIgnoreCase(pf.getHeading().getName()) && pf.getContextFreeQuality()!= Paragraph.Quality.BAD) {
+					if (pf.getQuality()== Paragraph.Quality.GOOD) {
+						break; //nothing to do, we had the title
+					}
+					else {
+						nearestH1 = pf;
+					}
+				}
+				if (pf.getQuality() == Paragraph.Quality.GOOD && nearestH1!=null) {
+					nearestH1.setContextFreeQuality(Paragraph.Quality.GOOD, "Pre-heading-h1");
+					break;
+				}
+			}
 		}
 
 		/**
