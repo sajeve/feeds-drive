@@ -61,14 +61,6 @@ public class Paragraph extends LinkedList<Node> {
 			message="";
 		}
 
-		if (this.heading!=null && conf.processHeadings() && conf.contentAlwaysHasTitle()) {
-			if ("h1".equalsIgnoreCase(this.heading.getName()) || "h2".equalsIgnoreCase(this.heading.getName())) {
-				if (Configuration.DEBUG)
-					message = "Context-free GOOD: tolerate heading " + message;
-				return Quality.GOOD;
-			}
-		}
-
 		if (linkDensity > conf.maxLinkDensity()) {
 			if (Configuration.DEBUG)
 				message = String.format("Context-free BAD: Too much links density=%.3g > %.3g. ",
@@ -245,6 +237,26 @@ public class Paragraph extends LinkedList<Node> {
 
 		linkDensity = (double)linksLength / rawText.length();
 		contextFreeQuality = computeContextFreeQuality();
+
+		/**
+		 * promote context-free quality of H1 and H2 paragraph
+		 */
+		if (this.heading!=null && conf.processHeadings() && conf.contentAlwaysHasTitle()) {
+			if ("h1".equalsIgnoreCase(this.heading.getName()) || "h2".equalsIgnoreCase(this.heading.getName())) {
+				switch (contextFreeQuality) {
+					case SHORT: setContextFreeQuality(Quality.NEAR_GOOD, "tolerate-h1h2"); break;
+					case NEAR_GOOD: setContextFreeQuality(Quality.GOOD, "tolerate-h1h2"); break;
+					case BAD: {
+						//a h1 or h2: not too short and not contains links is likely good.
+						// it is BAD here because of stop word, we will get over it
+						if (linkDensity<conf.maxLinkDensity() && rawText.length() >= conf.lengthLow()) {
+							setContextFreeQuality(Quality.NEAR_GOOD, "tolerate-h1h2");
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	public boolean isNearOrShort() {
