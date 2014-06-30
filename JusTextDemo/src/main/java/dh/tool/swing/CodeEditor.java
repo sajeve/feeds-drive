@@ -124,4 +124,20 @@ public class CodeEditor extends CollapsibleSectionPanel implements SearchListene
 	public void setSyntaxEditingStyle(String style) {
 		internalEditor.setSyntaxEditingStyle(style);
 	}
+
+	@Override
+	public void setEnabled(boolean enabled) {
+		super.setEnabled(enabled);
+		this.internalEditor.setEnabled(enabled);
+		if (!enabled) {
+			this.hideBottomComponent();
+		}
+	}
+
+	public void setEditable(boolean editable) {
+		this.internalEditor.setEditable(editable);
+	}
+	public boolean isEditable() {
+		return this.internalEditor.isEditable();
+	}
 }

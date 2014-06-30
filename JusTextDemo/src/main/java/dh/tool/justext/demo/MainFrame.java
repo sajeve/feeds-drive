@@ -10,6 +10,7 @@ import net.java.dev.designgridlayout.DesignGridLayout;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
 
@@ -228,15 +229,22 @@ public class MainFrame extends JFrame {
 		downloadStatus.setCaretPosition(0);
 
 		new SwingWorker<Void, Void>() {
+			private volatile Exception err;
+
 			@Override
-			protected Void doInBackground() throws Exception {
-				downloadPage(address, asMobileAgent);
+			protected Void doInBackground() {
+				try {
+					downloadPage(address, asMobileAgent);
+				}
+				catch (Exception ex) {
+					err = ex;
+				}
 				return null;
 			}
 			@Override
 			protected void done() {
 				try {
-					get();
+					if (err!=null) throw err;
 					MainApp.EVENT_BUS.post(new ExtractionRequest(document_, config));
 				}
 				catch (Exception ex) {

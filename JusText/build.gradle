@@ -4,8 +4,12 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 	compile 'org.jsoup:jsoup:1.7.3'
 	compile 'com.google.guava:guava:15.0'
-	testCompile ('junit:junit:4.4+')
+	compile 'com.google.guava:guava:15.0'
+	compile 'org.slf4j:slf4j-api:1.+'
+	compile 'com.ecyrd.speed4j:speed4j:0.+'
 }
+
+
 
 /**
  * Comment this when building jar to avoid duplicate file on archive (Bug gradle)

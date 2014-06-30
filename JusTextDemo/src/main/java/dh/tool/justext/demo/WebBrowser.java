@@ -13,6 +13,10 @@ import org.jsoup.nodes.Document;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * Created by hiep on 28/06/2014.
@@ -22,6 +26,7 @@ public abstract class WebBrowser extends JPanel {
 	private final JWebBrowser webBrowser = new JWebBrowser();
 	private final CodeEditor sourceEditor = new CodeEditor(10, 80, SyntaxConstants.SYNTAX_STYLE_HTML);
 	private final JTextArea statusMessage = new JTextArea(2, 80);
+	private final JCheckBox disableCheckbox = new JCheckBox("Disable");
 
 	private Document document_;
 	private Configuration config_;
@@ -37,7 +42,22 @@ public abstract class WebBrowser extends JPanel {
 
 		statusMessage.setEditable(false);
 
+		disableCheckbox.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				try {
+					webBrowser.setEnabled(!disableCheckbox.isSelected());
+					sourceEditor.setEnabled(!disableCheckbox.isSelected());
+				}
+				catch (Exception ex) {
+					Log.error("Disabling failed",ex);
+					JOptionPane.showMessageDialog(WebBrowser.this, ex.getMessage(), "Disabling failed", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		});
+
 		this.setLayout(new BorderLayout());
+		this.add(disableCheckbox, BorderLayout.PAGE_START);
 		this.add(contentPane, BorderLayout.CENTER);
 		this.add(statusMessage, BorderLayout.PAGE_END);
 
@@ -46,6 +66,8 @@ public abstract class WebBrowser extends JPanel {
 
 	@Subscribe public void onReceiveExtractionRequest(final ExtractionRequest request) {
 		try {
+			if (disableCheckbox.isSelected()) return;
+
 			Log.debug(MainApp.EventBusMarker, "onReceiveExtractionRequest");
 
 			if (request.configuration != null) {
@@ -58,23 +80,32 @@ public abstract class WebBrowser extends JPanel {
 			statusMessage.setText("Received extraction request "+request.document.baseUri());
 
 			new SwingWorker<ExtractionReply, Void>() {
+				private volatile Exception err;
+
 				@Override
 				protected ExtractionReply doInBackground() throws Exception {
-					//process request (create a clone to protect the original document_)
-					return extract(request.document.clone(), config_);
+					try {
+						//process request (create a clone to protect the original document_)
+						return extract(request.document.clone(), config_);
+					}
+					catch (Exception ex) {
+						err = ex;
+					}
+					return null;
 				}
 
 				@Override
 				protected void done() {
 					try {
+						if (err != null) throw err;
+
 						ExtractionReply extractionReply = get();
 						document_ = extractionReply.getResult();
 						String html = document_.outerHtml();
 						webBrowser.setHTMLContent(html);
 						sourceEditor.setText(html);
 						statusMessage.setText(extractionReply.getStatusMessage());
-					}
-					catch (Exception ex) {
+					} catch (Exception ex) {
 						Log.error("Failed display ExtractionReply", ex);
 						statusMessage.setText(ex.getMessage());
 					}

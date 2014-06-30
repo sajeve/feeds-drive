@@ -1,17 +1,25 @@
 package dh.tool.justext;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import dh.tool.common.ICancellation;
+import dh.tool.common.PerfWatcher;
 import dh.tool.jsoup.NodeHelper;
 import org.jsoup.nodes.*;
 import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.CancellationException;
 
 public class Extractor {
+	Logger log = LoggerFactory.getLogger(Extractor.class);
+
+	private PerfWatcher pw;
 	private Configuration conf;
 	private final ICancellation cancellation;
 
@@ -46,6 +54,8 @@ public class Extractor {
 	 */
 	private void process(Document document, boolean colorize) {
 		checkCancellation();
+		Stopwatch sw = Stopwatch.createStarted();
+		pw = new PerfWatcher(log, document.baseUri());
 
 		document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
 
@@ -53,6 +63,7 @@ public class Extractor {
 		if (conf.autoDetectLanguage() && Strings.isNullOrEmpty(conf.language())) {
 			//auto detect language only if user did not configured language
 			lang = NodeHelper.detectLanguage(document);
+			pw.t("Detect Language");
 
 			if (!Strings.isNullOrEmpty(lang)) {
 				//found language, check if we have stop words list on this language
@@ -63,6 +74,7 @@ public class Extractor {
 					so we will exceptionally change the language configuration by cloning the actual config that the client gave us
 					*/
 					conf = (new Configuration.Builder(conf)).language(lang).build();
+					pw.debug("Found language");
 				}
 			}
 		}
@@ -71,17 +83,25 @@ public class Extractor {
 
 		if (conf.preCleanUselessContent()) {
 			cleanUselessContent(document);
+			pw.t("cleanUselessContent");
 		}
 
 		checkCancellation();
 
-		LinkedList<Paragraph> paragraphs = conf.processOnlyBody() ?
-				computeParagraphs(document.body()) :
-				computeParagraphs(document);
+		LinkedList<Paragraph> paragraphs;
+		if (conf.processOnlyBody()) {
+			Node n = document.body();
+			pw.t("Get document body");
+			paragraphs = computeParagraphs(n);
+		}
+		else {
+			paragraphs = computeParagraphs(document);
+		}
+		pw.t("Found "+paragraphs.size()+" paragraphs");
 
 		checkCancellation();
 
-		new QualityComputation(paragraphs, conf, cancellation).process();
+		new QualityComputation(paragraphs).process();
 
 		checkCancellation();
 
@@ -89,6 +109,7 @@ public class Extractor {
 			for (Paragraph p : paragraphs) {
 				p.colorizeParagraph();
 			}
+			pw.t("Colorize paragraph");
 		}
 		else {
 			//remove all BAD node paragraphs
@@ -99,15 +120,20 @@ public class Extractor {
 					}
 				}
 			}
+			pw.t("Remove BAD paragraphs");
 
 			checkCancellation();
 
 			//clean empty tags
 			if (conf.postCleanBoilerplateTags()) {
 				NodeHelper.cleanEmptyElements(document);
+				pw.t("Clean empty elements");
 				NodeHelper.unwrapRedundancyTags(document);
+				pw.t("Unwrap redundancies tags");
 			}
 		}
+
+		pw.dg("Finished");
 	}
 
 	private void checkCancellation() {
@@ -173,24 +199,20 @@ public class Extractor {
 		return pe.getParagraphs();
 	}
 
-	private static class QualityComputation {
+	private class QualityComputation {
 		private final LinkedList<Paragraph> paragraphs;
-		private final Configuration conf;
-		private final ICancellation cancellation;
 
-		public QualityComputation(LinkedList<Paragraph> paragraphs, Configuration conf, ICancellation cancellation) {
+		public QualityComputation(LinkedList<Paragraph> paragraphs) {
 			this.paragraphs = paragraphs;
-			this.conf = conf;
-			this.cancellation = cancellation;
 		}
 
 		public void process() {
 			//performs context-free classification
-
 			for (Paragraph p : paragraphs) {
 				checkCancellation();
 				p.initRawInfo();
 			}
+			pw.t("Compute free-context quality");
 
 			//pre-process heading
 
@@ -206,7 +228,10 @@ public class Extractor {
 			//context-sensitive classification
 
 			processEdges(paragraphs.iterator()); //top edge
+			pw.t("Process top edge");
+
 			processEdges(paragraphs.descendingIterator()); //bottom edge
+			pw.t("Process bottom edge");
 
 			int left;
 			for (int i=0; i<paragraphs.size();) {
@@ -220,6 +245,7 @@ public class Extractor {
 				}
 				i++;
 			}
+			pw.t("Compute context-sensitive quality");
 
 			//post-process heading
 
@@ -227,6 +253,7 @@ public class Extractor {
 
 			if (conf.contentAlwaysHasTitle()) {
 				findTitle();
+				pw.t("Find title");
 			}
 
 			if (conf.removeTitle()) {
@@ -240,6 +267,7 @@ public class Extractor {
 						return;
 					}
 				}
+				pw.t("Remove title");
 			}
 		}
 
@@ -266,6 +294,7 @@ public class Extractor {
 					}
 				}
 			}
+			pw.t("Promote SHORT heading near a GOOD paragraph");
 		}
 
 		/**
@@ -279,6 +308,7 @@ public class Extractor {
 			if (!conf.processHeadings()) {
 				return;
 			}
+
 			//find all SHORT heading paragraph which is not too far away from the first GOOD or NEAR_GOOD paragraph
 			for (int i=0; i<paragraphs.size(); i++) {
 				Paragraph shortHeading = paragraphs.get(i);
@@ -300,6 +330,7 @@ public class Extractor {
 					}
 				}
 			}
+			pw.t("Promote SHORT heading near a GOOD/NEAR_GOOD paragraph");
 
 			//last chance for title: promote nearest NOT_BAD h1 to GOOD
 			Paragraph nearestH1 = null;
@@ -319,6 +350,7 @@ public class Extractor {
 					break;
 				}
 			}
+			pw.t("Tolerate *h1* title");
 		}
 
 		/**
@@ -362,6 +394,7 @@ public class Extractor {
 				return;
 			}
 
+			pw.resetStopwatch();
 			//find all heading paragraph NON-BAD in Context-free which is not too far away from the first GOOD paragraph
 			for (int i=0; i<paragraphs.size(); i++) {
 				Paragraph nonBadHeading = paragraphs.get(i);
@@ -383,6 +416,7 @@ public class Extractor {
 					}
 				}
 			}
+			pw.t("Post process heading");
 		}
 
 		private void processEdges(Iterator<Paragraph> it) {

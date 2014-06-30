@@ -26,8 +26,10 @@
 
 	<Loggers>
 		<Root level="DEBUG">
-			<AppenderRef ref="Async"/>
 			<AppenderRef ref="STDOUT"/>
+		</Root>
+		<Root level="TRACE">
+			<AppenderRef ref="Async"/>
 		</Root>
 	</Loggers>
 </Configuration>
