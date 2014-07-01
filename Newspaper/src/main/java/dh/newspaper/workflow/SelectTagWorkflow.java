@@ -17,7 +17,7 @@ import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
-import dh.newspaper.tools.thread.ICancellation;
+import dh.tool.common.ICancellation;
 import dh.newspaper.tools.StrUtils;
 import dh.newspaper.tools.thread.PrifoTask;
 import org.joda.time.DateTime;

@@ -1,38 +1,32 @@
 package dh.newspaper.parser;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.util.List;
-
+import android.util.Log;
 import android.webkit.URLUtil;
 import com.google.common.base.Splitter;
-import de.l3s.boilerpipe.BoilerpipeExtractor;
-import de.l3s.boilerpipe.extractors.ArticleExtractorNoTitle;
-import de.l3s.boilerpipe.extractors.CommonExtractors;
-import de.l3s.boilerpipe.sax.HTMLHighlighter;
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
-import dh.newspaper.tools.thread.ICancellation;
 import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.tools.StrUtils;
+import dh.tool.common.ICancellation;
+import dh.tool.justext.Configuration;
+import dh.tool.justext.Extractor;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
-import org.jsoup.nodes.Attributes;
-import org.jsoup.nodes.Comment;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.FormElement;
-import org.jsoup.nodes.Node;
+import org.jsoup.nodes.*;
 import org.jsoup.nodes.Entities.EscapeMode;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
-import com.google.common.base.Strings;
-
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Clean a HTML, extractContent the main content
@@ -41,8 +35,19 @@ import javax.inject.Inject;
 public class ContentParser {
 	private static final String TAG = ContentParser.class.getName();
 
-	public static final HTMLHighlighter HTML_HIGHLIGHTER = HTMLHighlighter.newExtractingInstance(true, false);
-	public static final BoilerpipeExtractor[] EXTRACTORS = new BoilerpipeExtractor[] {ArticleExtractorNoTitle.INSTANCE, CommonExtractors.DEFAULT_EXTRACTOR, CommonExtractors.KEEP_EVERYTHING_EXTRACTOR};
+	private static final Configuration JusTextDefaultConfig = new Configuration.Builder()
+			.removeTitle(true)
+			.autoDetectLanguage(false)
+			.language(null)
+			.build();
+
+	private static final Configuration JusTextRelaxConfig = new Configuration.Builder(JusTextDefaultConfig)
+			.maxHeadingDistance(1000)
+			.lengthLow(0)
+			.lengthHigh(0)
+			.stopwordsLow(0)
+			.stopwordsHigh(0)
+			.build();
 
 	public static final int AVATAR_MIN_WIDTH = 50;
 	public static final int AVATAR_MIN_HEIGHT = 50;
@@ -51,6 +56,62 @@ public class ContentParser {
 
 	@Inject
 	public ContentParser() {
+	}
+
+	public Document extractContent(InputStream input, String charSet, String baseURI, StringBuilder notice, ICancellation cancellation) throws IOException {
+		Stopwatch sw;
+
+		if (Constants.DEBUG) {
+			sw = Stopwatch.createStarted();
+		}
+		Document doc = Jsoup.parse(input, charSet, baseURI);
+		if (Constants.DEBUG) {
+			sw.stop();
+			Log.v("Parser", "Jsoup parse "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms - "+doc.baseUri());
+		}
+
+		try {
+			Document resu = doc.clone();
+			if (Constants.DEBUG) {
+				sw.reset().start();
+			}
+			new Extractor(JusTextDefaultConfig, cancellation).removeBoilerplate(resu);
+			if (Constants.DEBUG) {
+				sw.stop();
+				Log.v("Parser", "JusText extraction Default "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms - "+resu.baseUri());
+			}
+
+			Element body = resu.body();
+			if (body!=null && body.text().length() < Constants.ARTICLE_MIN_LENGTH) {
+				notice.append("Default-extractor return nearly-empty content, switch to relax-extractor");
+
+				if (Constants.DEBUG) {
+					sw.reset().start();
+				}
+				resu = doc.clone();
+				new Extractor(JusTextRelaxConfig, cancellation).removeBoilerplate(resu);
+				if (Constants.DEBUG) {
+					sw.stop();
+					Log.v("Parser", "JusText extraction Relax "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms - "+resu.baseUri());
+				}
+
+				body = resu.body();
+				if (body.text().length() < Constants.ARTICLE_MIN_LENGTH) {
+					notice.append("Relax-extractor return nearly-empty content, switch to full-content");
+					return doc;
+				}
+			}
+
+			return resu;
+		}
+		catch (CancellationException ex) {
+			return doc;
+		}
+		catch (Exception ex) {
+			Log.e(TAG, "Extraction failed - "+doc.baseUri(), ex);
+			notice.append("Extraction error "+ex.getMessage()+". Use full content");
+			return doc;
+		}
 	}
 
 	/**

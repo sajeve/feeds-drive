@@ -44,6 +44,9 @@ public class Constants {
 	/**
 	 * we only update article content in cache if the new content length is at least
 	 * around 90% of the existing content in cache
+	 * Negative number = do not use this fixture
 	 */
-	public static final int ARTICLE_LENGTH_TOLERANT = 90;
+	public static final int ARTICLE_LENGTH_PERCENT_TOLERANT = -1; //90
+
+	public static final int ARTICLE_MIN_LENGTH = 200; //90
 }

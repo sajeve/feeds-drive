@@ -4,7 +4,7 @@ import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.Subscription;
-import dh.newspaper.tools.thread.ICancellation;
+import dh.tool.common.ICancellation;
 import dh.newspaper.tools.StrUtils;
 import org.joda.time.DateTime;
 

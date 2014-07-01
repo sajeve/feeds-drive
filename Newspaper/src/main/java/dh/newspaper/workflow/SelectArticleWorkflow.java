@@ -5,10 +5,6 @@ import android.os.Looper;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
-import de.l3s.boilerpipe.extractors.ArticleExtractorNoTitle;
-import de.l3s.boilerpipe.sax.HTMLDocument;
-import de.l3s.boilerpipe.sax.HTMLFetcher;
-import de.l3s.boilerpipe.sax.HTMLHighlighter;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
@@ -18,6 +14,7 @@ import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.tools.StrUtils;
 import dh.newspaper.tools.thread.PrifoTask;
+import dh.tool.justext.Extractor;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.jsoup.Jsoup;
@@ -26,7 +23,6 @@ import org.jsoup.nodes.Document;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -200,7 +196,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 		}
 
 		String articleContent;
-		if (StrUtils.tooShort(mArticleContentDownloaded, mFeedItem.getDescription(), Constants.ARTICLE_LENGTH_TOLERANT)) {
+		if (StrUtils.tooShort(mArticleContentDownloaded, mFeedItem.getDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 			articleContent = mFeedItem.getDescription();
 			mParseNotice.append(" Downloaded content is too short. Use feed description");
 		}
@@ -267,7 +263,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 		String articleContent = Strings.isNullOrEmpty(mArticle.getContent()) ? mFeedItem.getDescription() : mArticle.getContent();
 
-		if (StrUtils.tooShort(mArticleContentDownloaded, articleContent, Constants.ARTICLE_LENGTH_TOLERANT)) {
+		if (StrUtils.tooShort(mArticleContentDownloaded, articleContent, Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 			mParseNotice.append(" Downloaded content is too short. Use old content");
 		}
 		else {
@@ -358,24 +354,27 @@ public class SelectArticleWorkflow extends PrifoTask {
 			resetStopwatch();
 
 			//download content
-			byte[] data = NetworkUtils.downloadContent(mFeedItem.getUri(), NetworkUtils.MOBILE_USER_AGENT, this);
-			if (data == null || data.length==0) {
-				mParseNotice.append(" Raw content is null.");
+
+			InputStream inputStream = NetworkUtils.getStreamFromUrl(mFeedItem.getUri(), NetworkUtils.DESKTOP_USER_AGENT, this);
+			if (inputStream == null) {
+				log("Download article content Cancelled");
 				return;
 			}
-			log("Raw content downloaded");
+			log("Content downloaded");
 
-			final HTMLDocument htmlDoc = new HTMLDocument(data, Charset.forName(Constants.DEFAULT_ENCODING));
-			mArticleContentDownloaded = ContentParser.HTML_HIGHLIGHTER.process(htmlDoc, ContentParser.EXTRACTORS);
+			String encoding = Constants.DEFAULT_ENCODING;
+			if (mParentSubscription!=null && !Strings.isNullOrEmpty(mParentSubscription.getEncoding())) {
+				encoding = mParentSubscription.getEncoding();
+			}
 
+			resetStopwatch();
+			Document doc = mContentParser.extractContent(inputStream, encoding, mFeedItem.getUri(), mParseNotice, this);
+			if (isCancelled()) return;
+			mArticleContentDownloaded = doc.outerHtml();
 			log("Extract content done", StrUtils.glimpse(mArticleContentDownloaded));
 
-			//articleContent = mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri()).html();
-			//mArticleContentDownloaded = mContentParser.getHtml(mContentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, mPathToContent.getXpath(), mFeedItem.getUri(), mParseNotice));
-			//log("Download article content: "+StrUtils.glimpse(mArticleContentDownloaded));
-
 			if (Strings.isNullOrEmpty(mArticleContentDownloaded)) {
-				mParseNotice.append(" boilerpipe returns empty content.");
+				mParseNotice.append(" Justext returns empty content.");
 			}
 		} catch (IOException e) {
 			mParseNotice.append(" IOException: "+e.getMessage());

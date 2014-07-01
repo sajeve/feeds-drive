@@ -235,6 +235,9 @@ public class StrUtils {
 	 * return true if str is shorter than percent of ref
 	 */
 	public static boolean tooShort(String str, String ref, int percent) {
+		if (percent < 0) {
+			return false;
+		}
 		int lenStr = Strings.isNullOrEmpty(str) ? 0 : str.length();
 		int lenRef =  Strings.isNullOrEmpty(ref) ? 0 : ref.length();
 		int shortestLenAllowed = lenRef*percent/100;

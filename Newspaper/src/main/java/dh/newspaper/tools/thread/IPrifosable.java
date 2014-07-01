@@ -1,5 +1,7 @@
 package dh.newspaper.tools.thread;
 
+import dh.tool.common.ICancellation;
+
 /**
  * A task must implement this interface to use in {@link dh.newspaper.tools.thread.PrifoBlockingQueue}
  * Created by hiep on 12/06/2014.

@@ -9,7 +9,7 @@ import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.PathToContent;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
-import dh.newspaper.tools.thread.ICancellation;
+import dh.tool.common.ICancellation;
 
 import java.io.IOException;
 

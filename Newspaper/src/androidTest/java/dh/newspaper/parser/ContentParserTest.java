@@ -4,22 +4,26 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import com.google.common.base.Strings;
 import dh.newspaper.Constants;
+import dh.newspaper.EmptyActivity;
 import dh.newspaper.MainActivity;
 import dh.newspaper.test.TestUtils;
 import dh.newspaper.tools.NetworkUtils;
+import dh.tool.common.PerfWatcher;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActivity> {
+public class ContentParserTest extends ActivityInstrumentationTestCase2<EmptyActivity> {
 	private final String TAG = ContentParserTest.class.getName();
 
 	ContentParser contentParser;
 
 	public ContentParserTest() {
-		super(MainActivity.class);
+		super(EmptyActivity.class);
 	}
 
 	@Override
@@ -61,7 +65,19 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 
 	public void testJsoup() {
 		Jsoup.parse("<img src='abc.htm' width='1' height='10'>", "localhost");
+	}
 
+	public void testExtractContent() throws IOException {
+		String address = "http://www.huffingtonpost.com/2014/06/30/passports-map_n_5536914.html";
+		InputStream inputStream = NetworkUtils.getStreamFromUrl(address, NetworkUtils.DESKTOP_USER_AGENT, null);
+
+		Logger log = LoggerFactory.getLogger(ContentParserTest.class);
+		PerfWatcher pw = new PerfWatcher(log, address);
+
+		StringBuilder notice = new StringBuilder();
+		Document doc = contentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, address, notice, null);
+
+		pw.i("Finised extracting");
 	}
 }
 
