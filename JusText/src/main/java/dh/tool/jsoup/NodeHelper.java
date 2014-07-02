@@ -1,6 +1,7 @@
 package dh.tool.jsoup;
 
 import com.google.common.base.Function;
+import com.google.common.base.Strings;
 import org.jsoup.helper.StringUtil;
 import org.jsoup.nodes.*;
 import org.jsoup.parser.Tag;
@@ -96,6 +97,13 @@ public class NodeHelper {
 		}
 
 		return false;
+	}
+
+	/**
+	 * getTextContent avoid NullReferenceException
+	 */
+	public static String getTextContent(Element node) {
+		return (node == null) ? null : node.text();
 	}
 
 	public static enum TagType {IGNORABLE, INNERTEXT, BLOCKLEVEL, BLOCKLEVEL_CONTENT, BLOCKLEVEL_TITLE}
@@ -246,7 +254,21 @@ public class NodeHelper {
 	}
 
 	public static boolean isIgnorableTagNode(Node node) {
-		return node instanceof Comment || isIgnorableTag(node);
+		if (node instanceof Comment || isIgnorableTag(node)) {
+			return true;
+		}
+		if (node.nodeName().equalsIgnoreCase("img") && Strings.isNullOrEmpty(node.attr("src"))) {
+			//ignore tag img without source
+			return true;
+		}
+		String styleAttr = node.attr("style");
+		if (styleAttr!=null) {
+			if (styleAttr.replace(" ", "").toLowerCase().contains("display:none")) {
+				//ignore element invisible
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static class TagUnwrapper implements NodeVisitor {
