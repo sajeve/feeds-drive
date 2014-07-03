@@ -1,14 +1,11 @@
 package dh.newspaper.model;
 
-import android.util.Log;
 import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.parser.ContentParser;
-import dh.newspaper.tools.StrUtils;
+import dh.tool.jsoup.NodeHelper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.Serializable;
 
@@ -26,6 +23,9 @@ public class FeedItem implements Serializable {
 	private String mLanguage;
 	private String mAuthor;
 
+	private Document document;
+	private String mTextPlainDescription;
+
 	public FeedItem(String parentUrl, String title, String publishedDate, String description, String uri, String language, String author) {
 		this.mTitle = title;
 		this.mPublishedDate = publishedDate;
@@ -40,15 +40,30 @@ public class FeedItem implements Serializable {
 		if (Strings.isNullOrEmpty(mDescription)){
 			return;
 		}
-
-		Document doc = Jsoup.parse(mDescription, mUri);
-
 		//set mExcerpt text
-		String descriptionTextOnly = doc.text();
-		mExcerpt = descriptionTextOnly.substring(0, Math.min(descriptionTextOnly.length(), Constants.EXCERPT_LENGTH));
+		String s = getTextPlainDescription();
+		if (s !=null)
+			mExcerpt = s.substring(0, Math.min(s.length(), Constants.EXCERPT_LENGTH));
 
 		//find the first valid image to make it avatar
-		mImageUrl = ContentParser.findAvatar(doc);
+		mImageUrl = ContentParser.findAvatar(getDocument());
+	}
+
+	public Document getDocument() {
+		if (Strings.isNullOrEmpty(mDescription)) {
+			return null;
+		}
+		if (document==null) {
+			document = Jsoup.parse(mDescription, mUri);
+		}
+		return document;
+	}
+
+	public String getTextPlainDescription() {
+		if (mTextPlainDescription == null) {
+			mTextPlainDescription = NodeHelper.getTextContent(getDocument());
+		}
+		return mTextPlainDescription;
 	}
 
 	public String getTitle() {

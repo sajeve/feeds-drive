@@ -1,10 +1,15 @@
 package dh.newspaper.workflow;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
@@ -14,16 +19,22 @@ import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.tools.StrUtils;
 import dh.newspaper.tools.thread.PrifoTask;
-import dh.tool.justext.Extractor;
+import dh.tool.common.PerfWatcher;
+import dh.tool.jsoup.NodeHelper;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -41,6 +52,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SelectArticleWorkflow extends PrifoTask {
 	private static final String TAG = SelectArticleWorkflow.class.getName();
+	private static final Logger LOG = LoggerFactory.getLogger(SelectArticleWorkflow.class);
 
 	@Inject DaoSession mDaoSession;
 	@Inject ContentParser mContentParser;
@@ -54,9 +66,13 @@ public class SelectArticleWorkflow extends PrifoTask {
 	private Article mArticle;
 	private FeedItem mFeedItem;
 
+	private Document mDoc;
 	private String mArticleContentDownloaded;
+	private String mArticleContentBody;
+	private boolean mSuccessDownloadAndExtraction = false;
+
 	private String mArticleLanguage;
-	private PathToContent mPathToContent;
+	//private PathToContent mPathToContent;
 	private StringBuilder mParseNotice = new StringBuilder();
 	private Subscription mParentSubscription;
 
@@ -65,6 +81,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 	private Stopwatch mStopwatch;
 	private final ReentrantLock lock = new ReentrantLock();
+	private PerfWatcher pw;
 
 	private SelectArticleWorkflow(Context context, Duration articleTimeToLive, boolean downloadFullContent, SelectArticleCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
@@ -99,6 +116,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 			logSimple(toString() + " is cancelled");
 			return;
 		}
+
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
@@ -114,6 +132,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 			logSimple("Start SelectArticleWorkflow");
 			Stopwatch genericStopWatch = Stopwatch.createStarted();
+
 			mStopwatch = Stopwatch.createStarted();
 			try {
 				resetStopwatch();
@@ -122,6 +141,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 						.where(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()))
 						.unique();
 				log("Find Parent subscription", mArticle);
+
 				if (isCancelled()) {
 					return;
 				}
@@ -179,7 +199,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 					mCallback.done(this, getArticle(), isCancelled());
 				}
 				mRunning = false;
-				logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+				logInfo("Workflow complete (" + genericStopWatch.elapsed(TimeUnit.MILLISECONDS) + " ms)");
 			}
 		} finally {
 			lock.unlock();
@@ -196,7 +216,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 		}
 
 		String articleContent;
-		if (StrUtils.tooShort(mArticleContentDownloaded, mFeedItem.getDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
+		if (StrUtils.tooShort(mArticleContentBody, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 			articleContent = mFeedItem.getDescription();
 			mParseNotice.append(" Downloaded content is too short. Use feed description");
 		}
@@ -224,10 +244,10 @@ public class SelectArticleWorkflow extends PrifoTask {
 				null,//date archive
 				null,//last open
 				DateTime.now().toDate(), //last updated
-				mPathToContent == null ? null : mPathToContent.getXpath(), //xpath
+				null, //mPathToContent == null ? null : mPathToContent.getXpath(), //xpath
 				mParseNotice.toString().trim());
 
-		computeArticleImage();
+		loadArticleImages();
 
 		resetStopwatch();
 		mDaoSession.getArticleDao().insert(mArticle);
@@ -257,24 +277,35 @@ public class SelectArticleWorkflow extends PrifoTask {
 	private void updateArticleContent() {
 		downloadAndExtractArticleContent();
 
-		if (isCancelled()) {
-			return;
-		}
+		if (isCancelled()) return;
 
-		String articleContent = Strings.isNullOrEmpty(mArticle.getContent()) ? mFeedItem.getDescription() : mArticle.getContent();
-
-		if (StrUtils.tooShort(mArticleContentDownloaded, articleContent, Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
-			mParseNotice.append(" Downloaded content is too short. Use old content");
+		boolean contentIsChanged = true;
+		if (!mSuccessDownloadAndExtraction) {
+			//choose content between mFeedItem.getDescription() and mArticleContentDownloaded
+			String articleContent;
+			if (StrUtils.tooShort(mArticleContentBody, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
+				mParseNotice.append(" Downloaded content is too short, use feed description.");
+				mArticle.setContent(mFeedItem.getDescription());
+			} else {
+				mArticle.setContent(mArticleContentDownloaded);
+			}
 		}
 		else {
-			articleContent = mArticleContentDownloaded;
+			//choose content between existed in node and feed description
+			if (StrUtils.tooShort(mArticle.getContent(), mFeedItem.getDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
+				mArticle.setContent(mFeedItem.getDescription());
+			} else {
+				contentIsChanged = false;
+			}
 		}
 
-		mArticle.setContent(articleContent);
-
-		if (mPathToContent!=null) {
-			mArticle.setXpath(mPathToContent.getXpath());
+		if (contentIsChanged) {
+			loadArticleImages(); //content changed, re-compute image
 		}
+
+//		if (mPathToContent!=null) {
+//			mArticle.setXpath(mPathToContent.getXpath());
+//		}
 		if (Strings.isNullOrEmpty(mArticleLanguage)) {
 			mArticleLanguage = mFeedItem.getLanguage();
 		}
@@ -282,8 +313,6 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 		mArticle.setParseNotice(mParseNotice.toString().trim());
 		mArticle.setLastUpdated(DateTime.now().toDate());
-
-		computeArticleImage();
 
 		resetStopwatch();
 		mDaoSession.getArticleDao().update(mArticle);
@@ -296,22 +325,49 @@ public class SelectArticleWorkflow extends PrifoTask {
 		}
 	}
 
-
 	/**
-	 * Update the avatar: put first valid image on article content to the {@link dh.newspaper.model.generated.Article#imageUrl}
-	 * if there was no image from feeds description.
+	 * load all image
+	 * set avatar = the middle image to {@link dh.newspaper.model.generated.Article#imageUrl}
 	 */
-	private void computeArticleImage() {
-		//if there is no image yet and the content downloaded from web is not null
-		if (Strings.isNullOrEmpty(mArticle.getImageUrl()) && !Strings.isNullOrEmpty(mArticleContentDownloaded)) {
-			if (getArticleContentDocument() != null) {
-				mArticle.setImageUrl(ContentParser.findAvatar(getArticleContentDocument()));
-			}
+	private void loadArticleImages() {
+		if (isCancelled() || mDoc == null) return;
+
+		Elements elems = mDoc.select("img");
+		if (elems == null || elems.isEmpty()) {
+			return;
+		}
+
+		for(Element e : elems) {
+			ImageLoader.getInstance().loadImage(e.attr("abs:src"), new ImageLoadingListener() {
+				@Override
+				public void onLoadingStarted(String imageUri, View view) {
+					if (isCancelled()) {
+						throw new CancellationException();
+					}
+				}
+
+				@Override
+				public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+
+				}
+
+				@Override
+				public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+
+				}
+
+				@Override
+				public void onLoadingCancelled(String imageUri, View view) {
+
+				}
+			});
+		}
+
+		if (Strings.isNullOrEmpty(mArticle.getImageUrl())) {
+			String avatar = elems.get((elems.size()-1)/2).attr("abs:src");
+			mArticle.setImageUrl(avatar);
 		}
 	}
-
-
-	Document mDoc;
 
 	/**
 	 * We parse article content only once time during the workflow running
@@ -362,27 +418,18 @@ public class SelectArticleWorkflow extends PrifoTask {
 			}
 			log("Content downloaded");
 
-			String encoding = Constants.DEFAULT_ENCODING;
-			if (mParentSubscription!=null && !Strings.isNullOrEmpty(mParentSubscription.getEncoding())) {
-				encoding = mParentSubscription.getEncoding();
-			}
+			extractContent(inputStream);
 
-			resetStopwatch();
-			Document doc = mContentParser.extractContent(inputStream, encoding, mFeedItem.getUri(), mParseNotice, this);
-			if (isCancelled()) return;
-			mArticleContentDownloaded = doc.outerHtml();
-			log("Extract content done", StrUtils.glimpse(mArticleContentDownloaded));
-
-			if (Strings.isNullOrEmpty(mArticleContentDownloaded)) {
-				mParseNotice.append(" Justext returns empty content.");
-			}
+			mSuccessDownloadAndExtraction = true;
 		} catch (IOException e) {
 			mParseNotice.append(" IOException: "+e.getMessage());
 			Log.w(TAG, e.toString());
 		} catch (Exception e) {
-			mParseNotice.append(" Fatal while extracting content: "+e.getMessage());
+			mParseNotice.append(" Exception: "+e.getMessage());
 			Log.w(TAG, e);
 		}
+
+
 
 		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
@@ -392,27 +439,52 @@ public class SelectArticleWorkflow extends PrifoTask {
 	}
 
 	/**
-	 * feed mPathToContent
+	 * fill
+	 * {@link #mArticleContentDownloaded}
+	 * {@link #mArticleContentBody}
+	 * {@link #mDoc}
 	 */
-	private void findFirstMatchingPathToContent() {
-		if (isCancelled()) {
-			return;
+	private void extractContent(InputStream inputStream) throws IOException {
+		String encoding = Constants.DEFAULT_ENCODING;
+		if (mParentSubscription != null && !Strings.isNullOrEmpty(mParentSubscription.getEncoding())) {
+			encoding = mParentSubscription.getEncoding();
 		}
+
 		resetStopwatch();
+		mDoc = mContentParser.extractContent(inputStream, encoding, mFeedItem.getUri(), mParseNotice, this);
+		if (isCancelled()) return;
 
-		mPathToContent = findFirstMatchingPathToContent(mFeedItem.getUri());
+		mArticleContentDownloaded = mDoc.outerHtml();
+		mArticleContentBody = NodeHelper.getTextContent(mDoc.body());
+		log("Extract content done", StrUtils.glimpse(mArticleContentDownloaded));
 
-		log("First matching Path To Content is "+mPathToContent);
-	}
-
-	PathToContent findFirstMatchingPathToContent(String feedUri) {
-		for(PathToContent ptc : refData.pathToContentList()) {
-			if (feedUri.matches(ptc.getUrlPattern())) {
-				return ptc;
-			}
+		if (Strings.isNullOrEmpty(mArticleContentBody)) {
+			mParseNotice.append(" Justext returns empty content.");
 		}
-		return null;
 	}
+
+//	/**
+//	 * feed mPathToContent
+//	 */
+//	private void findFirstMatchingPathToContent() {
+//		if (isCancelled()) {
+//			return;
+//		}
+//		resetStopwatch();
+//
+//		mPathToContent = findFirstMatchingPathToContent(mFeedItem.getUri());
+//
+//		log("First matching Path To Content is "+mPathToContent);
+//	}
+//
+//	PathToContent findFirstMatchingPathToContent(String feedUri) {
+//		for(PathToContent ptc : refData.pathToContentList()) {
+//			if (feedUri.matches(ptc.getUrlPattern())) {
+//				return ptc;
+//			}
+//		}
+//		return null;
+//	}
 
 	public Article getArticle() {
 		if (mArticle != null) {
@@ -458,7 +530,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 		Log.w(TAG, message + " - "  + mFeedItem.getUri());
 	}
 	private void logInfo(String message) {
-		Log.d(TAG, message + " - "  + mFeedItem.getUri());
+		Log.d(TAG, message + " - " + mFeedItem.getUri());
 	}
 	private void logSimple(String message) {
 		Log.v(TAG, message + " - " + mFeedItem.getUri());

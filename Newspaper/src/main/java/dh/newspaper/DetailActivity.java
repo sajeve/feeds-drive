@@ -28,6 +28,9 @@ public class DetailActivity extends Activity {
 		getActionBar().setTitle(mTitle);
 
 		mSinglePane = findViewById(R.id.fragment_feeds) == null;
+
+		overridePendingTransition(R.anim.right_in, R.anim.left_out);
+
 		/*if (mSinglePane) {
 			getFragmentManager().beginTransaction()
 					.replace(R.id.fragment_article, mArticleFragment)
@@ -66,6 +69,12 @@ public class DetailActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		overridePendingTransition(R.anim.left_in, R.anim.right_out);
+	}
 
 	/**
 	 * Used to store the last screen title. For use in

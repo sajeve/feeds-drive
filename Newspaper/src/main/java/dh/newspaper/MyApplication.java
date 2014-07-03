@@ -14,6 +14,8 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import de.greenrobot.event.EventBus;
+import de.psdev.slf4j.android.logger.AndroidLoggerAdapter;
+import de.psdev.slf4j.android.logger.LogLevel;
 import dh.newspaper.base.InjectingApplication;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.model.generated.DaoMaster;
@@ -44,6 +46,10 @@ public class MyApplication extends InjectingApplication {
 
 		if (Constants.DEBUG) {
 			StrictMode.enableDefaults();
+			AndroidLoggerAdapter.setLogLevel(LogLevel.ERROR);
+		}
+		else {
+			AndroidLoggerAdapter.setLogLevel(LogLevel.ERROR);
 		}
 
 		ResourceZoneInfoProvider.init(this);

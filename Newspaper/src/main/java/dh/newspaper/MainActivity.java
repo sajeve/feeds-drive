@@ -56,6 +56,8 @@ public class MainActivity extends Activity {
 			setUpAsNavigationDrawer();
 		}
 
+		overridePendingTransition(R.anim.right_in, R.anim.left_out);
+
 		/*else {
 			View v = findViewById(R.id.fragment_feeds);
 			Log.i(TAG, "fragment_feed.id = " + v.getMissionId());
@@ -185,6 +187,12 @@ public class MainActivity extends Activity {
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
 		mTitle = savedInstanceState.getCharSequence(STATE_TITLE);
+	}
+
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		overridePendingTransition(R.anim.left_in, R.anim.right_out);
 	}
 
 	/**

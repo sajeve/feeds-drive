@@ -39,6 +39,7 @@ public class ContentParser {
 			.removeTitle(true)
 			.autoDetectLanguage(false)
 			.language(null)
+			.maxLinkDensity(0.5)
 			.build();
 
 	private static final Configuration JusTextRelaxConfig = new Configuration.Builder(JusTextDefaultConfig)
@@ -47,6 +48,7 @@ public class ContentParser {
 			.lengthHigh(0)
 			.stopwordsLow(0)
 			.stopwordsHigh(0)
+			.maxLinkDensity(0.8)
 			.build();
 
 	public static final int AVATAR_MIN_WIDTH = 50;
@@ -538,6 +540,7 @@ public class ContentParser {
 	 * find first valid image in the document to use as avatar
 	 */
 	public static String findAvatar(Document doc) {
+		if (doc == null) return null;
 		Elements elems = doc.select("img");
 		if (elems == null) {
 			return null;
