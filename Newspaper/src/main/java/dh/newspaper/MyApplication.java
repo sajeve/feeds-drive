@@ -1,28 +1,23 @@
 package dh.newspaper;
 
+import android.app.AlarmManager;
 import android.app.FragmentManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
-import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
-import com.nostra13.universalimageloader.cache.disc.impl.ext.LruDiscCache;
-import com.nostra13.universalimageloader.core.DefaultConfigurationFactory;
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
-import de.greenrobot.event.EventBus;
 import de.psdev.slf4j.android.logger.AndroidLoggerAdapter;
 import de.psdev.slf4j.android.logger.LogLevel;
 import dh.newspaper.base.InjectingApplication;
 import dh.newspaper.cache.RefData;
-import dh.newspaper.model.generated.DaoMaster;
-import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.modules.AppContextModule;
 import dh.newspaper.modules.GlobalModule;
-import dh.newspaper.parser.ContentParser;
+import dh.newspaper.services.AlarmReceiver;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.view.utils.ErrorDialogFragment;
 import net.danlew.android.joda.ResourceZoneInfoProvider;
@@ -54,6 +49,8 @@ public class MyApplication extends InjectingApplication {
 
 		ResourceZoneInfoProvider.init(this);
 		mBackgroundTasksManager.runInitialisationWorkflow();
+
+		setupAlarm(getApplicationContext());
 
 /*
 		mDb = mDbHelper.getWritableDatabase();
@@ -104,8 +101,25 @@ public class MyApplication extends InjectingApplication {
 		return mRefData.getCacheDir();
 	}
 
+	private void setupAlarm(Context context) {
+		// let's grab new stuff at around 11:45 GMT, inexactly
+		/*Calendar updateTime = Calendar.getInstance();
+		updateTime.setTimeZone(TimeZone.getTimeZone("GMT"));
+		updateTime.set(Calendar.HOUR_OF_DAY, 11);
+		updateTime.set(Calendar.MINUTE, 45);*/
+
+		Intent downloader = new Intent(context, AlarmReceiver.class);
+		PendingIntent recurringDownload = PendingIntent.getBroadcast(context,
+				0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
+		AlarmManager alarms = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+		alarms.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+				Constants.SERVICE_START_AT,
+				Constants.SERVICE_INTERVAL,
+				recurringDownload);
+	}
+
 	public String getDatabasePathString(String name) {
-		return mRefData.getCachePath()+"/"+name+".mDb";
+		return getCacheDir()+"/"+name+".mDb";
 	}
 
 	public static void showErrorDialog(final FragmentManager fm, final String message, final Throwable ex) {

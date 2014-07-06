@@ -77,15 +77,19 @@ public class BackgroundTasksManager implements Closeable {
 			@Override
 			protected Boolean doInBackground(Object[] params) {
 				EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_START_LOADING));
-				mRefData.setupLruDiscCache(Constants.IMAGE_DISK_CACHE_SIZE);
-				mRefData.loadTags();
-				EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_REFRESH));
+				try {
+					mRefData.getLruDiscCache(); //setupLruDiscCache
+					mRefData.loadTags();
+				}
+				finally {
+					EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_REFRESH));
+				}
 				return true;
 			}
 
 			@Override
 			protected void onPostExecute(Boolean result) {
-				initImageLoader();
+				mRefData.initImageLoader();
 				if (mRefData.getTags().size() > 0) {
 					loadTag(mRefData.getTags().first());
 				}
@@ -274,22 +278,6 @@ public class BackgroundTasksManager implements Closeable {
 
 	public SelectArticleWorkflow getActiveSelectArticleWorkflow() {
 		return mSelectArticleWorkflow;
-	}
-
-	private void initImageLoader() {
-		DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
-				.cacheInMemory(true)
-				.cacheOnDisk(true)
-				.build();
-		ImageLoaderConfiguration.Builder config = new ImageLoaderConfiguration.Builder(mContext)
-				.diskCache(mRefData.getLruDiscCache())
-				.diskCacheSize(Constants.IMAGE_DISK_CACHE_SIZE)
-				.defaultDisplayImageOptions(displayImageOptions);
-
-		if (Constants.DEBUG) {
-			config.writeDebugLogs();
-		}
-		ImageLoader.getInstance().init(config.build());
 	}
 
 	@Override

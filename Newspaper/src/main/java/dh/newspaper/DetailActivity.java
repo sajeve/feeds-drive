@@ -65,6 +65,7 @@ public class DetailActivity extends Activity {
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
             NavUtils.navigateUpFromSameTask(this);
+			overridePendingTransition(R.anim.left_in, R.anim.right_out);
             return true;
         }
         return super.onOptionsItemSelected(item);

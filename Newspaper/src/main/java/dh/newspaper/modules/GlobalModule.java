@@ -8,6 +8,7 @@ import dh.newspaper.MyApplication;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.SubscriptionFactory;
 import dh.newspaper.services.BackgroundTasksManager;
+import dh.newspaper.services.FeedsDownloaderService;
 import dh.newspaper.view.ArticleFragment;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.TagsFragment;
@@ -32,7 +33,8 @@ import java.security.NoSuchAlgorithmException;
 			SelectArticleWorkflow.class,
 			SelectTagWorkflow.class,
 			ContentParser.class,
-			BackgroundTasksManager.class
+			BackgroundTasksManager.class,
+			FeedsDownloaderService.class
 	},
 	library = true
 )

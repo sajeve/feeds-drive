@@ -1,5 +1,6 @@
 package dh.newspaper;
 
+import android.app.AlarmManager;
 import dh.newspaper.model.generated.Article;
 import net.danlew.android.joda.DateUtils;
 import org.joda.time.DateTime;
@@ -21,6 +22,10 @@ public class Constants {
 	public static final int EXCERPT_LENGTH = 320;
 	public static final Duration ARTICLE_TTL = DEBUG ? new Duration(100) : new Duration(1000); //1s
 	public static final Duration SUBSCRIPTION_TTL = DEBUG ? new Duration(100) : new Duration(1000); //1s
+
+	/**
+	 * number of actual articles in memory cache, it is the windows size of the list view
+	 */
 	public static final int ARTICLES_PER_PAGE = DEBUG ? 100 : 200;
 
 	public static final int IMAGE_DISK_CACHE_SIZE = 100 * 1024 * 1024;
@@ -29,11 +34,9 @@ public class Constants {
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
 	public static final String SUBJECT_TAGS_REFRESH = "Tags.Refresh";
 	//public static final String SUBJECT_TAGS_DONE_LOADING = "Tags.DoneLoading";
-
 	public static final String SUBJECT_FEEDS_START_LOADING = "Feeds.StartLoading";
 	public static final String SUBJECT_FEEDS_REFRESH = "Feeds.Refresh";
 	public static final String SUBJECT_FEEDS_DONE_LOADING = "Feeds.DoneLoading";
-
 	public static final String SUBJECT_ARTICLE_START_LOADING = "Article.StartLoading";
 	public static final String SUBJECT_ARTICLE_REFRESH = "Article.Refresh";
 	public static final String SUBJECT_ARTICLE_DONE_LOADING = "Article.DoneLoading";
@@ -49,4 +52,12 @@ public class Constants {
 	public static final int ARTICLE_LENGTH_PERCENT_TOLERANT = -1; //90
 
 	public static final int ARTICLE_MIN_LENGTH = 200; //90
+
+	public static final long SERVICE_START_AT = 5000; //updateTime.getTimeInMillis(),
+	public static final long SERVICE_INTERVAL = DEBUG ? 5*60*1000 : AlarmManager.INTERVAL_HOUR; //AlarmManager.INTERVAL_DAY
+
+	/**
+	 * In Background service, we won't download article which last updated is since 1 hour
+	 */
+	public static final Duration ARTICLE_TTL_SERVICE = DEBUG ? new Duration(SERVICE_INTERVAL) : new Duration(3600000); //1h
 }

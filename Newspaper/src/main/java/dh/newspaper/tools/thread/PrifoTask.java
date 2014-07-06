@@ -88,7 +88,7 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 
 	/**
 	 * Use to recognise if the two task has the same mission,
-	 * in {@link dh.newspaper.tools.BumpBlockingQueue} if we add 2 task of the same id (a twin) into the queue, it will not
+	 * in {@link dh.newspaper.tools.PriorityExecutor} if we add 2 task of the same id (a twin) into the queue, it will not
 	 * add the task but increase the priority of the existing twin-task in the queue.
 	 */
 	public abstract String getMissionId();

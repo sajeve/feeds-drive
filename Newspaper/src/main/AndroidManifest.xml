@@ -47,7 +47,8 @@
         -->
 
 
-        <!-- <service android:name=".services.MyLocalService"></service> -->
+        <service android:name=".services.FeedsDownloaderService"></service>
+	    <receiver android:name=".services.AlarmReceiver"></receiver>
     </application>
 
 </manifest>

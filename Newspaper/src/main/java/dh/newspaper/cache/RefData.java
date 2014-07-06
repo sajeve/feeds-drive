@@ -7,6 +7,9 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
 import com.nostra13.universalimageloader.cache.disc.impl.ext.LruDiscCache;
 import com.nostra13.universalimageloader.core.DefaultConfigurationFactory;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import dh.newspaper.Constants;
 import dh.newspaper.model.generated.*;
 
@@ -106,13 +109,40 @@ public class RefData {
 		}
 	}
 
-	public synchronized void setupLruDiscCache(int maxSize) {
+	private synchronized void setupLruDiscCache(int maxSize) {
 		mLruDiscCache = new LruDiscCache(
 				new File(getCachePath()+"/"+Constants.CACHE_IMAGE_FOLDER),
 				DefaultConfigurationFactory.createFileNameGenerator(), maxSize);
 	}
 
 	public LruDiscCache getLruDiscCache() {
+		if (mLruDiscCache == null) {
+			setupLruDiscCache(Constants.IMAGE_DISK_CACHE_SIZE);
+		}
 		return mLruDiscCache;
+	}
+
+	private DisplayImageOptions displayImageOptions;
+
+	/**
+	 * Init image loader using LruDiscCache
+	 */
+	public void initImageLoader() {
+		if (displayImageOptions != null) {
+			return; // init is already called
+		}
+		displayImageOptions = new DisplayImageOptions.Builder()
+				.cacheInMemory(true)
+				.cacheOnDisk(true)
+				.build();
+		ImageLoaderConfiguration.Builder config = new ImageLoaderConfiguration.Builder(mContext)
+				.diskCache(getLruDiscCache())
+				.diskCacheSize(Constants.IMAGE_DISK_CACHE_SIZE)
+				.defaultDisplayImageOptions(displayImageOptions);
+
+		if (Constants.DEBUG) {
+			config.writeDebugLogs();
+		}
+		ImageLoader.getInstance().init(config.build());
 	}
 }

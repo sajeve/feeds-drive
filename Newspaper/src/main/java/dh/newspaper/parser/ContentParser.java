@@ -50,6 +50,7 @@ public class ContentParser {
 			.stopwordsHigh(0)
 			.maxLinkDensity(0.8)
 			.build();
+	public static final boolean ENABLE_JUSTEXT_RELAX_CONFIG = false;
 
 	public static final int AVATAR_MIN_WIDTH = 50;
 	public static final int AVATAR_MIN_HEIGHT = 50;
@@ -84,27 +85,34 @@ public class ContentParser {
 			}
 
 			Element body = resu.body();
-			if (body!=null && body.text().length() < Constants.ARTICLE_MIN_LENGTH) {
-				notice.append("Default-extractor return nearly-empty content, switch to relax-extractor");
+			if (body==null || body.text().length() < Constants.ARTICLE_MIN_LENGTH) {
+				if (ENABLE_JUSTEXT_RELAX_CONFIG) {
+					notice.append("Default-extractor return nearly-empty content, switch to relax-extractor");
 
-				if (Constants.DEBUG) {
-					sw.reset().start();
-				}
-				resu = doc.clone();
-				new Extractor(JusTextRelaxConfig, cancellation).removeBoilerplate(resu);
-				if (Constants.DEBUG) {
-					sw.stop();
-					Log.v("Parser", "JusText extraction Relax "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms - "+resu.baseUri());
-				}
+					if (Constants.DEBUG) {
+						sw.reset().start();
+					}
+					resu = doc.clone();
+					new Extractor(JusTextRelaxConfig, cancellation).removeBoilerplate(resu);
+					if (Constants.DEBUG) {
+						sw.stop();
+						Log.v("Parser", "JusText extraction Relax " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms - " + resu.baseUri());
+					}
 
-				body = resu.body();
-				if (body.text().length() < Constants.ARTICLE_MIN_LENGTH) {
-					notice.append("Relax-extractor return nearly-empty content, switch to full-content");
+					body = resu.body();
+					if (body == null || body.text().length() < Constants.ARTICLE_MIN_LENGTH) {
+						notice.append("Relax-extractor return nearly-empty content, switch to full-content");
+						return doc;
+					}
+				}
+				else {
+					notice.append("Default-extractor return nearly-empty content, switch to full-content");
 					return doc;
 				}
 			}
-
-			return resu;
+			else {
+				return resu;
+			}
 		}
 		catch (CancellationException ex) {
 			return doc;
@@ -112,8 +120,8 @@ public class ContentParser {
 		catch (Exception ex) {
 			Log.e(TAG, "Extraction failed - "+doc.baseUri(), ex);
 			notice.append("Extraction error "+ex.getMessage()+". Use full content");
-			return doc;
 		}
+		return doc;
 	}
 
 	/**
@@ -273,10 +281,12 @@ public class ContentParser {
 		}
 		Document doc = Jsoup.parse(input, charSet, addressUrl, Parser.xmlParser());
 		input.close();
-		return parseFeeds(doc);
+		return parseFeeds(doc, cancelListener);
 	}
 
-	public Feeds parseFeeds(Document doc) throws FeedParserException {
+	public Feeds parseFeeds(Document doc, ICancellation cancelListener) throws FeedParserException {
+		if (cancelListener!=null && cancelListener.isCancelled()) return null;
+
 		FeedFormat feedFormat;
 
 		Elements itemsElem = doc.select("rss>channel>item");
@@ -289,6 +299,9 @@ public class ContentParser {
 			itemsElem = doc.select("feed>entry");
 			itemCount = itemsElem==null ? 0 : itemsElem.size();
 		}
+
+		if (cancelListener!=null && cancelListener.isCancelled()) return null;
+
 		if (itemCount==0) {
 			throw new FeedParserException(doc.baseUri(), "Cannot parse: '"+ StrUtils.ellipsize(doc.text(), 50)+"'");
 		}
@@ -302,6 +315,8 @@ public class ContentParser {
 					parseFeedsPublishedDate(feedFormat, doc)
 				);
 		for (int i = 0; i < itemCount; i++) {
+			if (cancelListener!=null && cancelListener.isCancelled()) return null;
+
 			Element elem = itemsElem.get(i);
 			FeedItem item = new FeedItem(
 					doc.baseUri(),

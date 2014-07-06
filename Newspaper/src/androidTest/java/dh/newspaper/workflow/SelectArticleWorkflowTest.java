@@ -1,6 +1,7 @@
 package dh.newspaper.workflow;
 
 import android.test.ActivityInstrumentationTestCase2;
+import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
@@ -32,22 +33,14 @@ public class SelectArticleWorkflowTest extends ActivityInstrumentationTestCase2<
 	}
 
 	public void testSelectArticleWorkflow1() throws IOException, FeedParserException {
-		Feeds feeds = mContentParser.parseFeeds("http://vnexpress.net/rss/thoi-su.rss", "utf-8", new ICancellation() {
-			@Override
-			public boolean isCancelled() {
-				return false;
-			}
-		});
+		Feeds feeds = mContentParser.parseFeeds("http://www.huffingtonpost.com/tag/asian-americans/feed", "utf-8", null);
 		assertTrue(feeds.size() > 0);
 		FeedItem feedItem = feeds.get(0);
 
+		assertEquals("http://www.huffingtonpost.com/kiran-ahuja/reflecting-on-50-years-of_b_5553462.html", feedItem.getUri());
 		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), feedItem, Constants.ARTICLE_TTL, true, null);
-
-		PathToContent pathToContent = saw.findFirstMatchingPathToContent("http://vnexpress.net/tin-tuc/thoi-su/ha-noi-don-dep-day-dien-cap-chang-chit-tren-pho-2998401.html");
-		assertNotNull(pathToContent);
-		assertEquals("vn", pathToContent.getLanguage());
-
 		saw.run();
+		assertTrue(!Strings.isNullOrEmpty(feedItem.getTextPlainDescription()));
 	}
 
 }
