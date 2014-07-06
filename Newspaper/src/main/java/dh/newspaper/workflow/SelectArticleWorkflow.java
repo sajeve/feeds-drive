@@ -20,7 +20,6 @@ import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.tools.StrUtils;
 import dh.newspaper.tools.thread.PrifoTask;
 import dh.tool.common.PerfWatcher;
-import dh.tool.jsoup.NodeHelper;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.jsoup.Jsoup;
@@ -68,7 +67,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 	private Document mDoc;
 	private String mArticleContentDownloaded;
-	private String mArticleContentBody;
+	private String mArticleTextPlainDownloaded;
 	private boolean mSuccessDownloadAndExtraction = false;
 
 	private String mArticleLanguage;
@@ -216,7 +215,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 		}
 
 		String articleContent;
-		if (StrUtils.tooShort(mArticleContentBody, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
+		if (StrUtils.tooShort(mArticleTextPlainDownloaded, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 			articleContent = mFeedItem.getDescription();
 			mParseNotice.append(" Downloaded content is too short. Use feed description");
 		}
@@ -264,7 +263,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 		if (isCancelled()) {
 			return;
 		}
-		boolean articleIsExpiry = (mArticleTimeToLive == null) || new Duration(new DateTime(mArticle.getLastUpdated()), DateTime.now()).isLongerThan(mArticleTimeToLive);
+		boolean articleIsExpiry = mArticleTimeToLive==null || mArticle.getLastUpdated()==null  || new Duration(new DateTime(mArticle.getLastUpdated()), DateTime.now()).isLongerThan(mArticleTimeToLive);
 
 		if (articleIsExpiry) {
 			updateArticleContent();
@@ -280,10 +279,10 @@ public class SelectArticleWorkflow extends PrifoTask {
 		if (isCancelled()) return;
 
 		boolean contentIsChanged = true;
-		if (!mSuccessDownloadAndExtraction) {
+		if (mSuccessDownloadAndExtraction) {
 			//choose content between mFeedItem.getDescription() and mArticleContentDownloaded
 			String articleContent;
-			if (StrUtils.tooShort(mArticleContentBody, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
+			if (StrUtils.tooShort(mArticleTextPlainDownloaded, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 				mParseNotice.append(" Downloaded content is too short, use feed description.");
 				mArticle.setContent(mFeedItem.getDescription());
 			} else {
@@ -293,6 +292,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 		else {
 			//choose content between existed in node and feed description
 			if (StrUtils.tooShort(mArticle.getContent(), mFeedItem.getDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
+				mParseNotice.append(" Cached content is too short, use feed description.");
 				mArticle.setContent(mFeedItem.getDescription());
 			} else {
 				contentIsChanged = false;
@@ -429,8 +429,6 @@ public class SelectArticleWorkflow extends PrifoTask {
 			Log.w(TAG, e);
 		}
 
-
-
 		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
 			mCallback.onFinishedDownloadContent(this, getArticle());
@@ -441,7 +439,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 	/**
 	 * fill
 	 * {@link #mArticleContentDownloaded}
-	 * {@link #mArticleContentBody}
+	 * {@link #mArticleTextPlainDownloaded}
 	 * {@link #mDoc}
 	 */
 	private void extractContent(InputStream inputStream) throws IOException {
@@ -455,11 +453,16 @@ public class SelectArticleWorkflow extends PrifoTask {
 		if (isCancelled()) return;
 
 		mArticleContentDownloaded = mDoc.outerHtml();
-		mArticleContentBody = NodeHelper.getTextContent(mDoc.body());
-		log("Extract content done", StrUtils.glimpse(mArticleContentDownloaded));
+		Element docBody = mDoc.body();
+		mArticleTextPlainDownloaded = docBody == null ? null : docBody.text();
 
-		if (Strings.isNullOrEmpty(mArticleContentBody)) {
+
+		if (Strings.isNullOrEmpty(mArticleTextPlainDownloaded)) {
+			log("Extract content done", "Empty content: "+mParseNotice);
 			mParseNotice.append(" Justext returns empty content.");
+		}
+		else {
+			log("Extract content done", StrUtils.glimpse(mArticleContentDownloaded));
 		}
 	}
 
