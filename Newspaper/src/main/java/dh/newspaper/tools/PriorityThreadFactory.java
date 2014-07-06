@@ -10,6 +10,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * The default thread factory
  */
 public class PriorityThreadFactory implements ThreadFactory {
+	public static final PriorityThreadFactory MIN = new PriorityThreadFactory(Thread.MIN_PRIORITY);
+	public static final PriorityThreadFactory LOW = new PriorityThreadFactory(Thread.MAX_PRIORITY-2);
+	public static final PriorityThreadFactory HIGH = new PriorityThreadFactory(Thread.MAX_PRIORITY+2);
+	public static final PriorityThreadFactory MAX = new PriorityThreadFactory(Thread.MAX_PRIORITY);
+
 	private static final AtomicInteger poolNumber = new AtomicInteger(1);
 	private final ThreadGroup group;
 	private final AtomicInteger threadNumber = new AtomicInteger(1);
