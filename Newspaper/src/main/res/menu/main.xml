@@ -1,15 +1,33 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context="dh.newspaper.MainActivity" >
+        xmlns:tools="http://schemas.android.com/tools"
+		xmlns:app="http://schemas.android.com/apk/res-auto"
+        tools:context="dh.newspaper.MainActivity" >
 
-    <item
+    <!--<item
         android:id="@+id/action_example"
-        android:showAsAction="withText|ifRoom"
-        android:title="@string/action_example"/>
+        app:showAsAction="withText|ifRoom"
+        android:orderInCategory="100"
+        android:title="@string/action_example"/>-->
+
+	<item
+		android:id="@+id/action_share"
+		app:showAsAction="ifRoom"
+		android:icon="@android:drawable/ic_menu_share"
+		android:title="@string/action_share"/>
+	<item
+		android:id="@+id/action_subscribe"
+		app:showAsAction="ifRoom"
+		android:icon="@android:drawable/ic_menu_add"
+		android:title="@string/action_subscribe"/>
+	<item
+		android:id="@+id/action_offline"
+		android:icon="@android:drawable/ic_menu_view"
+		app:showAsAction="never"
+		android:title="@string/action_offline"/>
     <item
         android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never"
+		android:icon="@android:drawable/ic_menu_preferences"
+        app:showAsAction="never"
         android:title="@string/action_settings"/>
 
 </menu>

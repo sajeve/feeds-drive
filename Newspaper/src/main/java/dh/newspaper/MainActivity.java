@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.view.FeedsFragment;
 
@@ -105,18 +106,30 @@ public class MainActivity extends Activity {
 //		}
 //	}
 
+
+
+
+
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		if (isDrawerOpen()) {
-			// Only show items in the action bar relevant to this screen
-			// if the drawer is not showing. Otherwise, let the drawer
-			// decide what to show in the action bar.
-			getMenuInflater().inflate(R.menu.main, menu);
-			restoreActionBar();
-			return true;
-		}
+//		if (isDrawerOpen()) {
+//			// Only show items in the action bar relevant to this screen
+//			// if the drawer is not showing. Otherwise, let the drawer
+//			// decide what to show in the action bar.
+//			getMenuInflater().inflate(R.menu.main, menu);
+//			restoreActionBar();
+//			return true;
+//		}
+//		restoreActionBar();
+//		return super.onCreateOptionsMenu(menu);
+
+
+
+		getMenuInflater().inflate(R.menu.main, menu);
 		restoreActionBar();
-		return super.onCreateOptionsMenu(menu);
+		return true;
+
 	}
 
 	@Override
@@ -130,6 +143,23 @@ public class MainActivity extends Activity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	/**
 	 * Invoke by EventBus when {@link dh.newspaper.view.FeedsFragment} attached
