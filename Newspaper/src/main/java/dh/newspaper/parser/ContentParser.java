@@ -119,7 +119,7 @@ public class ContentParser {
 		}
 		catch (Exception ex) {
 			Log.e(TAG, "Extraction failed - "+doc.baseUri(), ex);
-			notice.append("Extraction error "+ex.getMessage()+". Use full content");
+			notice.append("Extraction error "+ex.toString()+". Use full content");
 		}
 		return doc;
 	}

@@ -2,22 +2,30 @@ package dh.newspaper.parser;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import com.squareup.okhttp.OkHttpClient;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.test.TestUtils;
 import dh.newspaper.tools.NetworkUtils;
+import dh.tool.common.ICancellation;
 import dh.tool.common.PerfWatcher;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActivity> {
-	private final String TAG = ContentParserTest.class.getName();
+	private final static String TAG = ContentParserTest.class.getName();
 
 	ContentParser contentParser;
 
@@ -29,6 +37,87 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 	protected void setUp() throws Exception {
 		contentParser = new ContentParser();
 	}
+
+
+
+
+
+
+
+
+
+	public void testDownloadWithRedirect() throws IOException {
+		String address = "http://www.nytimes.com/2014/07/07/world/middleeast/dozens-killed-in-yemen-as-sectarian-muslim-fighting-heats-up.html";
+		//byte[] data = downloadContentHttpConnection(address, NetworkUtils.DESKTOP_USER_AGENT, null);
+		byte[] data = NetworkUtils.downloadContentHttpGet(address, NetworkUtils.DESKTOP_USER_AGENT,  null);
+
+		InputStream dataStream = new ByteArrayInputStream(data);
+		TestUtils.writeToFile(Constants.DEBUG_DATABASE_PATH + "/nytime_dozens4_noredirect.html", dataStream, false);
+	}
+
+	private static final OkHttpClient okHttpClient = new OkHttpClient();
+	/**
+	 * Download content using HttpConnection
+	 */
+	public static byte[] downloadContentHttpConnection(String address, String userAgent, ICancellation cancelListener) throws IOException {
+		Stopwatch sw = Stopwatch.createStarted();
+
+		HttpURLConnection httpConnection = okHttpClient.open(new URL(address));
+		httpConnection.addRequestProperty("User-Agent", userAgent);
+
+		int responseCode = httpConnection.getResponseCode();
+		InputStream input = httpConnection.getInputStream();
+
+		ByteArrayOutputStream baos = null;
+		try {
+			//download all the page to other InputStream
+			baos = new ByteArrayOutputStream();
+			byte[] buffer = new byte[1024];
+			int len;
+			while ((len = input.read(buffer)) > -1) {
+				if (cancelListener!=null && cancelListener.isCancelled()) {
+					Log.v(TAG, "Download canceled ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
+					return null;
+				}
+				baos.write(buffer, 0, len);
+			}
+			baos.flush();
+
+			if (200<=responseCode && responseCode<400) {
+				byte[] content = baos.toByteArray();
+				baos.close();
+				Log.v(TAG, "Download end "+content.length+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
+				return content;
+			} else {
+				Log.w(TAG, "status code is "+responseCode);
+				return null;
+				//throw new IllegalStateException("Failed to connect to " + address + ": " + httpConnection.getResponseMessage() + " (" + responseCode + ")");
+			}
+		}
+		finally {
+			if (input != null) {
+				input.close();
+			}
+			if (baos!=null) {
+				baos.close();
+			}
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	public void runExtractContent(String address, String fileName, String xpath) throws IOException {
 		//download

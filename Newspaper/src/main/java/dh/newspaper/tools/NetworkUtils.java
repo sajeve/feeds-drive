@@ -11,8 +11,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.params.ClientPNames;
+import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.EntityUtils;
 
 import java.io.*;
@@ -28,6 +31,7 @@ public class NetworkUtils {
 	private static final String TAG = NetworkUtils.class.getName();
 	public static final String MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; U; Android 4.0.3; ko-kr; LG-L160L Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
 	public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36";
+	private static final int SOCKET_OPERATION_TIMEOUT = 60 * 1000;
 
 	private static final OkHttpClient okHttpClient = new OkHttpClient();
 
@@ -38,27 +42,30 @@ public class NetworkUtils {
 	 * @throws IllegalStateException
 	 * @throws IOException
 	 */
-	public static InputStream getStreamFromUrl_AndroidHttpGet(String address, String userAgent, ICancellation cancelListener) throws IOException {
-		Stopwatch sw;
+	public static byte[] downloadContentAndroidHttpGet(String address, ICancellation cancelListener) throws IOException {
+		Stopwatch sw = null;
 		if (Constants.DEBUG) {
 			sw = Stopwatch.createStarted();
 		}
 
-		AndroidHttpClient client = AndroidHttpClient.newInstance(userAgent);
+		AndroidHttpClient ahClient = AndroidHttpClient.newInstance(DESKTOP_USER_AGENT);
+		ahClient.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, true);
+		ahClient.getParams().setParameter(ClientPNames.MAX_REDIRECTS, 40);
+		ahClient.getParams().setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, true); //Too many redirects: 21
 
 		HttpGet request = new HttpGet(address);
 		byte[] rawData = null;
 		try {
 			if (cancelListener!=null && cancelListener.isCancelled()) {
-				Log.v(TAG, "Downloaded canceled HttpGet ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
+				Log.v(TAG, "Downloaded canceled AndroidHttpClient ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 			}
 
-			HttpResponse response = client.execute(request);
+			HttpResponse response = ahClient.execute(request);
 			HttpEntity entity = response.getEntity();
-			rawData = EntityUtils.toByteArray(entity);
-			return new ByteArrayInputStream(rawData);
+
+			return EntityUtils.toByteArray(entity);
 		} finally {
-			client.close();
+			ahClient.close();
 
 			if (Constants.DEBUG) {
 				sw.stop();
@@ -67,29 +74,32 @@ public class NetworkUtils {
 			}
 		}
 	}
-
 	/**
 	 * Download content using HttpGet
 	 */
 	public static byte[] downloadContentHttpGet(String address, String userAgent, ICancellation cancelListener) throws IOException {
 		Stopwatch sw = Stopwatch.createStarted();
 
-		HttpClient client = new DefaultHttpClient();
-		client.getParams().setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, true); //Too many redirects: 21
-		client.getParams().setParameter("http.useragent", userAgent);
+		HttpClient httpClient = new DefaultHttpClient();
+		HttpProtocolParams.setUserAgent(httpClient.getParams(), userAgent); // or httpClient.getParams().setParameter("http.useragent", userAgent);
+		httpClient.getParams().setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, true); //Too many redirects: 21
+		HttpConnectionParams.setStaleCheckingEnabled(httpClient.getParams(), false);
+		HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), SOCKET_OPERATION_TIMEOUT);
+		HttpConnectionParams.setSoTimeout(httpClient.getParams(), SOCKET_OPERATION_TIMEOUT);
+		HttpConnectionParams.setSocketBufferSize(httpClient.getParams(), 8192);
 
 		HttpGet request = new HttpGet(address);
 
 		if (cancelListener!=null && cancelListener.isCancelled()) {
-			Log.v(TAG, "Download2 cancelled  ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
+			Log.v(TAG, "Download HG cancelled  ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 		}
 
-		HttpResponse response = client.execute(request);
+		HttpResponse response = httpClient.execute(request);
 		HttpEntity entity = response.getEntity();
 
 		byte[] content = EntityUtils.toByteArray(entity);
 
-		Log.v(TAG, "Download2 end "+content.length+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
+		Log.v(TAG, "Download HG end "+content.length+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 		return content;
 	}
 
@@ -101,41 +111,41 @@ public class NetworkUtils {
 
 		HttpURLConnection httpConnection = okHttpClient.open(new URL(address));
 		httpConnection.addRequestProperty("User-Agent", userAgent);
-
 		int responseCode = httpConnection.getResponseCode();
-		InputStream input = httpConnection.getInputStream();
 
-		ByteArrayOutputStream baos = null;
-		try {
-			//download all the page to other InputStream
-			baos = new ByteArrayOutputStream();
-			byte[] buffer = new byte[1024];
-			int len;
-			while ((len = input.read(buffer)) > -1) {
-				if (cancelListener!=null && cancelListener.isCancelled()) {
-					Log.v(TAG, "Download canceled ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
-					return null;
+		if (200<=responseCode && responseCode<300) {
+			InputStream input = httpConnection.getInputStream();
+			ByteArrayOutputStream baos = null;
+			try {
+				//download all the page to other InputStream
+				baos = new ByteArrayOutputStream();
+				byte[] buffer = new byte[1024];
+				int len;
+				while ((len = input.read(buffer)) > -1) {
+					if (cancelListener!=null && cancelListener.isCancelled()) {
+						Log.v(TAG, "Download HC canceled ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
+						return null;
+					}
+					baos.write(buffer, 0, len);
 				}
-				baos.write(buffer, 0, len);
-			}
-			baos.flush();
+				baos.flush();
 
-			if (responseCode == HttpURLConnection.HTTP_OK) {
 				byte[] content = baos.toByteArray();
 				baos.close();
-				Log.v(TAG, "Download end "+content.length+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
+				Log.v(TAG, "Download HC end "+content.length+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 				return content;
-			} else {
-				throw new IllegalStateException("Failed to connect to " + address + ": " + httpConnection.getResponseMessage() + " (" + responseCode + ")");
+			}
+			finally {
+				if (input != null) {
+					input.close();
+				}
+				if (baos!=null) {
+					baos.close();
+				}
 			}
 		}
-		finally {
-			if (input != null) {
-				input.close();
-			}
-			if (baos!=null) {
-				baos.close();
-			}
+		else {
+			throw new IllegalStateException("Failed to connect to " + address + ": " + httpConnection.getResponseMessage() + " (" + responseCode + ")");
 		}
 	}
 
@@ -173,11 +183,11 @@ public class NetworkUtils {
 	public static byte[] downloadContent(String address, String userAgent, ICancellation cancelListener) throws IOException {
 		byte[] content;
 		try {
-			content = downloadContentHttpConnection(address, userAgent, cancelListener);
-		}
-		catch (ProtocolException ex) {
-			Log.w(TAG, "ProtocolException: " + ex.getMessage() + " on " + address + ". Retry with HttpGet");
 			content = downloadContentHttpGet(address, userAgent, cancelListener);
+		}
+		catch (Exception ex) {
+			Log.w(TAG, ex.toString() + " on " + address + ". Retry with HttpConnection");
+			content = downloadContentHttpConnection(address, userAgent, cancelListener);
 		}
 		return content;
 	}

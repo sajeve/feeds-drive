@@ -60,7 +60,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed removeBoilerplate", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
 			}
 		}
 	};
@@ -76,7 +76,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed decorateBoilerplate", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
 			}
 		}
 	};
@@ -92,7 +92,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed cleanUselessContent", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
 			}
 		}
 	};
@@ -115,7 +115,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed removeBoilerplate LangAware", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
 			}
 		}
 	};
@@ -132,7 +132,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed decorateBoilerplate LangAware", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.getMessage());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
 			}
 		}
 	};
@@ -249,7 +249,7 @@ public class MainFrame extends JFrame {
 				}
 				catch (Exception ex) {
 					Log.error("Failed download "+address, ex);
-					JOptionPane.showMessageDialog(MainFrame.this,"Failed download page "+address+":\n"+ex.getMessage(), "Failed download page", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(MainFrame.this,"Failed download page "+address+":\n"+ex.toString(), "Failed download page", JOptionPane.ERROR_MESSAGE);
 				}
 				finally {
 					downloadRequest--;

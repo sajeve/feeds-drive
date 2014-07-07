@@ -75,7 +75,7 @@
 -libraryjars libs/jsr305-2.0.1.jar
 -dontwarn sun.misc.Unsafe
 
--keepclasseswithmembers class com.google.common.base.internal.Finalizer{
+-keepclasseswithmembers class com.google.dh.tool.common.base.internal.Finalizer{
 	<methods>;
 }
 

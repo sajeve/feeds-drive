@@ -7,11 +7,18 @@ import java.io.*;
  */
 public class TestUtils {
 	private static final String TAG = TestUtils.class.getName();
+	private static final boolean ForceWriteToConsole = true;
 
 	public static void writeToFile(String filename, String content, boolean wrapHtml) throws IOException {
 		System.out.println("Start write String to file " + filename);
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filename)));
+		BufferedWriter writer;
+		if (ForceWriteToConsole) {
+			writer = new BufferedWriter(new OutputStreamWriter(System.out));
+		}
+		else {
+			writer = new BufferedWriter(new FileWriter(new File(filename)));
+		}
 		if (wrapHtml) {
 			writer.write("<!DOCTYPE html>\n");
 			writer.write("<html><head><meta charset=\"utf-8\"></head><body>");
@@ -21,13 +28,21 @@ public class TestUtils {
 			writer.write("</body></html>");
 		}
 		writer.close();
+
 		System.out.println("Write String to file OK " + filename);
 	}
 
 	public static void writeToFile(String filename, InputStream content, boolean wrapHtml) throws IOException {
 		System.out.println("Start write InputStream to file " + filename);
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filename)));
+		BufferedWriter writer;
+		if (ForceWriteToConsole) {
+			writer = new BufferedWriter(new OutputStreamWriter(System.out));
+		}
+		else {
+			writer = new BufferedWriter(new FileWriter(new File(filename)));
+		}
+
 		if (wrapHtml) {
 			writer.write("<!DOCTYPE html>\n");
 			writer.write("<html><head><meta charset=\"utf-8\"></head><body>");

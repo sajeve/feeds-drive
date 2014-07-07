@@ -27,6 +27,7 @@
 			android:horizontalSpacing="8dp"
 			android:verticalSpacing="8dp"
 			android:numColumns="@integer/grid_columns_count"
+			android:listSelector="@drawable/item_feed_bgcolor"
 			/>
 
 	<!--

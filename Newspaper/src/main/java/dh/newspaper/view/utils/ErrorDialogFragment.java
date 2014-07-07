@@ -24,7 +24,7 @@ public class ErrorDialogFragment extends DialogFragment
     	ErrorDialogFragment dlg = new ErrorDialogFragment();
     	
         Bundle args = new Bundle();
-        args.putString("message", TextUtils.isEmpty(message) ? ex.getMessage() : message);
+        args.putString("message", TextUtils.isEmpty(message) ? ex.toString() : message);
         args.putString("stack", Log.getStackTraceString(ex));
         dlg.setArguments(args);
         

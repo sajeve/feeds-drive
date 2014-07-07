@@ -51,7 +51,7 @@ public abstract class WebBrowser extends JPanel {
 				}
 				catch (Exception ex) {
 					Log.error("Disabling failed",ex);
-					JOptionPane.showMessageDialog(WebBrowser.this, ex.getMessage(), "Disabling failed", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(WebBrowser.this, ex.toString(), "Disabling failed", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -107,7 +107,7 @@ public abstract class WebBrowser extends JPanel {
 						statusMessage.setText(extractionReply.getStatusMessage());
 					} catch (Exception ex) {
 						Log.error("Failed display ExtractionReply", ex);
-						statusMessage.setText(ex.getMessage());
+						statusMessage.setText(ex.toString());
 					}
 				}
 			}.execute();

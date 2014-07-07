@@ -185,7 +185,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 						checkArticleExpiration();
 					} catch (Exception ex) {
 						Log.w(TAG, ex);
-						mParseNotice.append(" Error while refresh cached article: " + ex.getMessage());
+						mParseNotice.append(" Error while refresh cached article: " + ex.toString());
 						return;
 					}
 				}
@@ -363,10 +363,10 @@ public class SelectArticleWorkflow extends PrifoTask {
 			});
 		}
 
-		if (Strings.isNullOrEmpty(mArticle.getImageUrl())) {
-			String avatar = elems.get((elems.size()-1)/2).attr("abs:src");
-			mArticle.setImageUrl(avatar);
-		}
+		//if (Strings.isNullOrEmpty(mArticle.getImageUrl())) {
+		String avatar = elems.get((elems.size()-1)/2).attr("abs:src");
+		mArticle.setImageUrl(avatar);
+		//}
 	}
 
 	/**

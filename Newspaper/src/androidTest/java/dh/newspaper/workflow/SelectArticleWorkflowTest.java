@@ -7,10 +7,11 @@ import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
-import dh.newspaper.model.generated.PathToContent;
+import dh.newspaper.model.generated.Article;
+import dh.newspaper.model.generated.DaoSession;
+import dh.newspaper.modules.AppContextModule;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
-import dh.tool.common.ICancellation;
 
 import java.io.IOException;
 
@@ -41,6 +42,23 @@ public class SelectArticleWorkflowTest extends ActivityInstrumentationTestCase2<
 		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), feedItem, Constants.ARTICLE_TTL, true, null);
 		saw.run();
 		assertTrue(!Strings.isNullOrEmpty(feedItem.getTextPlainDescription()));
+	}
+
+	public void testSelectArticleWorkflow2() throws IOException, FeedParserException {
+
+		AppContextModule appContextModule = new AppContextModule(this.getActivity());
+		DaoSession daoSession = appContextModule.provideDaoSession();
+		Article article = daoSession.getArticleDao().loadByRowId(2778);
+
+//		QueryBuilder<Subscription> subscriptionByTagQueryBuilder = daoSession.getSubscriptionDao().queryBuilder()
+//				.where(SubscriptionDao.Properties.Tags.like("%|" + tag.toUpperCase() + "|%")
+//						, SubscriptionDao.Properties.Enable.eq(Boolean.TRUE));
+//		Query<Subscription> subscriptionByTagQuery = subscriptionByTagQueryBuilder.build();
+//		LazyList<Subscription> subscriptions = subscriptionByTagQuery.listLazy();
+
+
+		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), article, Constants.ARTICLE_TTL, true, null);
+		saw.run();
 	}
 
 }

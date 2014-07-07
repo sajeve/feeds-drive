@@ -63,7 +63,7 @@ public class MyApplication extends InjectingApplication {
 			Article article = new Article(null, "articleUrl1", "parentUrl1", "imageUrl1", "title1", "author1", "excerpt1", "content1", "fa1256", "en", 0L, null, null, null, null, new Date());
 			mDaoSession.getArticleDao().insert(article);
 		} catch (Exception ex) {
-			Log.w(TAG, ex.getMessage());
+			Log.w(TAG, ex.toString());
 		}
 */
 		//EventBus.getDefault().register(mAppBundle, 100);

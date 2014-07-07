@@ -42,7 +42,7 @@ public class ConfigPanel extends JPanel {
 				}
 				catch (Exception ex) {
 					Log.error("Failed Apply clicked", ex);
-					JOptionPane.showMessageDialog(ConfigPanel.this, "Failed apply config: "+ex.getMessage(), "Failed apply config", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(ConfigPanel.this, "Failed apply config: "+ex.toString(), "Failed apply config", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -55,7 +55,7 @@ public class ConfigPanel extends JPanel {
 				}
 				catch (Exception ex) {
 					Log.error("Failed Reset clicked", ex);
-					JOptionPane.showMessageDialog(ConfigPanel.this, ex.getMessage());
+					JOptionPane.showMessageDialog(ConfigPanel.this, ex.toString());
 				}
 			}
 		});
