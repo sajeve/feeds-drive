@@ -2,11 +2,24 @@ package dh.tool.justext.demo;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.eventbus.Subscribe;
+import com.sree.textbytes.readabilityBUNDLE.Article;
+import com.sree.textbytes.readabilityBUNDLE.ContentExtractor;
+import dh.tool.common.ICancellation;
 import dh.tool.justext.Configuration;
 import dh.tool.justext.Extractor;
 import dh.tool.justext.demo.common.ExtractionReply;
 import dh.tool.justext.demo.common.ExtractionRequest;
 import net.java.dev.designgridlayout.DesignGridLayout;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
@@ -18,6 +31,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +74,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed removeBoilerplate", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex);
 			}
 		}
 	};
@@ -76,7 +90,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed decorateBoilerplate", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex);
 			}
 		}
 	};
@@ -92,7 +106,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed cleanUselessContent", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex);
 			}
 		}
 	};
@@ -115,7 +129,7 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed removeBoilerplate LangAware", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex);
 			}
 		}
 	};
@@ -132,7 +146,61 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				sw.stop();
 				Log.error("Failed decorateBoilerplate LangAware", ex);
-				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex.toString());
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex);
+			}
+		}
+	};
+	private final WebBrowser webResultReadabilitySnack = new WebBrowser() {
+		@Override
+		public ExtractionReply extract(Document doc, Configuration conf) {
+			String algorithm = "ReadabilitySnack";
+			Stopwatch sw = Stopwatch.createStarted();
+			try {
+				ContentExtractor ce = new ContentExtractor();
+				Article article = ce.extractContent(doc.html(), algorithm);
+				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
+
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());
+			} catch (Exception ex) {
+				sw.stop();
+				Log.error("Failed "+algorithm, ex);
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex);
+			}
+		}
+	};
+	private final WebBrowser webResultReadabilityCore = new WebBrowser() {
+		@Override
+		public ExtractionReply extract(Document doc, Configuration conf) {
+			String algorithm = "ReadabilityCore";
+			Stopwatch sw = Stopwatch.createStarted();
+			try {
+				ContentExtractor ce = new ContentExtractor();
+				Article article = ce.extractContent(doc.html(), algorithm);
+				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
+
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());
+			} catch (Exception ex) {
+				sw.stop();
+				Log.error("Failed "+algorithm, ex);
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex);
+			}
+		}
+	};
+	private final WebBrowser webResultReadabilityGoose = new WebBrowser() {
+		@Override
+		public ExtractionReply extract(Document doc, Configuration conf) {
+			String algorithm = "ReadabilityGoose";
+			Stopwatch sw = Stopwatch.createStarted();
+			try {
+				ContentExtractor ce = new ContentExtractor();
+				Article article = ce.extractContent(doc.html(), algorithm);
+				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
+
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());
+			} catch (Exception ex) {
+				sw.stop();
+				Log.error("Failed "+algorithm, ex);
+				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), ex);
 			}
 		}
 	};
@@ -160,7 +228,10 @@ public class MainFrame extends JFrame {
 		tabbedWebResult.addTab("Original", webOriginal);
 		tabbedWebResult.addTab("Pre-Process", webPreProcess);
 		tabbedWebResult.addTab("Lang Auto-detect", webResultLangAware);
-		tabbedWebResult.addTab("Lang Auto-detect Decoration ", webResultLangAwareDecorated);
+		tabbedWebResult.addTab("Lang Auto-detect Decoration", webResultLangAwareDecorated);
+		tabbedWebResult.addTab("ReadabilitySnack", webResultReadabilitySnack);
+		tabbedWebResult.addTab("ReadabilityCore", webResultReadabilityCore);
+		tabbedWebResult.addTab("ReadabilityGoose", webResultReadabilityGoose);
 
 		downloadStatus.setEditable(false);
 
@@ -266,13 +337,36 @@ public class MainFrame extends JFrame {
 		}.execute();
 	}
 
-	private void downloadPage(String address, boolean asMobileAgent) throws IOException {
+	private void downloadPage2(String address, boolean asMobileAgent) throws IOException {
 		Stopwatch sw = Stopwatch.createStarted();
 		Connection con = HttpConnection.connect(new URL(address));
 		con.userAgent(asMobileAgent ? MainApp.MOBILE_USER_AGENT : MainApp.DESKTOP_USER_AGENT).timeout(60*1000);
 		document_ = con.get();
 		sw.stop();
 		Log.info(String.format("Download and parse: %d ms - '%s'", sw.elapsed(TimeUnit.MILLISECONDS), address));
+	}
+
+	private void downloadPage(String address, boolean asMobileAgent) throws IOException {
+		Stopwatch sw = Stopwatch.createStarted();
+		byte[] rawContent = downloadContentHttpGet(address, asMobileAgent ? MainApp.MOBILE_USER_AGENT : MainApp.DESKTOP_USER_AGENT);
+		document_ = Jsoup.parse(new ByteArrayInputStream(rawContent), "utf-8", address);
+		sw.stop();
+		Log.info(String.format("Download and parse: %d ms - '%s'", sw.elapsed(TimeUnit.MILLISECONDS), address));
+	}
+
+	/**
+	 * Download content using HttpGet
+	 */
+	public static byte[] downloadContentHttpGet(String address, String userAgent) throws IOException {
+		HttpClient httpClient = HttpClientBuilder.create()
+				.setUserAgent(userAgent)
+				.build();
+
+		HttpGet request = new HttpGet(address);
+		HttpResponse response = httpClient.execute(request);
+		HttpEntity entity = response.getEntity();
+		byte[] content = EntityUtils.toByteArray(entity);
+		return content;
 	}
 
 	private void addUrlHistory(String address) {

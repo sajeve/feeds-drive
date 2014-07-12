@@ -12,6 +12,7 @@ repositories {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar', '*.xml'])
 	compile project(':JusText')
+	compile project(':ReadabilityAll')
 	compile 'net.java.dev.designgridlayout:designgridlayout:1.+'
 	compile 'com.google.guava:guava:15.0'
 	compile 'org.apache.logging.log4j:log4j-api:2.+'

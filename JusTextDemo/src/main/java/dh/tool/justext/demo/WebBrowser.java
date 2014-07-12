@@ -6,6 +6,7 @@ import dh.tool.justext.Configuration;
 import dh.tool.justext.demo.common.ExtractionReply;
 import dh.tool.justext.demo.common.ExtractionRequest;
 import dh.tool.swing.CodeEditor;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
@@ -100,8 +101,19 @@ public abstract class WebBrowser extends JPanel {
 						if (err != null) throw err;
 
 						ExtractionReply extractionReply = get();
-						document_ = extractionReply.getResult();
-						String html = document_.outerHtml();
+
+						String html;
+						if (extractionReply.getError() == null) {
+							document_ = extractionReply.getResult();
+							html = document_ != null ? document_.outerHtml() : extractionReply.getResultText();
+						}
+						else {
+							html = "<pre>"+ExceptionUtils.getFullStackTrace(extractionReply.getError())+"</pre>";
+						}
+
+						if (html==null) {
+							html="";
+						}
 						webBrowser.setHTMLContent(html);
 						sourceEditor.setText(html);
 						statusMessage.setText(extractionReply.getStatusMessage());

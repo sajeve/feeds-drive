@@ -9,8 +9,9 @@ import org.jsoup.nodes.Document;
 public class ExtractionReply {
 	private String address;
 	private long timeToParse;
-	private String errorMessage;
+	private Exception error;
 	private Document result;
+	private String resultText;
 	private boolean success;
 
 	public ExtractionReply(String address, long timeToParse, Document result) {
@@ -20,10 +21,17 @@ public class ExtractionReply {
 		this.success = true;
 	}
 
-	public ExtractionReply(String address, long timeToParse, String errorMessage) {
+	public ExtractionReply(String address, long timeToParse, String cleanedText) {
 		this.address = address;
 		this.timeToParse = timeToParse;
-		this.errorMessage = errorMessage;
+		this.resultText = cleanedText;
+		this.success = true;
+	}
+
+	public ExtractionReply(String address, long timeToParse, Exception ex) {
+		this.address = address;
+		this.timeToParse = timeToParse;
+		this.error = ex;
 		this.success = false;
 	}
 
@@ -35,8 +43,8 @@ public class ExtractionReply {
 		return timeToParse;
 	}
 
-	public String getErrorMessage() {
-		return errorMessage;
+	public Exception getError() {
+		return error;
 	}
 
 	public Document getResult() {
@@ -47,12 +55,16 @@ public class ExtractionReply {
 		return success;
 	}
 
+	public String getResultText() {
+		return resultText;
+	}
+
 	public String getStatusMessage() {
 		if (isSuccess()) {
 			return String.format("%d ms - SUCCESS extracting %s", timeToParse, address);
 		}
 		else {
-			return String.format("%d ms - FAILED extracting %s \n%s", timeToParse, address, errorMessage);
+			return String.format("%d ms - FAILED extracting %s \n%s", timeToParse, address, error.toString());
 		}
 
 	}
