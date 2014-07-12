@@ -4,7 +4,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.eventbus.Subscribe;
 import com.sree.textbytes.readabilityBUNDLE.Article;
 import com.sree.textbytes.readabilityBUNDLE.ContentExtractor;
-import dh.tool.common.ICancellation;
 import dh.tool.justext.Configuration;
 import dh.tool.justext.Extractor;
 import dh.tool.justext.demo.common.ExtractionReply;
@@ -14,11 +13,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.params.ClientPNames;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -153,11 +148,11 @@ public class MainFrame extends JFrame {
 	private final WebBrowser webResultReadabilitySnack = new WebBrowser() {
 		@Override
 		public ExtractionReply extract(Document doc, Configuration conf) {
-			String algorithm = "ReadabilitySnack";
+			ContentExtractor.Algorithm algorithm = ContentExtractor.Algorithm.ReadabilitySnack;
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
 				ContentExtractor ce = new ContentExtractor();
-				Article article = ce.extractContent(doc.html(), algorithm);
+				Article article = ce.extractContent(doc.html(), algorithm, null);
 				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());
@@ -171,11 +166,11 @@ public class MainFrame extends JFrame {
 	private final WebBrowser webResultReadabilityCore = new WebBrowser() {
 		@Override
 		public ExtractionReply extract(Document doc, Configuration conf) {
-			String algorithm = "ReadabilityCore";
+			ContentExtractor.Algorithm algorithm = ContentExtractor.Algorithm.ReadabilityCore;
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
 				ContentExtractor ce = new ContentExtractor();
-				Article article = ce.extractContent(doc.html(), algorithm);
+				Article article = ce.extractContent(doc.html(), algorithm, null);
 				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());
@@ -189,11 +184,11 @@ public class MainFrame extends JFrame {
 	private final WebBrowser webResultReadabilityGoose = new WebBrowser() {
 		@Override
 		public ExtractionReply extract(Document doc, Configuration conf) {
-			String algorithm = "ReadabilityGoose";
+			ContentExtractor.Algorithm algorithm = ContentExtractor.Algorithm.ReadabilityGoose;
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
 				ContentExtractor ce = new ContentExtractor();
-				Article article = ce.extractContent(doc.html(), algorithm);
+				Article article = ce.extractContent(doc.html(), algorithm, null);
 				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());

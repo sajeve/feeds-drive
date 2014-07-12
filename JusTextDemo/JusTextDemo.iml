@@ -28,14 +28,19 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="JusText" exported="" />
-    <orderEntry type="module" module-name="ReadabilityAll" exported="" />
+    <orderEntry type="module" module-name="Readability" exported="" />
     <orderEntry type="library" exported="" name="designgridlayout-1.11" level="project" />
     <orderEntry type="library" exported="" name="guava-15.0" level="project" />
     <orderEntry type="library" exported="" name="log4j-api-2.0-rc2" level="project" />
     <orderEntry type="library" exported="" name="log4j-core-2.0-rc2" level="project" />
     <orderEntry type="library" exported="" name="log4j-slf4j-impl-2.0-rc2" level="project" />
+    <orderEntry type="library" exported="" name="commons-lang-2.6" level="project" />
+    <orderEntry type="library" exported="" name="httpclient-4.4-alpha1" level="project" />
     <orderEntry type="library" exported="" name="org.eclipse.swt.win32.win32.x86_64-4.4" level="project" />
     <orderEntry type="library" exported="" name="slf4j-api-1.7.7" level="project" />
+    <orderEntry type="library" exported="" name="httpcore-4.4-alpha1" level="project" />
+    <orderEntry type="library" exported="" name="commons-logging-1.1.3" level="project" />
+    <orderEntry type="library" exported="" name="commons-codec-1.6" level="project" />
     <orderEntry type="library" exported="" name="autocomplete-2.5.2" level="project" />
     <orderEntry type="library" exported="" name="DJNativeSwing-1.0.2" level="project" />
     <orderEntry type="library" exported="" name="DJNativeSwing.SWT-1.0.2" level="project" />

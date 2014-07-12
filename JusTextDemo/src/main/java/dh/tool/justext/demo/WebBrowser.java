@@ -108,7 +108,7 @@ public abstract class WebBrowser extends JPanel {
 							html = document_ != null ? document_.outerHtml() : extractionReply.getResultText();
 						}
 						else {
-							html = "<pre>"+ExceptionUtils.getFullStackTrace(extractionReply.getError())+"</pre>";
+							html = "<pre>"+ ExceptionUtils.getFullStackTrace(extractionReply.getError())+"</pre>";
 						}
 
 						if (html==null) {

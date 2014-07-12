@@ -12,12 +12,15 @@ repositories {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar', '*.xml'])
 	compile project(':JusText')
-	compile project(':ReadabilityAll')
+	compile project(':Readability')
 	compile 'net.java.dev.designgridlayout:designgridlayout:1.+'
 	compile 'com.google.guava:guava:15.0'
 	compile 'org.apache.logging.log4j:log4j-api:2.+'
 	compile 'org.apache.logging.log4j:log4j-core:2.+'
 	compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.+'
+
+	compile 'commons-lang:commons-lang:2.+'
+	compile 'org.apache.httpcomponents:httpclient:4.+'
 
 	//swt dependencies
 	compile 'org.eclipse.swt:org.eclipse.swt.win32.win32.x86_64:4.+'
