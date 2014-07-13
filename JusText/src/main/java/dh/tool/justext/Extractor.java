@@ -306,8 +306,12 @@ public class Extractor {
 
 			fillHoles();
 
+			//TODO: recognize image+SHORT paragraphs because they are often images + caption
+			//TODO: tolerate some short paragraphs because they are often name of authors
+
+
 			if (conf.removeTitle()) {
-				if (title!=null) {
+				if (title==null) {
 					//find first good heading
 					for (int i=0; i<paragraphs.size(); i++) {
 						checkCancellation();
@@ -319,8 +323,9 @@ public class Extractor {
 						}
 					}
 				}
-
-				title.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
+				if (title!=null) {
+					title.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
+				}
 				pw.t("Remove title");
 			}
 		}
@@ -336,7 +341,9 @@ public class Extractor {
 				for (int j = i + 1; j < paragraphs.size(); j++) {
 					Paragraph p2 = paragraphs.get(j);
 					if (nearlyIdenticalParagraph(p1, p2)) {
+						p1.setContextFreeQuality(Paragraph.Quality.BAD, "identical paragraph "+p2.getId());
 						p1.setQuality(Paragraph.Quality.BAD, "identical paragraph "+p2.getId());
+						p2.setContextFreeQuality(Paragraph.Quality.BAD, "identical paragraph "+p1.getId());
 						p2.setQuality(Paragraph.Quality.BAD, "identical paragraph "+p1.getId());
 					}
 				}
