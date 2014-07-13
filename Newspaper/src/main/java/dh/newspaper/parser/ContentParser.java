@@ -10,7 +10,7 @@ import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.tools.StrUtils;
-import dh.tool.common.ICancellation;
+import dh.tool.thread.ICancellation;
 import dh.tool.justext.Configuration;
 import dh.tool.justext.Extractor;
 import org.jsoup.Connection;

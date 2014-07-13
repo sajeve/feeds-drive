@@ -1,18 +1,10 @@
 package dh.tool.justext;
 
-import com.google.common.base.Stopwatch;
-import dh.tool.TestUtils;
-import dh.tool.jsoup.NodeHelper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by hiep on 24/06/2014.

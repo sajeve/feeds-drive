@@ -71,4 +71,25 @@ public class NodeHelperTest {
 		NodeHelper.unwrapRedundancyTags(doc);
 		System.out.println(doc.html());
 	}
+
+	@Test
+	public void testGetUniqueLeafTag() {
+		{
+			Document doc = Jsoup.parse("<html><section><div><div>hello</div></div>world</section></html>");
+			Assert.assertNull(NodeHelper.getUniqueLeafTag(doc.select("section").first()));
+		}
+		{
+			Document doc = Jsoup.parse("<html><section><div><div2>hello</div2></div></section></html>");
+			Assert.assertEquals("div2", NodeHelper.getUniqueLeafTag(doc.select("section").first()).nodeName());
+		}
+		{
+			Document doc = Jsoup.parse("<html><foo><bar><img/></bar></foo><section><div><div2>hello</div2></div></section><li>haha</li></html>");
+			System.out.println(doc.html());
+
+			Assert.assertEquals("li", NodeHelper.getUniqueLeafTag(doc.select("li").first()).nodeName());
+			Assert.assertEquals("img", NodeHelper.getUniqueLeafTag(doc.select("foo").first()).nodeName());
+			Assert.assertEquals("div2", NodeHelper.getUniqueLeafTag(doc.select("section").first()).nodeName());
+			Assert.assertNull(NodeHelper.getUniqueLeafTag(doc.select("html").first()));
+		}
+	}
 }

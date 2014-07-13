@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.sree.textbytes.readabilityBUNDLE.*;
+import dh.tool.common.PerfWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jsoup.nodes.Document;
@@ -29,14 +30,14 @@ public class GooseExtractor {
 	
 	public Logger logger = LoggerFactory.getLogger(GooseExtractor.class.getName());
 	
-	public Element grabArticle(Article article, String lang) {
+	public Element grabArticle(Article article, String lang, PerfWatcher pf) {
 		
 		Element extractedContent = null;
 		extractedContent = fetchArticleContent(article.getCleanedDocument(), lang);
 
-		if(article.getMultiPageStatus()) {
+		if(article.isMultiPage()) {
 			AppendNextPage appendNextPage = new AppendNextPage();
-			Element finalConsolidated = appendNextPage.appendNextPageContent(article, extractedContent, ContentExtractor.Algorithm.ReadabilityGoose, lang);
+			Element finalConsolidated = appendNextPage.appendNextPageContent(article, extractedContent, ContentExtractor.Algorithm.ReadabilityGoose, lang, pf);
 			return finalConsolidated;
 		}else 
 			return extractedContent;
@@ -69,6 +70,7 @@ public class GooseExtractor {
 		int i = 0;
 
 		// holds all the parents of the nodes we're checking
+
 		Set<Element> parentNodes = new HashSet<Element>();
 		ArrayList<Element> nodesWithText = new ArrayList<Element>();
 
@@ -80,7 +82,6 @@ public class GooseExtractor {
 			if (wordStats.getStopWordCount() > 2 && !highLinkDensity) {
 				nodesWithText.add(node);
 			}
-
 		}
 
 		int numberOfNodes = nodesWithText.size();
@@ -90,10 +91,10 @@ public class GooseExtractor {
 		// comments
 		double bottomNodesForNegativeScore = (float) numberOfNodes * 0.25;
 
-		logger.debug("About to inspect num of nodes with text: "+ numberOfNodes);
+		logger.trace("About to inspect num of nodes with text: "+ numberOfNodes);
 
 		for (Element node : nodesWithText) {
-			logger.debug("NodesWithText : " + node);
+			logger.trace("NodesWithText : " + node);
 			// add parents and grandparents to scoring
 			// only add boost to the middle paragraphs, top and bottom is
 			// usually jankz city
@@ -126,7 +127,7 @@ public class GooseExtractor {
 				}
 			}
 
-			logger.debug("Location Boost Score: " + boostScore 	+ " on iteration: " + i + "' id='" + node.parent().id() + "' class='" + node.parent().attr("class"));
+			logger.trace("Location Boost Score: " + boostScore 	+ " on iteration: " + i + "' id='" + node.parent().id() + "' class='" + node.parent().attr("class"));
 			String nodeText = node.text();
 			WordStats wordStats = StopWords.getStopWordCount(nodeText, lang);
 			int upscore = (int) (wordStats.getStopWordCount() + boostScore);
@@ -151,7 +152,7 @@ public class GooseExtractor {
 		// now let's find the parent node who scored the highest
 		double topNodeScore = 0;
 		for (Element e : parentNodes) {
-			logger.debug("ParentNode: score='" + e.attr("algoScore") + "' nodeCount='" + e.attr("algoNodes") + "' id='" + e.id()+ "' class='" + e.attr("class") + "' " + "    :  " + e);
+			logger.trace("ParentNode: score='" + e.attr("algoScore") + "' nodeCount='" + e.attr("algoNodes") + "' id='" + e.id()+ "' class='" + e.attr("class") + "' " + "    :  " + e);
 			double score = ScoreInfo.getContentScore(e);
 			if (score > topNodeScore) {
 				topNode = e;
@@ -165,7 +166,7 @@ public class GooseExtractor {
 
 		if (logger.isDebugEnabled()) {
 			if (topNode == null) {
-				logger.debug("ARTICLE NOT ABLE TO BE EXTRACTED!, WE FAILED!");
+				logger.trace("ARTICLE NOT ABLE TO BE EXTRACTED!, WE FAILED!");
 			} else {
 				String logText;
 				String targetText = "";
@@ -181,8 +182,8 @@ public class GooseExtractor {
 				} else {
 					logText = targetText;
 				}
-				logger.debug("TOPNODE TEXT: " + logText.trim());
-				logger.debug("Our TOPNODE: score='" + topNode.attr("algoScore")	+ "' nodeCount='" + topNode.attr("algoNodes")+ "' id='" + topNode.id() + "' class='"+ topNode.attr("class") + "' ");
+				logger.trace("TOPNODE TEXT: " + logText.trim());
+				logger.trace("Our TOPNODE: score='" + topNode.attr("algoScore")	+ "' nodeCount='" + topNode.attr("algoNodes")+ "' id='" + topNode.id() + "' class='"+ topNode.attr("class") + "' ");
 			}
 		}
 		
@@ -265,7 +266,7 @@ public class GooseExtractor {
 		while (sibling != null) {
 			if (sibling.tagName().equals("p")) {
 				if (stepsAway >= 3) {
-					logger.debug("Next paragraph is too far away, not boosting");
+					logger.trace("Next paragraph is too far away, not boosting");
 
 					return false;
 				}
@@ -273,7 +274,7 @@ public class GooseExtractor {
 				String paraText = sibling.text();
 				WordStats wordStats = StopWords.getStopWordCount(paraText, lang);
 				if (wordStats.getStopWordCount() > 5) {
-					logger.debug("We're gonna boost this node, seems contenty");
+					logger.trace("We're gonna boost this node, seems contenty");
 					return true;
 				}
 

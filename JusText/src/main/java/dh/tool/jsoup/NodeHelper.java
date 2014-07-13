@@ -66,6 +66,31 @@ public class NodeHelper {
 	}
 
 	/**
+	 * return all parent of a Node
+	 */
+	public static String displayParent(Node node) {
+		StringBuilder ret = new StringBuilder();
+		Node ancestor=node;
+
+		String padding = "\n";
+		while (ancestor!=null) {
+			if (ancestor instanceof Element) {
+				ret.append(padding);
+				ret.append("<");
+				ret.append(((Element) ancestor).tagName());
+				for (Attribute attr : ancestor.attributes()) {
+					ret.append(" "+attr.getKey()+"=\""+attr.getValue()+"\"");
+				}
+				ret.append(">");
+			}
+			padding += "  ";
+			ancestor = ancestor.parent();
+		}
+
+		return ret.toString();
+	}
+
+	/**
 	 * return the Tag of the first heading (h1, h2..) ancestor
 	 * otherwise return null if no ancestor is heading
 	 */
@@ -78,6 +103,34 @@ public class NodeHelper {
 				return t;
 			}
 			ancestor = ancestor.parent();
+		}
+
+		return null;
+	}
+
+	/**
+	 * return the unique leaf tag (deepest child tag) of the ancestor
+	 * return null if the ancestor has more than one leaf.
+	 * for example "<div><span><kaka>abc</kaka><span/></div>" will return "<kaka>abc</kaka>"
+	 * @param ancestor
+	 */
+	public static Node getUniqueLeafTag(Node ancestor) {
+		if (ancestor == null || !(ancestor instanceof Element)) {
+			return null;
+		}
+
+		if (ancestor.childNodeSize() == 0) {
+			return ancestor;
+		}
+
+		if (ancestor.childNodeSize() == 1) {
+			Node uniqueChild = ancestor.childNode(0);
+			if (uniqueChild instanceof TextNode) {
+				return ancestor;
+			}
+			else {
+				return getUniqueLeafTag(uniqueChild);
+			}
 		}
 
 		return null;
@@ -173,6 +226,7 @@ public class NodeHelper {
 				&& !"title".equalsIgnoreCase(attrName)
 				&& !"charset".equalsIgnoreCase(attrName)
 				&& !"http-equiv".equalsIgnoreCase(attrName)
+				&& !"alt".equalsIgnoreCase(attrName)
 				;
 	}
 	public static boolean isIgnorableTag(Node tag) {
@@ -261,13 +315,13 @@ public class NodeHelper {
 			//ignore tag img without source
 			return true;
 		}
-		String styleAttr = node.attr("style");
-		if (styleAttr!=null) {
-			if (styleAttr.replace(" ", "").toLowerCase().contains("display:none")) {
-				//ignore element invisible
-				return true;
-			}
-		}
+//		String styleAttr = node.attr("style");
+//		if (styleAttr!=null) {
+//			if (styleAttr.replace(" ", "").toLowerCase().contains("display:none")) {
+//				//ignore element invisible
+//				return true;
+//			}
+//		}
 		return false;
 	}
 

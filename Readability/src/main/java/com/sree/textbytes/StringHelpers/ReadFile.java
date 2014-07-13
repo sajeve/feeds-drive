@@ -25,7 +25,7 @@ public class ReadFile
 	public static List<String> read(File fileName) {
 		List<String> lines = new ArrayList<String>();
 		FileInputStream fileInputStream = null;
-		logger.debug("File created with name "+fileName.getName());
+		logger.trace("File created with name "+fileName.getName());
 		try {
 			fileInputStream = new FileInputStream(fileName);
 		} catch (FileNotFoundException e) {
@@ -36,7 +36,7 @@ public class ReadFile
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(dataInputStream));
 		String line;
 		try {
-			logger.debug("Reading line by line from file "+fileName.getAbsolutePath());
+			logger.trace("Reading line by line from file "+fileName.getAbsolutePath());
 			while((line = bufferedReader.readLine()) != null)
 			{
 				lines.add(line);
@@ -45,7 +45,7 @@ public class ReadFile
 			logger.error("IO Exception "+e.toString());
 		}
 		
-		logger.debug("File read completely");
+		logger.trace("File read completely");
 		return lines;
 	}
 

@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 /**

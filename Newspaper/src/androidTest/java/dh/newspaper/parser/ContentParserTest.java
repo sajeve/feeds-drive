@@ -9,12 +9,9 @@ import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.test.TestUtils;
 import dh.newspaper.tools.NetworkUtils;
-import dh.tool.common.ICancellation;
-import dh.tool.common.PerfWatcher;
+import dh.tool.thread.ICancellation;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

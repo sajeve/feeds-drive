@@ -20,7 +20,7 @@ public class AddSiblings {
 	 * @return
 	 */
 	public static Element addSiblings(Element node, String lang) {
-		logger.debug("Starting to add siblings");
+		//logger.trace("Starting to add siblings");
 		int baselineScoreForSiblingParagraphs = getBaselineScoreForSiblings(node, lang);
 		Element currentSibling = node.previousElementSibling();
 		while (currentSibling != null) {
@@ -38,11 +38,10 @@ public class AddSiblings {
 				continue;
 			}
 			for (Element firstParagraph : potentialParagraphs) {
-				WordStats wordStats = StopWords.getStopWordCount(firstParagraph
-						.text(), lang);
+				WordStats wordStats = StopWords.getStopWordCount(firstParagraph.text(), lang);
 				int paragraphScore = wordStats.getStopWordCount();
 				if ((float) (baselineScoreForSiblingParagraphs * .30) < paragraphScore) {
-					logger.debug("This previous node looks like a good sibling, adding it");
+					//logger.trace("This previous node looks like a good sibling, adding it");
 					//node.child(insertedSiblings).before("<p>" + firstParagraph.text() + "<p>");
 					node.child(insertedSiblings).before("<p>" + firstParagraph.html() + "<p>");
 					insertedSiblings++;
@@ -53,7 +52,7 @@ public class AddSiblings {
 		
 		//----
 		Element nextSibling = node.nextElementSibling();
-		logger.debug("Next element sibling : "+nextSibling);
+		//logger.trace("Next element sibling : "+nextSibling);
 		if(nextSibling != null) {
 			//Elements iframeElements = nextSibling.getElementsByTag("iframe");
 			Elements iframeElements = nextSibling.select("iframe|object");
@@ -63,7 +62,7 @@ public class AddSiblings {
 						String srcAttribute = iframe.attr("src");
 						if(!string.isNullOrEmpty(srcAttribute)) {
 							if(Patterns.exists(Patterns.VIDEOS, srcAttribute)) {
-								logger.debug("Ifarme match found and its a video");
+								//logger.trace("Ifarme match found and its a video");
 								node.appendElement("p").appendChild(iframe);
 							}
 						}
@@ -72,7 +71,7 @@ public class AddSiblings {
 						for(Element embedElement : embedElements) {
 							String embedSrc = embedElement.attr("src");
 							if(Patterns.exists(Patterns.VIDEOS, embedSrc)) {
-								logger.debug("Embed Video match found in Next Sibiling");
+								//logger.trace("Embed Video match found in Next Sibiling");
 								node.appendElement("p").appendChild(iframe);
 							}
 							
@@ -89,7 +88,7 @@ public class AddSiblings {
 					WordStats nextParaWordStats = StopWords.getStopWordCount(nextPara.text(), lang);
 					int nextParaScore = nextParaWordStats.getStopWordCount();
 					if((float) (baseLineScoreForNextSibling * .30) < nextParaScore) {
-						logger.debug("This next node looks like a good sibling, adding it :"+nextPara);
+						//logger.trace("This next node looks like a good sibling, adding it :"+nextPara);
 						//node.appendElement("p").text(nextPara.text());
 						node.appendElement("p").html(nextPara.html());
 					}
@@ -133,7 +132,7 @@ public class AddSiblings {
 
 		if (numberOfParagraphs > 0) {
 			base = scoreOfParagraphs / numberOfParagraphs;
-			logger.debug("The base score for siblings to beat is: " + base + " NumOfParas: " + numberOfParagraphs + " scoreOfAll: "	+ scoreOfParagraphs);
+			//logger.trace("The base score for siblings to beat is: " + base + " NumOfParas: " + numberOfParagraphs + " scoreOfAll: "	+ scoreOfParagraphs);
 		}
 
 		return base;
@@ -172,15 +171,15 @@ public class AddSiblings {
 		float linkDivisor = numberOfLinkWords / numberOfWords;
 		float score = linkDivisor * numberOfLinks;
 
-		if (logger.isDebugEnabled()) {
-			String logText;
-			if (e.text().length() >= 51) {
-				logText = e.text().substring(0, 50);
-			} else {
-				logText = e.text();
-			}
-			logger.debug("Calulated link density score as: " + score + " for node: " + logText);
-		}
+//		if (logger.isDebugEnabled()) {
+//			String logText;
+//			if (e.text().length() >= 51) {
+//				logText = e.text().substring(0, 50);
+//			} else {
+//				logText = e.text();
+//			}
+//			//logger.trace("Calulated link density score as: " + score + " for node: " + logText);
+//		}
 		if (score > 1) {
 			return true;
 		}

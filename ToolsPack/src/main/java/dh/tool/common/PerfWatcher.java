@@ -32,8 +32,16 @@ public class PerfWatcher {
 		log.debug(String.format("%5d ms  %s - %s", stopwatch.elapsed(TimeUnit.MILLISECONDS), message, id));
 		resetStopwatch();
 	}
+	public void d(String message, Throwable e) {
+		log.debug(String.format("%5d ms  %s - %s", stopwatch.elapsed(TimeUnit.MILLISECONDS), message, id), e);
+		resetStopwatch();
+	}
 	public void i(String message) {
 		log.info(String.format("%5d ms  %s - %s", stopwatch.elapsed(TimeUnit.MILLISECONDS), message, id));
+		resetStopwatch();
+	}
+	public void i(String message, Throwable e) {
+		log.info(String.format("%5d ms  %s - %s", stopwatch.elapsed(TimeUnit.MILLISECONDS), message, id), e);
 		resetStopwatch();
 	}
 	public void w(String message) {
@@ -41,7 +49,7 @@ public class PerfWatcher {
 		resetStopwatch();
 	}
 	public void w(String message, Throwable e) {
-		log.warn(String.format("%5d ms  %s - %s", stopwatch.elapsed(TimeUnit.MILLISECONDS), message), e);
+		log.warn(String.format("%5d ms  %s - %s", stopwatch.elapsed(TimeUnit.MILLISECONDS), message, id), e);
 		resetStopwatch();
 	}
 	public void e(String message) {
@@ -49,7 +57,7 @@ public class PerfWatcher {
 		resetStopwatch();
 	}
 	public void e(String message, Throwable e) {
-		log.error(String.format("%5d ms  %s - %s", stopwatch.elapsed(TimeUnit.MILLISECONDS), message), e);
+		log.error(String.format("%5d ms  %s - %s", stopwatch.elapsed(TimeUnit.MILLISECONDS), message, id), e);
 		resetStopwatch();
 	}
 

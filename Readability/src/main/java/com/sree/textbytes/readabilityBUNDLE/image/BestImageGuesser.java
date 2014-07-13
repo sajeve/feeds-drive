@@ -60,7 +60,7 @@ public class BestImageGuesser {
 
 	public Element filterBadImages(Element topNode) {
 		Elements topNodeImages = topNode.select("img");
-		logger.debug("Found " + topNodeImages.size() + " images in top node");
+		logger.trace("Found " + topNodeImages.size() + " images in top node");
 		if (topNodeImages.size() > 0) {
 			for (Element imageElement : topNodeImages) {
 				String imgSrc = imageElement.attr("src");
@@ -68,7 +68,7 @@ public class BestImageGuesser {
 					continue;
 				matchBadImageNames.reset(imgSrc);
 				if (matchBadImageNames.find()) {
-					logger.debug("Found bad filename for image: " + imgSrc);
+					logger.trace("Found bad filename for image: " + imgSrc);
 					imageElement.parent().remove();
 				}
 			}
@@ -121,18 +121,18 @@ public class BestImageGuesser {
 			Elements metaElements = this.doc.select(metaRegex);
 			for (Element metaItem : metaElements) {
 				if (metaItem.attr(attr).length() < 1) {
-					logger.debug("Meta " + attr + " link faling");
+					logger.trace("Meta " + attr + " link faling");
 					return false;
 				}
 				knownJunkImageMatcher.reset(metaItem.attr(attr));
 				if(knownJunkImageMatcher.find()) {
-					logger.debug("Known Junk image found in Meta , skipping "+metaItem.attr(attr));
+					logger.trace("Known Junk image found in Meta , skipping "+metaItem.attr(attr));
 					return false;
 				}else {
 					this.image.setImageSrc(metaItem.attr(attr));
 					this.image.setImageExtractionType(extractionType);
 					this.image.setConfidenceScore(100);
-					logger.debug("Meta tag found and using : "
+					logger.trace("Meta tag found and using : "
 							+ this.image.getImageSrc());
 					return true;
 				}

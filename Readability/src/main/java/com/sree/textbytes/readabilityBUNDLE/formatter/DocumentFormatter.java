@@ -168,19 +168,19 @@ public class DocumentFormatter {
 	 */
 	private Element cleanKnownBadTags(Element node) {
 		Elements naughtyIDs = node.select(queryNaughtyIDs);
-		logger.debug("Found "+naughtyIDs.size() + " naughty IDs in the top node ");
+		logger.trace("Found "+naughtyIDs.size() + " naughty IDs in the top node ");
 		for(Element naughtyElement : naughtyIDs) {
 			removeNode(naughtyElement);
 		}
 		
 		Elements naughtyClass = node.select(queryNaughtyClasses);
-		logger.debug("Found "+naughtyClass.size() + " naughty classes in the top node ");
+		logger.trace("Found "+naughtyClass.size() + " naughty classes in the top node ");
 		for(Element naughtyElement : naughtyClass) {
 			removeNode(naughtyElement);
 		}
 		
 		Elements naughtyNames = node.select(queryNaughtyNames);
-		logger.debug("Found "+naughtyNames.size() + " naughty names in the top node ");
+		logger.trace("Found "+naughtyNames.size() + " naughty names in the top node ");
 		for(Element naughtyElement : naughtyNames) {
 			removeNode(naughtyElement);
 			
@@ -199,7 +199,7 @@ public class DocumentFormatter {
 	private void removeNode(Element node) {
 		if (node == null || node.parent() == null)
 			return;
-		logger.debug("Removing Cleaning node : "+node);
+		logger.trace("Removing Cleaning node : "+node);
 		node.remove();
 	}
 	
@@ -211,7 +211,7 @@ public class DocumentFormatter {
 	 * @return
 	 */
 	private Element cleanupNode(Element node) {
-		logger.debug("Starting clean up Node");
+		logger.trace("Starting clean up Node");
 		Elements nodes = node.children();
 	    String dropCapText = null;
 	    boolean isDropCap = false;
@@ -222,7 +222,7 @@ public class DocumentFormatter {
 			}
 			
 
-			logger.debug("CLEANUP  NODE: " + e.id() + " class: " + e.attr("class") + "Node : "+e);
+			logger.trace("CLEANUP  NODE: " + e.id() + " class: " + e.attr("class"));
 		      // now check for word density
 		      // grab all the paragraphs in the children and remove ones that are too small to matter
 		      Elements subParagraphs = e.getElementsByTag("p");
@@ -237,24 +237,24 @@ public class DocumentFormatter {
 		        		for(Element iframe : iframeElements) {
 		        			if(iframe.tagName().equals("iframe")) {
 								String attributes = getIFrameAttributes(iframe);
-								logger.debug("IFRAME attributes : "+attributes);
+								logger.trace("IFRAME attributes : "+attributes);
 								if(Patterns.exists(Patterns.VIDEOS, attributes)) {
-									logger.debug("valid video in iframe"+iframe);
+									logger.trace("valid video in iframe"+iframe);
 									continue;
 								}else {
-				        			logger.debug("Removing IFRAME , not a valid video");
+				        			logger.trace("Removing IFRAME , not a valid video");
 				        			iframe.remove();
 				        		}
 		        			}else if(iframe.tagName().equals("object")) {
 		        				Elements embedElements = iframe.getElementsByTag("embed");
 		        				for(Element embedElement : embedElements) {
 		        					String srcAttribute = embedElement.attr("src");
-		        					logger.debug("Object Attribute : "+srcAttribute);
+		        					logger.trace("Object Attribute : "+srcAttribute);
 		        					if(Patterns.exists(Patterns.VIDEOS, srcAttribute)) {
-		        						logger.debug("Valid video found in Object embed");
+		        						logger.trace("Valid video found in Object embed");
 		        						continue;
 		        					}else {
-		        						logger.debug("Removing Object , not a valid video");
+		        						logger.trace("Removing Object , not a valid video");
 		        						iframe.remove();
 		        					}
 		        				}
@@ -262,7 +262,7 @@ public class DocumentFormatter {
 		        		}
 		        		
 		        	}else {
-		        		logger.debug("Clean Up text less than critical and not images"+p);
+		        		logger.trace("Clean Up text less than critical and not images"+p);
 		        		p.remove();
 		        	}
 		          
@@ -272,7 +272,7 @@ public class DocumentFormatter {
 		      //if this node has a decent enough gravityScore we should keep it as well, might be content
 				
 			  if(e.tagName().equals("ul") || e.tagName().equals("ol")) {
-				  logger.debug("Tag is ul or ol, skipping");
+				  logger.trace("Tag is ul or ol, skipping");
 				  continue;
 			  }else if(e.tagName().equals("div") || e.tagName().equals("a")) {
 				  
@@ -284,15 +284,14 @@ public class DocumentFormatter {
 			      
 			      Elements imgElements = e.getElementsByTag("img");
 			      Elements iframeElements = e.getElementsByTag("iframe");
-			      logger.debug("Image size : "+imgElements.size());
+			      logger.trace("Image size : "+imgElements.size());
 			      float thresholdScore = (float) (topNodeScore * .08);
-			      logger.debug("topNodeScore: " + topNodeScore + " currentNodeScore: " + currentNodeScore + " threshold: " + thresholdScore);
+			      logger.trace("topNodeScore: " + topNodeScore + " currentNodeScore: " + currentNodeScore + " threshold: " + thresholdScore);
 			      if (currentNodeScore < thresholdScore && imgElements.size() == 0 && iframeElements.size() == 0) {
 			        if (!e.tagName().equals("td") && !e.tagName().equals("table") && tableElements.size() == 0) {
-			            logger.debug("Removing node due to low threshold score : node "+e);
 			            e.remove();
 			        } else {
-			            logger.debug("Not removing TD node");
+			            logger.trace("Not removing TD node");
 			        }
 
 			        continue;
@@ -304,10 +303,10 @@ public class DocumentFormatter {
 			      isDropCap = Patterns.exists(Patterns.DROP_CAP, className);
 			      if(isDropCap) {
 			    	  dropCapText = e.html();
-			    	  logger.debug("DropCap Text :"+dropCapText);
+			    	  logger.trace("DropCap Text :"+dropCapText);
 			      }
 			      
-			      logger.debug("Drop Cap is : "+isDropCap);
+			      logger.trace("Drop Cap is : "+isDropCap);
 
 				  
 			  }
@@ -318,7 +317,7 @@ public class DocumentFormatter {
 			for(Element e : node.children()) {
 				String className = e.attr("class");
 				if(Patterns.exists(Patterns.DROP_CAP, className)) {
-					logger.debug("Drop Cap Text element : "+e);
+					logger.trace("Drop Cap Text element : "+e);
 					String html = dropCapText + e.nextElementSibling().html();
 					e.nextElementSibling().html(html);
 					e.remove();
@@ -417,12 +416,12 @@ public class DocumentFormatter {
 			double weight = readability.getElementScore(tagElement);
 			double contentScore = ScoreInfo.getContentScore(tagElement);
 			if ((weight + contentScore) < 0) {
-				logger.debug("Cleaning tag wiight < 0 weight : " + weight + " content score : " + contentScore + "  tag "+ tagElement);
+				logger.trace("Cleaning tag wiight < 0 weight : " + weight + " content score : " + contentScore);
 				if(tagElement.tagName().equals("ul") || tagElement.tagName().equals("ol")) {
 					double linkDensity = WeightMethods.getLinkDensity(tagElement);
-					logger.debug("Link density of ul node : "+linkDensity);
+					logger.trace("Link density of ul node : "+linkDensity);
 					if(linkDensity > 0.3) {
-						logger.debug("Removing list node due to high link density");
+						logger.trace("Removing list node due to high link density");
 						tagElement.remove();
 					}
 				}else {
@@ -459,10 +458,9 @@ public class DocumentFormatter {
 				else
 					toRemove = false;
 				if (toRemove) {
-					logger.debug("Removing node toRemove is true : " + tagElement);
 					int imageSize = tagElement.select("img").size();
 					if(imageSize > 0) {
-						logger.debug("Not removing since it contains some images");
+						logger.trace("Not removing since it contains some images");
 					}else {
 						tagElement.remove();
 					}
@@ -491,7 +489,7 @@ public class DocumentFormatter {
             	Pattern pattern = Pattern.compile("http:\\/\\/(www\\.)?(youtube|vimeo)\\.com");
 				Matcher matcher = pattern.matcher(attributes);
 				if(matcher.find()) {
-					logger.debug("Ifarme match found");
+					logger.trace("Ifarme match found");
 					continue;
 				}else {
 					target.remove();
@@ -575,7 +573,7 @@ public class DocumentFormatter {
     		for(Element element : elements) {
     			if(element.hasText()) {
         			if(checkHtmlHashDuplicates(element.hashCode())) {
-        				logger.debug("Duplicate Html hash tag found in extracted output");
+        				logger.trace("Duplicate Html hash tag found in extracted output");
         				removeNode(element);
         			}else 
         				htmlHashes.add(element.html().hashCode());

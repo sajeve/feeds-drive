@@ -7,8 +7,6 @@ import org.jsoup.nodes.Element;
 
 import com.sree.textbytes.readabilityBUNDLE.image.Image;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -83,6 +81,8 @@ public class Article {
 	
 	private List<String> nextPageHtmlSources = new ArrayList<String>();
 
+	private String language;
+
 	/**
 	 * Set the next page html sources
 	 * @param nextPageSources
@@ -113,14 +113,14 @@ public class Article {
 	/**
 	 * Its true of the document has next pages.
 	 */
-	private boolean isMultiPage = false;
+	private boolean multiPage = false;
 	
-	public void setMultiPageStatus(boolean status) {
-		this.isMultiPage = status;
+	public void setMultiPage(boolean status) {
+		this.multiPage = status;
 	}
 	
-	public boolean getMultiPageStatus() {
-		return isMultiPage;
+	public boolean isMultiPage() {
+		return multiPage;
 	}
 	
 	/**
@@ -216,5 +216,12 @@ public class Article {
 	public void setTopImage(Image topImage) {
 		this.topImage = topImage;
 	}
-	
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
 }

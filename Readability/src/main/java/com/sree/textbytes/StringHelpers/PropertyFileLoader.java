@@ -38,7 +38,7 @@ public class PropertyFileLoader
 	{
 		File propertyFile = new File(fileName);
 		if(propertyFile.exists()) {
-			logger.debug("Property file exists, "+propertyFile.getName());
+			logger.trace("Property file exists, "+propertyFile.getName());
 			try {
 				InputStream configStream = new FileInputStream(propertyFile);
 				properties.load(configStream);
@@ -51,7 +51,7 @@ public class PropertyFileLoader
 				logger.error("IO Exception  "+e.toString());
 			}
 			
-			logger.debug("Property file loaded with "+propertyFile.getName());
+			logger.trace("Property file loaded with "+propertyFile.getName());
 			
 		}
 		else {

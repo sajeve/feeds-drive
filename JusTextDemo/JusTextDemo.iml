@@ -46,6 +46,7 @@
     <orderEntry type="library" exported="" name="DJNativeSwing.SWT-1.0.2" level="project" />
     <orderEntry type="library" exported="" name="rstaui-2.5.2" level="project" />
     <orderEntry type="library" exported="" name="rsyntaxtextarea-2.5.2" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="junit-4.4" level="project" />
   </component>
 </module>
 

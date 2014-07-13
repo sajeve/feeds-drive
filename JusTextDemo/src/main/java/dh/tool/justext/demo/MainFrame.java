@@ -8,27 +8,16 @@ import dh.tool.justext.Configuration;
 import dh.tool.justext.Extractor;
 import dh.tool.justext.demo.common.ExtractionReply;
 import dh.tool.justext.demo.common.ExtractionRequest;
+import dh.tool.justext.demo.util.Network;
 import net.java.dev.designgridlayout.DesignGridLayout;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,7 +28,7 @@ public class MainFrame extends JFrame {
 
 	public MainFrame() throws HeadlessException {
 		this.setTitle("JusText Demo");
-		this.setSize(new Dimension(800, 600));
+		this.setSize(new Dimension(600, 1000));
 
 		initGui();
 
@@ -94,7 +83,7 @@ public class MainFrame extends JFrame {
 		public ExtractionReply extract(Document doc, Configuration conf) {
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
-				Extractor.cleanUselessContent(doc);
+				new Extractor(conf).cleanUselessContent(doc);
 				sw.stop();
 				Log.info(String.format("cleanUselessContent - %d ms: %s", sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), doc);
@@ -152,7 +141,7 @@ public class MainFrame extends JFrame {
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
 				ContentExtractor ce = new ContentExtractor();
-				Article article = ce.extractContent(doc.html(), algorithm, null);
+				Article article = ce.extractContent(doc.html(), doc.baseUri(), algorithm, conf.language());
 				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());
@@ -170,7 +159,7 @@ public class MainFrame extends JFrame {
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
 				ContentExtractor ce = new ContentExtractor();
-				Article article = ce.extractContent(doc.html(), algorithm, null);
+				Article article = ce.extractContent(doc.html(), doc.baseUri(), algorithm, conf.language());
 				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());
@@ -188,7 +177,7 @@ public class MainFrame extends JFrame {
 			Stopwatch sw = Stopwatch.createStarted();
 			try {
 				ContentExtractor ce = new ContentExtractor();
-				Article article = ce.extractContent(doc.html(), algorithm, null);
+				Article article = ce.extractContent(doc.html(), doc.baseUri(), algorithm, conf.language());
 				Log.info(String.format("%s - %d ms: %s", algorithm, sw.elapsed(TimeUnit.MILLISECONDS), doc.baseUri()));
 
 				return new ExtractionReply(doc.baseUri(), sw.elapsed(TimeUnit.MILLISECONDS), article.getCleanedArticleText());
@@ -202,16 +191,12 @@ public class MainFrame extends JFrame {
 
 	private void initGui() {
 		comboAddress.setEditable(true);
-		comboAddress.setMaximumRowCount(10);
+		comboAddress.setMaximumRowCount(100);
 		comboAddress.setModel(new DefaultComboBoxModel());
-		comboAddress.addItem("http://doisong.vnexpress.net/tin-tuc/nha-dep/tu-van-nha-dep/9-kieu-ket-hop-ban-ghe-trai-nguoc-phong-cach-3010427.html");
-		comboAddress.addItem("http://worldcup.dantri.com.vn/world-cup-2014/cac-ung-vien-tiem-nang-vo-dich-world-cup-2014-893752.htm");
-		comboAddress.addItem("http://www.huffingtonpost.com/2014/06/28/aereo-suspension-operatio_n_5539559.html");
-		comboAddress.addItem("http://www.metronews.fr/conso/soldes-d-ete-2014-10-pieces-femme-a-s-offrir-d-urgence-chez-zara/mnfz!vD1qVKnYKBVTk/");
-		comboAddress.addItem("http://www.metronews.fr/info/meteo-france-32-departements-en-alerte-orange-a-cause-des-orages/mnfB!KGqdLzKKCaCU/");
-		comboAddress.addItem("http://www.lesechos.fr/finance-marches/banque-assurances/0203602724767-bnp-paribas-aux-etats-unis-bonnafe-reconnait-des-dysfonctionnements-et-des-erreurs-1019225.php");
-		comboAddress.addItem("http://business.lesechos.fr/directions-ressources-humaines/partenaire/partenaire-160-enjeux-de-la-reforme-sur-la-formation-professionnelle-100753.php");
-		comboAddress.addItem("http://vietnamnet.vn/vn/xa-hoi/183308/nhat-hoa-cuoi-roi-giua-duong-tai-xe-bi-thuong-nang.html");
+		for (String url : Constants.SamplesArticles) {
+			comboAddress.addItem(url);
+		}
+
 		//comboAddress.addActionListener(loadAddress);
 
 		buttonGo.addActionListener(loadAddress);
@@ -300,7 +285,7 @@ public class MainFrame extends JFrame {
 			@Override
 			protected Void doInBackground() {
 				try {
-					downloadPage(address, asMobileAgent);
+					document_ = Network.downloadPage(address, asMobileAgent);
 				}
 				catch (Exception ex) {
 					err = ex;
@@ -330,38 +315,6 @@ public class MainFrame extends JFrame {
 				}
 			}
 		}.execute();
-	}
-
-	private void downloadPage2(String address, boolean asMobileAgent) throws IOException {
-		Stopwatch sw = Stopwatch.createStarted();
-		Connection con = HttpConnection.connect(new URL(address));
-		con.userAgent(asMobileAgent ? MainApp.MOBILE_USER_AGENT : MainApp.DESKTOP_USER_AGENT).timeout(60*1000);
-		document_ = con.get();
-		sw.stop();
-		Log.info(String.format("Download and parse: %d ms - '%s'", sw.elapsed(TimeUnit.MILLISECONDS), address));
-	}
-
-	private void downloadPage(String address, boolean asMobileAgent) throws IOException {
-		Stopwatch sw = Stopwatch.createStarted();
-		byte[] rawContent = downloadContentHttpGet(address, asMobileAgent ? MainApp.MOBILE_USER_AGENT : MainApp.DESKTOP_USER_AGENT);
-		document_ = Jsoup.parse(new ByteArrayInputStream(rawContent), "utf-8", address);
-		sw.stop();
-		Log.info(String.format("Download and parse: %d ms - '%s'", sw.elapsed(TimeUnit.MILLISECONDS), address));
-	}
-
-	/**
-	 * Download content using HttpGet
-	 */
-	public static byte[] downloadContentHttpGet(String address, String userAgent) throws IOException {
-		HttpClient httpClient = HttpClientBuilder.create()
-				.setUserAgent(userAgent)
-				.build();
-
-		HttpGet request = new HttpGet(address);
-		HttpResponse response = httpClient.execute(request);
-		HttpEntity entity = response.getEntity();
-		byte[] content = EntityUtils.toByteArray(entity);
-		return content;
 	}
 
 	private void addUrlHistory(String address) {

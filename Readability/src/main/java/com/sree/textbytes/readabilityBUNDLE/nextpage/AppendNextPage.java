@@ -1,22 +1,22 @@
 package com.sree.textbytes.readabilityBUNDLE.nextpage;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.sree.textbytes.readabilityBUNDLE.ContentExtractor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import com.sree.textbytes.readabilityBUNDLE.Article;
-import com.sree.textbytes.readabilityBUNDLE.ParseWrapper;
+import com.sree.textbytes.readabilityBUNDLE.ContentExtractor;
 import com.sree.textbytes.readabilityBUNDLE.cleaner.DocumentCleaner;
 import com.sree.textbytes.readabilityBUNDLE.extractor.GooseExtractor;
 import com.sree.textbytes.readabilityBUNDLE.extractor.ReadabilityExtractor;
 import com.sree.textbytes.readabilityBUNDLE.extractor.ReadabilitySnack;
 import com.sree.textbytes.readabilityBUNDLE.formatter.DocumentFormatter;
+import dh.tool.common.PerfWatcher;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Append next page extracted content and create a final consolidated
@@ -39,9 +39,9 @@ public class AppendNextPage {
 	 * @param extractionAlgo
 	 * @return
 	 */
-	public Element appendNextPageContent(Article article, Element firstPageContent, ContentExtractor.Algorithm extractionAlgo, String lang) {
+	public Element appendNextPageContent(Article article, Element firstPageContent, ContentExtractor.Algorithm extractionAlgo, String lang, PerfWatcher pf) {
 		int pageNumber = 1;
-		
+
 		DocumentFormatter documentFormatter = new DocumentFormatter();
 		
 		contentHashes.add(firstPageContent.text().hashCode());
@@ -54,24 +54,22 @@ public class AppendNextPage {
 		
 		finalConsolidatedContent.appendChild(articleContent);
 		
-		ParseWrapper parseWrapper = new ParseWrapper();
 		DocumentCleaner documentClearner = new DocumentCleaner();
 		
-		if(article.getMultiPageStatus()) {
-			List<String> nextPageHtmlSource = new ArrayList<String>();
-			nextPageHtmlSource = article.getNextPageSources();
-			logger.debug("MultiPagesInfo size : "+nextPageHtmlSource.toString());
-			
+		if(article.isMultiPage()) {
+			List<String> nextPageHtmlSource = article.getNextPageSources();
+
 			for(String nextPageHtml : nextPageHtmlSource) {
-				logger.debug("Fetching article from next page : ");
+				pf.resetStopwatch();
+
 				Element nextPageExtractedContent = null;
-				Document nextPageDocument = null;
-				try {
-					nextPageDocument = parseWrapper.parse(nextPageHtml);
-					nextPageDocument = documentClearner.clean(nextPageDocument);
-				}catch(Exception e) {
-					logger.warn("JSOUP PARSE EXCEPTION ",e);
-				}
+				Document nextPageDocument = nextPageDocument = Jsoup.parse(nextPageHtml);
+
+				pf.d("Fetching article from next page");
+
+				nextPageDocument = documentClearner.clean(nextPageDocument, pf);
+
+				pf.d("Clean");
 
 				switch (extractionAlgo) {
 					case ReadabilityCore:
@@ -88,19 +86,20 @@ public class AppendNextPage {
 						break;
 				}
 
+				pf.d("fetchArticleContent");
+
 				if(nextPageExtractedContent != null) {
 					if(checkDuplicateNextPage(nextPageExtractedContent.text().hashCode())) {
-						logger.debug("Duplicate next page content found , skipping");
+						logger.trace("Duplicate next page content found , skipping");
 					}else {
 						
 						contentHashes.add(nextPageExtractedContent.text().hashCode());
 						Element nextPageContent = document.createElement("div").attr("algo-page-number", Integer.toString(pageNumber)).attr("class", "algo-page-class");
 						nextPageContent.appendChild(documentFormatter.getFormattedElement(nextPageExtractedContent));
-						logger.debug("Next Page Content : "+nextPageExtractedContent);
-						if(!checkParagraphDeDupe(finalConsolidatedContent,nextPageContent))
-						{
-						finalConsolidatedContent.appendChild(nextPageContent);
-						pageNumber++;
+						//logger.trace("Next Page Content : "+nextPageExtractedContent);
+						if (!checkParagraphDeDupe(finalConsolidatedContent,nextPageContent)) {
+							finalConsolidatedContent.appendChild(nextPageContent);
+							pageNumber++;
 						}
 					}
 				}

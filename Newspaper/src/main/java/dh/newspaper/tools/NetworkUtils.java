@@ -5,7 +5,7 @@ import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.squareup.okhttp.OkHttpClient;
 import dh.newspaper.Constants;
-import dh.tool.common.ICancellation;
+import dh.tool.thread.ICancellation;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;

@@ -1,6 +1,5 @@
 package dh.tool.justext;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 
 import java.io.Serializable;
@@ -25,7 +24,7 @@ public class Configuration implements Serializable, Cloneable {
 	private int lengthHigh = 200;
 	private double stopwordsLow = 0.3;
 	private double stopwordsHigh = 0.32;
-	private double maxLinkDensity = 0.2;
+	private double maxLinkDensity = 0.3; //0.2
 	private boolean strictOnEdgeContent = true;
 	private boolean removeTitle = false;
 	private boolean preCleanUselessContent = true;
@@ -34,6 +33,8 @@ public class Configuration implements Serializable, Cloneable {
 	private String language;
 	private boolean autoDetectLanguage = false;
 	private boolean contentAlwaysHasTitle = true;
+	private boolean tolerateImage = true;
+	private boolean keepStyleAttribute = false;
 
 	public boolean processHeadings() {
 		return processHeadings;
@@ -89,6 +90,12 @@ public class Configuration implements Serializable, Cloneable {
 	public boolean contentAlwaysHasTitle() {
 		return contentAlwaysHasTitle;
 	}
+	public boolean tolerateImage() {
+		return tolerateImage;
+	}
+	public boolean keepStyleAttribute() {
+		return keepStyleAttribute;
+	}
 
 	@Override
 	protected Configuration clone() throws CloneNotSupportedException {
@@ -108,6 +115,8 @@ public class Configuration implements Serializable, Cloneable {
 		resu.processOnlyBody = processOnlyBody;
 		resu.autoDetectLanguage = autoDetectLanguage;
 		resu.contentAlwaysHasTitle = contentAlwaysHasTitle;
+		resu.tolerateImage = tolerateImage;
+		resu.keepStyleAttribute = keepStyleAttribute;
 		return resu;
 	}
 
@@ -134,6 +143,8 @@ public class Configuration implements Serializable, Cloneable {
 			if ("language".equalsIgnoreCase(key)) language = StopwordsManager.getLanguage(value);
 			if ("autoDetectLanguage".equalsIgnoreCase(key)) autoDetectLanguage = Boolean.parseBoolean(value);
 			if ("contentAlwaysHasTitle".equalsIgnoreCase(key)) contentAlwaysHasTitle = Boolean.parseBoolean(value);
+			if ("tolerateImage".equalsIgnoreCase(key)) tolerateImage = Boolean.parseBoolean(value);
+			if ("keepStyleAttribute".equalsIgnoreCase(key)) keepStyleAttribute = Boolean.parseBoolean(value);
 		}
 	}
 
@@ -155,6 +166,8 @@ public class Configuration implements Serializable, Cloneable {
 		sb.append("language = " + language + "; ");
 		sb.append("autoDetectLanguage = " + autoDetectLanguage + "; ");
 		sb.append("contentAlwaysHasTitle = " + contentAlwaysHasTitle + "; ");
+		sb.append("tolerateImage = " + tolerateImage + "; ");
+		sb.append("keepStyleAttribute = " + keepStyleAttribute + "; ");
 		return sb.toString().trim();
 	}
 
@@ -270,6 +283,14 @@ public class Configuration implements Serializable, Cloneable {
 		}
 		public Builder contentAlwaysHasTitle(boolean contentAlwaysHasTitle) {
 			configuration.contentAlwaysHasTitle = contentAlwaysHasTitle;
+			return this;
+		}
+		public Builder tolerateImage(boolean tolerateImage) {
+			configuration.tolerateImage = tolerateImage;
+			return this;
+		}
+		public Builder keepStyleAttribute(boolean keepStyleAttribute) {
+			configuration.keepStyleAttribute = keepStyleAttribute;
 			return this;
 		}
 	}

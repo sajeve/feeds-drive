@@ -34,8 +34,10 @@ public class Paragraph extends LinkedList<Node> {
 	private double linkDensity;
 	private Tag heading;
 	private double stopwordsDensity;
-	private String message;
+	private String message = "";
 	private int id;
+	private String imageUrl; //different null if the paragraph is image
+	private boolean isImage = false;
 
 	/**
 	 * true only if we has stopwords list of the configured language
@@ -56,10 +58,6 @@ public class Paragraph extends LinkedList<Node> {
 		double stopwordsHigh = stopwordsChecking ? conf.stopwordsHigh() : 0;
 		double stopwordsLow = stopwordsChecking ? conf.stopwordsLow() : 0;
 		String lang = Strings.isNullOrEmpty(conf.language()) ? "" : " "+conf.language();
-
-		if (message == null) {
-			message="";
-		}
 
 		if (linkDensity > conf.maxLinkDensity()) {
 			if (Configuration.DEBUG)
@@ -119,28 +117,16 @@ public class Paragraph extends LinkedList<Node> {
 		}
 	}
 
-	public String getRawText() {
-		initRawInfo();
-		return rawText;
-	}
-
-	public double getStopwordsDensity() {
-		initRawInfo();
-		return stopwordsDensity;
-	}
-
 	public Quality getContextFreeQuality() {
 		initRawInfo();
 		return contextFreeQuality;
 	}
 
-	public double getLinkDensity() {
-		initRawInfo();
-		return linkDensity;
-	}
-
 	public int getLength() {
 		initRawInfo();
+		if (rawText == null) {
+			return 0;
+		}
 		return rawText.length();
 	}
 
@@ -161,17 +147,21 @@ public class Paragraph extends LinkedList<Node> {
 	}
 
 	void setQuality(Quality quality, String reason) {
-		if (Configuration.DEBUG) {
-			message = reason+" " + quality + ". " + message;
+		if (this.quality != quality) {
+			if (Configuration.DEBUG) {
+				message = reason + " " + quality + ". " + message;
+			}
+			this.quality = quality;
 		}
-		this.quality = quality;
 	}
 
 	void setContextFreeQuality(Quality contextFreeQuality, String reason) {
-		if (Configuration.DEBUG) {
-			message = reason+" change context-free quality to " + contextFreeQuality + ". " + message;
+		if (this.contextFreeQuality != contextFreeQuality) {
+			if (Configuration.DEBUG) {
+				message = reason + " change context-free quality to " + contextFreeQuality + ". " + message;
+			}
+			this.contextFreeQuality = contextFreeQuality;
 		}
-		this.contextFreeQuality = contextFreeQuality;
 	}
 
 	/**
@@ -183,81 +173,107 @@ public class Paragraph extends LinkedList<Node> {
 	 * The second invocation of this method won't do anything
 	 */
 	public void initRawInfo() {
-		if (rawText != null) {
+		if (rawText != null || imageUrl!=null) {
 			return; //already processed
 		}
 
-		heading = null;
-		linksLength = 0;
+		Node uniqueNode = null;
 
-		StringBuilder sb = new StringBuilder();
-		for (Node n : this) {
-			if (n instanceof TextNode) {
-				String nodeRawText = ((TextNode) n).text();
-				sb.append(nodeRawText);
-
-				if (NodeHelper.isLink(n))
-					linksLength += nodeRawText.length();
+		//fragment has only one node which is image, for example: <div><span><img/></span></div>
+		if (this.size() == 1) {
+			uniqueNode = NodeHelper.getUniqueLeafTag(this.getFirst());
+			if (NodeHelper.isImgTag(uniqueNode)) {
+				isImage = true;
+				imageUrl = uniqueNode.attr("src");
+				heading = NodeHelper.findHeadingAncestor(uniqueNode);
+				rawText = "img"; //each image is considered as a paragraph of 3 characters.
 			}
+		}
+
+		if (isImage) {
+			if (NodeHelper.isLink(uniqueNode)) {
+				contextFreeQuality = Quality.BAD; //all image link is BAD
+				message = "Context-free BAD: image link. " + message;
+			}
+			else {
+				if (conf.tolerateImage()) {
+					contextFreeQuality = Quality.NEAR_GOOD;
+					message = "Context-free NEAR_GOOD: image tolerate. " + message;
+				}
+				else {
+					contextFreeQuality = Quality.SHORT;
+					message = "Context-free SHORT: image. " + message;
+				}
+			}
+		}
+		else {
+			heading = null;
+			linksLength = 0;
+
+			StringBuilder sb = new StringBuilder();
+			for (Node n : this) {
+				if (n instanceof TextNode) {
+					String nodeRawText = ((TextNode) n).text();
+					sb.append(nodeRawText);
+
+					if (NodeHelper.isLink(n))
+						linksLength += nodeRawText.length();
+				}
 			/*
 			if one of node in the fragment is heading, so the fragment is heading
 			example: <h1><span>hello</span> world <img/></h1>
 			 */
-			if (heading == null) {
-				heading = NodeHelper.findHeadingAncestor(n);
-			}
-		}
-		rawText = sb.toString();
-
-		if (Configuration.DEBUG) {
-			message = (message == null ? "" : message) + (isHeading() ? "("+heading.getName().toUpperCase()+")" : "");
-		}
-
-		/*compute stopwords density*/
-
-		if (!Strings.isNullOrEmpty(conf.language())) {
-			try {
-				SortedSet<String> stopwords = StopwordsManager.getStopwords(conf.language());
-
-				Iterable<String> words = Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(rawText);
-				Iterator<String> it = words.iterator();
-				this.countWords = 0;
-				this.countStopwords = 0;
-				while (it.hasNext()) {
-					if (stopwords.contains(it.next())) {
-						this.countStopwords++;
-					}
-					this.countWords++;
+				if (heading == null) {
+					heading = NodeHelper.findHeadingAncestor(n);
 				}
-
-				this.stopwordsDensity = 1.0*countStopwords / countWords;
-				this.stopwordsChecking = true;
-			} catch (Exception e) {
-				message += "Failed load stopwords of "+conf.language()+": "+e.getMessage()+". ";
-				this.stopwordsChecking = false;
-				e.printStackTrace();
 			}
-		}
+			rawText = sb.toString();
 
-		linkDensity = (double)linksLength / rawText.length();
-		contextFreeQuality = computeContextFreeQuality();
+			if (Configuration.DEBUG) {
+				message = (message == null ? "" : message) + (isHeading() ? "(" + heading.getName().toUpperCase() + ")" : "");
+			}
+
+			/*compute stopwords density*/
+
+			if (!Strings.isNullOrEmpty(conf.language())) {
+				try {
+					SortedSet<String> stopwords = StopwordsManager.getStopwords(conf.language());
+
+					Iterable<String> words = Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(rawText);
+					Iterator<String> it = words.iterator();
+					this.countWords = 0;
+					this.countStopwords = 0;
+					while (it.hasNext()) {
+						if (stopwords.contains(it.next())) {
+							this.countStopwords++;
+						}
+						this.countWords++;
+					}
+
+					this.stopwordsDensity = 1.0 * countStopwords / countWords;
+					this.stopwordsChecking = true;
+				} catch (Exception e) {
+					message += "Failed load stopwords of " + conf.language() + ": " + e.getMessage() + ". ";
+					this.stopwordsChecking = false;
+					e.printStackTrace();
+				}
+			}
+
+			linkDensity = (double) linksLength / rawText.length();
+			contextFreeQuality = computeContextFreeQuality();
+		}
 
 		/**
 		 * promote context-free quality of H1 and H2 paragraph
 		 */
-		if (this.heading!=null && conf.processHeadings() && conf.contentAlwaysHasTitle()) {
-			if ("h1".equalsIgnoreCase(this.heading.getName()) || "h2".equalsIgnoreCase(this.heading.getName())) {
-				switch (contextFreeQuality) {
-					case SHORT: setContextFreeQuality(Quality.NEAR_GOOD, "tolerate-h1h2"); break;
-					case NEAR_GOOD: setContextFreeQuality(Quality.GOOD, "tolerate-h1h2"); break;
-					case BAD: {
-						//h1 or h2 which is not too short and not contains links is likely good.
-						//it is BAD here because of stop word, we will get over it
-						if (linkDensity == 0 && rawText.length() >= conf.lengthLow()) {
-							setContextFreeQuality(Quality.NEAR_GOOD, "tolerate-h1h2");
-							break;
-						}
-					}
+		if (this.heading != null && conf.processHeadings() && conf.contentAlwaysHasTitle()) {
+			if (isH1orH2()) {
+				if (contextFreeQuality == Quality.BAD && linkDensity == 0 && getLength() >= conf.lengthLow()) {
+					//it is BAD here because of stop word, we will get over it
+					setContextFreeQuality(Quality.NEAR_GOOD, "tolerate-h1h2");
+				}
+				else {
+					setContextFreeQuality(promote(contextFreeQuality), "tolerate-h1h2");
 				}
 			}
 		}
@@ -293,15 +309,41 @@ public class Paragraph extends LinkedList<Node> {
 		}
 	}
 
+	public String getRawText() {
+		return rawText;
+	}
+
+	public String getImageUrl() {
+		return imageUrl;
+	}
+
+	public boolean isImage() {
+		return isImage;
+	}
+
 	@Override
 	public String toString() {
 		if (Configuration.DEBUG) {
 			return "["+this.getId()+"] " + message;
 		}
 
-		return String.format("[%d] %s length=%d link=%.3g stopwords=%.3g", getId(), getQuality(), rawText.length(), getLinkDensity(), getStopwordsDensity());
+		return String.format("[%d] %s length=%d link=%.3g stopwords=%.3g", getId(), getQuality(), rawText.length(), linkDensity, stopwordsDensity);
 	}
 
+
+	public boolean isH1() {
+		return this.isHeading() && "h1".equalsIgnoreCase(this.getHeading().getName());
+	}
+	public boolean isH1orH2() {
+		if (!this.isHeading()) return false;
+		String headTagName = this.getHeading().getName();
+		return  "h1".equalsIgnoreCase(headTagName) || "h2".equalsIgnoreCase(headTagName);
+	}
+	public boolean isH1orH2orH3() {
+		if (!this.isHeading()) return false;
+		String headTagName = this.getHeading().getName();
+		return  "h1".equalsIgnoreCase(headTagName) || "h2".equalsIgnoreCase(headTagName) || "h3".equalsIgnoreCase(headTagName);
+	}
 
 	public int getId() {
 		return id;
@@ -318,6 +360,15 @@ public class Paragraph extends LinkedList<Node> {
 		GOOD,
 		SHORT, //too short to make a reliable decision
 		NEAR_GOOD, //somewhere in-between short and good
+	}
+
+	public static Quality promote(Quality q) {
+		switch (q) {
+			case BAD: return Quality.SHORT;
+			case SHORT: return Quality.NEAR_GOOD;
+			case NEAR_GOOD: return Quality.GOOD;
+		}
+		return Quality.GOOD;
 	}
 
 }

@@ -7,7 +7,7 @@ import dh.newspaper.MainActivity;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.test.TestUtils;
 import dh.newspaper.tools.NetworkUtils;
-import dh.tool.common.ICancellation;
+import dh.tool.thread.ICancellation;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Entities;

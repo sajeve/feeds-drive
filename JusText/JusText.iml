@@ -26,6 +26,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="ToolsPack" exported="" />
     <orderEntry type="library" exported="" name="jsoup-1.7.3" level="project" />
     <orderEntry type="library" exported="" name="guava-15.0" level="project" />
     <orderEntry type="library" exported="" name="slf4j-api-1.7.7" level="project" />

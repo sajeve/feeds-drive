@@ -11,9 +11,6 @@ import org.apache.logging.log4j.MarkerManager;
 import javax.swing.*;
 
 public class MainApp {
-	public static final String MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; U; Android 4.0.3; ko-kr; LG-L160L Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
-	public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36";
-
 	private static final Logger Log = LogManager.getLogger(MainApp.class.getName());
 	public static final Marker EventBusMarker = MarkerManager.getMarker("EventBus");
 

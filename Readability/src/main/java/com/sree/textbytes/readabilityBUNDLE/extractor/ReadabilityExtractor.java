@@ -8,6 +8,7 @@ import java.util.ListIterator;
 import java.util.Set;
 
 import com.sree.textbytes.readabilityBUNDLE.*;
+import dh.tool.common.PerfWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jsoup.nodes.Document;
@@ -43,14 +44,14 @@ public class ReadabilityExtractor {
      * @param article
      * @return
      */
-	public Element grabArticle(Article article, String lang) {
+	public Element grabArticle(Article article, String lang, PerfWatcher pf) {
 		
 		Element extractedContent = null;
 		extractedContent = fetchArticleContent(article.getCleanedDocument(), lang);
 
-		if(article.getMultiPageStatus()) {
+		if(article.isMultiPage()) {
 			AppendNextPage appendNextPage = new AppendNextPage();
-			Element finalConsolidated = appendNextPage.appendNextPageContent(article, extractedContent, ContentExtractor.Algorithm.ReadabilityCore, lang);
+			Element finalConsolidated = appendNextPage.appendNextPageContent(article, extractedContent, ContentExtractor.Algorithm.ReadabilityCore, lang, pf);
 			return finalConsolidated;
 		}else 
 			return extractedContent;
@@ -135,7 +136,7 @@ public class ReadabilityExtractor {
                 if (Patterns.exists(Patterns.UNLIKELY_CANDIDATES, unlikelyMatchString)
                     && !Patterns.exists(Patterns.OK_MAYBE_ITS_A_CANDIDATE, unlikelyMatchString)
                     && !"body".equals(node.tagName())) {
-                    logger.debug("Removing unlikely candidate - " + unlikelyMatchString);
+                    logger.trace("Removing unlikely candidate - " + unlikelyMatchString);
                     List<Element> toRemoveAndBelow = node.getAllElements();
                     listIterator.remove();
                     /*
@@ -278,8 +279,8 @@ public class ReadabilityExtractor {
         	double score = ScoreInfo.getContentScore(candidate);
             double newScore = score * (1.0 - getLinkDensity(candidate));
             ScoreInfo.setContentScore(candidate, newScore);
-            logger.debug("Candidate [" + candidate.getClass() + "] (" + candidate.className() + ":"
-                      + candidate.id() + ") with score " + newScore);
+            logger.trace("Candidate [" + candidate.getClass() + "] (" + candidate.className() + ":"
+					+ candidate.id() + ") with score " + newScore);
 
             if (null == topCandidate || newScore > ScoreInfo.getContentScore(topCandidate)) {
                 topCandidate = candidate;
@@ -309,12 +310,12 @@ public class ReadabilityExtractor {
 
 		            boolean append = false;
 
-		            logger.debug("Looking at sibling node: [" + siblingNode.getClass() + "] (" + siblingNode.className()
-		                      + ":" + siblingNode.id() + ")");
+		            logger.trace("Looking at sibling node: [" + siblingNode.getClass() + "] (" + siblingNode.className()
+							+ ":" + siblingNode.id() + ")");
 		            if (scored) {
-		            	logger.debug("Sibling has score " + ScoreInfo.getContentScore(siblingNode));
+		            	logger.trace("Sibling has score " + ScoreInfo.getContentScore(siblingNode));
 		            } else {
-		            	logger.debug("Sibling has score unknown");
+		            	logger.trace("Sibling has score unknown");
 		            }
 
 		            if (siblingNode == topCandidate) {
@@ -345,7 +346,7 @@ public class ReadabilityExtractor {
 		                }
 		            }
 		            if (append) {
-		            	logger.debug("Appending node: [" + siblingNode.getClass() + "]");
+		            	logger.trace("Appending node: [" + siblingNode.getClass() + "]");
 
 		                Element nodeToAppend = null;
 		                if (!"div".equals(siblingNode.tagName()) && !"p".equals(siblingNode.tagName())) {
@@ -354,7 +355,7 @@ public class ReadabilityExtractor {
 		                     * into a div so it doesn't get filtered out later by accident.
 		                     */
 
-		                	logger.debug("Altering siblingNode of " + siblingNode.tagName() + " to div.");
+		                	logger.trace("Altering siblingNode of " + siblingNode.tagName() + " to div.");
 		                    nodeToAppend = changeElementTag(siblingNode, "div",document);
 		                } else {
 		                    nodeToAppend = siblingNode;

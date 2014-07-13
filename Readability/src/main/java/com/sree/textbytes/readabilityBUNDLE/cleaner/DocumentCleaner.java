@@ -1,5 +1,6 @@
 package com.sree.textbytes.readabilityBUNDLE.cleaner;
 
+import dh.tool.common.PerfWatcher;
 import org.jsoup.nodes.Document;
 
 import com.sree.textbytes.StringHelpers.ReplaceSequence;
@@ -77,46 +78,69 @@ public class DocumentCleaner  {
 	
 	public Document docToClean;
 
-	public Document clean(Document doc) {
-		logger.debug("Starting cleaning phase with DocumentCleaner : "+doc);
+	public Document clean(Document doc, PerfWatcher pf) {
 		this.docToClean = doc;
 		cleanEmTags(docToClean);
+		pf.d("cleanEmTags");
+
 		removeDropCaps(docToClean);
+		pf.d("removeDropCaps");
+
 		removeScriptsAndStyles(docToClean);
+		pf.d("removeScriptsAndStyles");
+
 		removeStyleSheets(docToClean);
+		pf.d("removeStyleSheets");
+
 		convertNoScriptToDiv(docToClean);
+		pf.d("convertNoScriptToDiv");
 		
 		removeComments(docToClean);
+		pf.d("removeComments");
 
-		cleanBadTags(docToClean);
+		/*cleanBadTags(docToClean);
+		pf.d("cleanBadTags");*/
 
 		removeNodesViaRegEx(docToClean, captionPattern);
+		pf.d("removeNodesViaRegEx");
+
 		removeNodesViaRegEx(docToClean, googlePattern);
+		pf.d("removeNodesViaRegEx");
+
 		removeNodesViaRegEx(docToClean, entriesPattern);
+		pf.d("removeNodesViaRegEx");
 
 		/**
 		 * remove twitter and facebook nodes, mashable has f'd up class names for this
 		 */
 		removeNodesViaRegEx(docToClean, facebookPattern);
+		pf.d("remove facebookPattern");
+
 		removeNodesViaRegEx(docToClean, twitterPattern);
+		pf.d("remove twitterPattern");
 
 		// turn any divs that aren't used as true layout items with block level
 		// elements inside them into paragraph tags
 		
-		
 		cleanUpSpanTagsInParagraphs(docToClean);
+		pf.d("cleanUpSpanTagsInParagraphs");
+
 		convertDivsToParagraphs(docToClean, "div");
+		pf.d("convertDivsToParagraphs");
+
 		convertDivsToParagraphs(docToClean, "span");
-		
+		pf.d("convertSpansToParagraphs");
+
 		//convertDoubleBrsToP(docToClean);
 		convertFontToSpan(docToClean);
+		pf.d("convertFontToSpan");
+
 		removeEmptyParas(docToClean);
-		
+		pf.d("removeEmptyParas");
+
 		//convertDivToParagraph(docToClean,"div");
 		//convertDivToParagraph(docToClean,"span");
-		
 
-			
 		return docToClean;
 	}
 
@@ -142,7 +166,6 @@ public class DocumentCleaner  {
 	 */
 	private void removeStyleSheets(Document docToClean) {
 		Elements stylesheets = docToClean.select("link[rel='stylesheet']");
-		logger.debug("Removing "+stylesheets.size() + " style sheets");
 		stylesheets.remove();
 	}
 	
@@ -199,7 +222,6 @@ public class DocumentCleaner  {
 	private void convertNoScriptToDiv(Document docToClean) {
 		Elements noScripts = docToClean.getElementsByTag("noscript");
 		for(Element noScript : noScripts) {
-			logger.debug("Converting NO SCRIPT to DIV");
 			changeElementTag(noScript, "div");
 		}
 	}
@@ -236,7 +258,6 @@ public class DocumentCleaner  {
         while (i < node.childNodes().size()) {
             Node child = node.childNode(i);
             if (child.nodeName().equals("#comment")) {
-            	logger.debug("Cleaning comment tag "+child);
                 child.remove();
             }
             else {
@@ -256,7 +277,7 @@ public class DocumentCleaner  {
 		Elements paras = docToClean.select("p");
 		for(Element para : paras) {
 			if(string.isNullOrEmpty(para.text()) && para.childNodes().size() == 0) {
-				logger.debug("Null Para found :"+para + "size : "+para.childNodes().size());
+				//logger.trace("Null Para found :" + para + "size : " + para.childNodes().size());
 				para.remove();
 			}
 		}
@@ -268,7 +289,7 @@ public class DocumentCleaner  {
 	 */
 	private void removeDropCaps(Document doc) {
 		Elements items = doc.select("span[class~=(dropcap|drop_cap)]");
-		logger.debug("Cleaning " + items.size() + " dropcap tags");
+		//logger.trace("Cleaning " + items.size() + " dropcap tags");
 		for (Element item : items) {
 			TextNode tn = new TextNode(item.text(), doc.baseUri());
 			item.replaceWith(tn);
@@ -281,33 +302,33 @@ public class DocumentCleaner  {
 		Elements children = doc.body().children();
 
 		Elements naughtyList = children.select(queryNaughtyIDs);
-		logger.debug(naughtyList.size() + " naughty ID elements found");
+		////logger.trace(naughtyList.size() + " naughty ID elements found");
 		for (Element node : naughtyList) {
-			logger.debug("Cleaning: Removing node with id: " + node.id());
+			////logger.trace("Cleaning: Removing node with id: " + node.id());
 			removeNode(node);
 		}
 		Elements naughtyList2 = children.select(queryNaughtyIDs);
-		logger.debug(naughtyList2.size()
-				+ " naughty ID elements found after removal");
+		//logger.trace(naughtyList2.size()
+//				+ " naughty ID elements found after removal");
 
 		Elements naughtyList3 = children.select(queryNaughtyClasses);
-		logger.debug(naughtyList3.size() + " naughty CLASS elements found");
+		//logger.trace(naughtyList3.size() + " naughty CLASS elements found");
 		for (Element node : naughtyList3) {
-			logger.debug("clean: Removing node with class: " + node.className());
+		//logger.trace("clean: Removing node with class: " + node.className());
 			removeNode(node);
 		}
 		Elements naughtyList4 = children.select(queryNaughtyClasses);
-		logger.debug(naughtyList4.size()
-				+ " naughty CLASS elements found after removal");
+		//logger.trace(naughtyList4.size()
+//				+ " naughty CLASS elements found after removal");
 
 		// starmagazine puts shit on name tags instead of class or id
 		Elements naughtyList5 = children.select(queryNaughtyNames);
 
-		logger.debug(naughtyList5.size() + " naughty Name elements found");
+		//logger.trace(naughtyList5.size() + " naughty Name elements found");
 		for (Element node : naughtyList5) {
-			logger.debug("clean: Removing node with class: "
-					+ node.attr("class") + " id: " + node.id() + " name: "
-					+ node.attr("name"));
+		//logger.trace("clean: Removing node with class: "
+//					+ node.attr("class") + " id: " + node.id() + " name: "
+//					+ node.attr("name"));
 			removeNode(node);
 		}
 	}
@@ -322,7 +343,7 @@ public class DocumentCleaner  {
 	private void removeNode(Element node) {
 		if (node == null || node.parent() == null)
 			return;
-		logger.debug("Removing Cleaning node : "+node);
+		//logger.trace("Removing Cleaning node : " + node);
 		node.remove();
 	}
 
@@ -336,8 +357,8 @@ public class DocumentCleaner  {
 		try {
 			Elements naughtyList = doc.getElementsByAttributeValueMatching(
 					"id", pattern);
-			logger.debug("regExRemoveNodes: " + naughtyList.size()
-					+ " ID elements found against pattern: " + pattern);
+			//logger.trace("regExRemoveNodes: " + naughtyList.size()
+			//		+ " ID elements found against pattern: " + pattern);
 			for (Element node : naughtyList) {
 				removeNode(node);
 			}
@@ -345,36 +366,35 @@ public class DocumentCleaner  {
 			Elements naughtyList3 = doc.getElementsByAttributeValueMatching(
 					"class", pattern);
 
-			logger.debug("regExRemoveNodes: " + naughtyList3.size()
-					+ " CLASS elements found against pattern: " + pattern);
+			//logger.trace("regExRemoveNodes: " + naughtyList3.size()
+			//		+ " CLASS elements found against pattern: " + pattern);
 			for (Element node : naughtyList3) {
 				removeNode(node);
 			}
 		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
 			logger.error(e.toString());
 		}
 	}
 	
 	private void removeScriptsAndStyles(Document doc) {
-		logger.debug("Starting to remove script tags");
+		//logger.trace("Starting to remove script tags");
 
 		Elements scripts = doc.getElementsByTag("script");
 		for (Element item : scripts) {
 			item.remove();
 		}
-		logger.debug("Removed: " + scripts.size() + " script tags");
-		logger.debug("Removing Style Tags");
+		//logger.trace("Removed: " + scripts.size() + " script tags");
+		//logger.trace("Removing Style Tags");
 		Elements styles = doc.getElementsByTag("style");
 		for (Element style : styles) {
 			style.remove();
 		}
-		logger.debug("Removed: " + styles.size() + " style tags");
+		//logger.trace("Removed: " + styles.size() + " style tags");
 	}
 	
 	
 	private void convertDivToParagraph(Document docToClean,String tag) {
-		logger.debug("Starting to replace bad divs");
+		//logger.trace("Starting to replace bad divs");
 		Elements divElements = docToClean.getElementsByTag(tag);
 		for(Element divElement :  divElements) {
 			boolean hasBlock = false;
@@ -401,7 +421,7 @@ public class DocumentCleaner  {
 	}
 	
 	private void convertDivsToParagraphs(Document doc, String domType) {
-		logger.debug("Starting to replace bad divs...");
+		//logger.trace("Starting to replace bad divs...");
 
 		int divIndex = 0;
 		int badDivs = 0;
@@ -438,9 +458,9 @@ public class DocumentCleaner  {
 
 		}
 
-		logger.debug("Found " + divs.size() + " total divs with " + badDivs
-				+ " bad divs replaced and " + convertedTextNodes
-				+ " textnodes converted inside divs");
+		//logger.trace("Found " + divs.size() + " total divs with " + badDivs
+		//		+ " bad divs replaced and " + convertedTextNodes
+		//		+ " textnodes converted inside divs");
 	}
 
 	private ArrayList<Node> getReplacementNodes(Document doc, Element div) {
@@ -530,7 +550,6 @@ public class DocumentCleaner  {
 	 */
 	private Element getFlushedBuffer(StringBuilder replacementText, Document doc) {
 		String bufferedText = replacementText.toString();
-		logger.debug("Flushing TextNode Buffer: " + bufferedText.trim());
 		Document newDoc = new Document(doc.baseUri());
 		Element newPara = newDoc.createElement("p");
 		newPara.html(bufferedText);
@@ -556,15 +575,13 @@ public class DocumentCleaner  {
 
 	private void cleanUpSpanTagsInParagraphs(Document doc) {
 		Elements span = doc.getElementsByTag("span");
-		logger.debug("Cleaning " + span.size() + " span tags in paragraph ");
+		//logger.trace("Cleaning " + span.size() + " span tags in paragraph ");
 
 		for (Element item : span) {
 			if (item.parent().nodeName().equals("p")) {
 				TextNode tn = new TextNode(item.text(), doc.baseUri());
 				item.replaceWith(tn);
-				logger.debug("Replacing nested span with TextNode: "
-						+ item.text());
-
+				//logger.trace("Replacing nested span with TextNode: " + item.text());
 			}
 		}
 	}
@@ -574,7 +591,7 @@ public class DocumentCleaner  {
 	 */
 	private void cleanEmTags(Document doc) {
 		Elements ems = doc.getElementsByTag("em");
-		logger.debug("Cleaning " + ems.size() + " EM tags");
+		//logger.trace("Cleaning " + ems.size() + " EM tags");
 		for (Element node : ems) {
 			// replace the node with a div node
 			Elements images = node.getElementsByTag("img");

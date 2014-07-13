@@ -2,9 +2,10 @@ package dh.tool.justext;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
-import dh.tool.common.ICancellation;
 import dh.tool.common.PerfWatcher;
+import dh.tool.common.StrUtils;
 import dh.tool.jsoup.NodeHelper;
+import dh.tool.thread.ICancellation;
 import org.jsoup.nodes.*;
 import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
@@ -78,15 +79,14 @@ public class Extractor {
 			}
 		}
 
-		checkCancellation();
-
 		if (conf.preCleanUselessContent()) {
+			checkCancellation();
 			cleanUselessContent(document);
 			pw.t("cleanUselessContent");
 		}
 
-		checkCancellation();
 
+		checkCancellation();
 		LinkedList<Paragraph> paragraphs;
 		if (conf.processOnlyBody()) {
 			Node n = document.body();
@@ -97,8 +97,6 @@ public class Extractor {
 			paragraphs = computeParagraphs(document);
 		}
 		pw.t("Found "+paragraphs.size()+" paragraphs");
-
-		checkCancellation();
 
 		new QualityComputation(paragraphs).process();
 
@@ -143,9 +141,8 @@ public class Extractor {
 
 	/**
 	 * Clean useless tags, attributes and replace absolute path
-	 * @param node
 	 */
-	public static void cleanUselessContent(Node node) {
+	public void cleanUselessContent(Node n) {
 		new NodeTraversor(new NodeVisitor() {
 			@Override
 			public void head(Node node, int depth) {
@@ -160,27 +157,62 @@ public class Extractor {
 						i++;
 					}
 				}
-				//remove useless Attributes
-				if (node instanceof Element) {
-					Iterator<Attribute> it = node.attributes().iterator();
-					while (it.hasNext()) {
-						Attribute a = it.next();
-						if (NodeHelper.isIgnorableAttribute(a.getKey())) {
-							node.removeAttr(a.getKey());
+
+				boolean isImgTag = NodeHelper.isImgTag(node);
+
+				/*
+				* For img tag, we keep all attributes, for other tag, we remove every useless Attributes.
+				* Because in some website, eg: http://www.huffingtonpost.com/2014/07/11/clinton-2016-media-coverage_n_5577900.html
+				* the img source is not "src", TODO: we need a image source guesser in this case
+				*/
+				if (isImgTag) {
+					//For img tag, we keep all attributes except style attributes if the config ask to remove all style attributes
+					if (!conf.keepStyleAttribute()) {
+						node.removeAttr("style");
+					}
+				}
+				else {
+					if (node instanceof Element) {
+						Iterator<Attribute> it = node.attributes().iterator();
+						while (it.hasNext()) {
+							Attribute attr = it.next();
+							if (NodeHelper.isIgnorableAttribute(attr.getKey())) {
+								node.removeAttr(attr.getKey());
+							}
+
+							if ("style".equalsIgnoreCase(attr.getKey())) {
+								if (conf.keepStyleAttribute()) {
+									//keep style attribute but force display hidden nodes: remove the attributes style which contains "display:none".
+									// So the hidden content will visible with no style
+									//eg: http://edition.cnn.com/2014/07/11/sport/football/world-cup-pleitgen-german-words/index.html?hpt=hp_c2
+									String styleAttrValue = attr.getValue();
+									if (styleAttrValue.replace(" ", "").toLowerCase().contains("display:none")) {
+										node.removeAttr(attr.getKey());
+									}
+								}
+								else {
+									node.removeAttr(attr.getKey()); //remove the style attribute
+								}
+							}
 						}
 					}
 				}
 
-				//convert to absolute path
-				if (NodeHelper.isLinkTag(node)) {
-					String absolutePath = node.attr("abs:href");
-					if (!Strings.isNullOrEmpty(absolutePath)) {
-						node.attr("href", absolutePath);
-					}
-				} else if (NodeHelper.isImgTag(node)) {
+
+				/*
+				 * Convert relative path to absolute path
+				 */
+				if (isImgTag) {
+					//TODO: img src guesser, to guess what is the real source of the image tag remove twitter, facebook,.. logo, blank image or too small image
 					String absolutePath = node.attr("abs:src");
 					if (!Strings.isNullOrEmpty(absolutePath)) {
 						node.attr("src", absolutePath);
+					}
+				}
+				else if (NodeHelper.isLinkTag(node)) {
+					String absolutePath = node.attr("abs:href");
+					if (!Strings.isNullOrEmpty(absolutePath)) {
+						node.attr("href", absolutePath);
 					}
 				}
 			}
@@ -189,13 +221,23 @@ public class Extractor {
 			public void tail(Node node, int depth) {
 
 			}
-		}).traverse(node);
+		}).traverse(n);
 	}
 
 	private LinkedList<Paragraph> computeParagraphs(Node node) {
 		ParagraphsExplorer pe = new ParagraphsExplorer(conf);
 		node.traverse(pe);
 		return pe.getParagraphs();
+	}
+
+	private static boolean nearlyIdenticalParagraph(Paragraph p1, Paragraph p2) {
+		if (p1.isImage() && p2.isImage()) {
+			return StrUtils.equalsIgnoreCases(p1.getImageUrl(), p2.getImageUrl());
+		}
+		if (p1.getLength()>0 && StrUtils.equalsString(p1.getRawText(), p2.getRawText())) {
+			return p1.isHeading() == p2.isHeading();
+		}
+		return false;
 	}
 
 	private class QualityComputation {
@@ -206,6 +248,8 @@ public class Extractor {
 		}
 
 		public void process() {
+			checkCancellation();
+
 			//performs context-free classification
 			for (Paragraph p : paragraphs) {
 				checkCancellation();
@@ -232,6 +276,8 @@ public class Extractor {
 			processEdges(paragraphs.descendingIterator()); //bottom edge
 			pw.t("Process bottom edge");
 
+			removeRedundancyParagraphs();
+
 			int left;
 			for (int i=0; i<paragraphs.size();) {
 				checkCancellation();
@@ -255,6 +301,8 @@ public class Extractor {
 				pw.t("Find title");
 			}
 
+			removeTrailHeading();
+
 			if (conf.removeTitle()) {
 				//remove first good heading
 				for (int i=0; i<paragraphs.size(); i++) {
@@ -268,6 +316,25 @@ public class Extractor {
 				}
 				pw.t("Remove title");
 			}
+		}
+
+		/**
+		 * Remove all identical images and paragraphs. They are always boiler plates
+		 */
+		public void removeRedundancyParagraphs() {
+			checkCancellation();
+			pw.resetStopwatch();
+			for (int i=0; i<paragraphs.size()-1; i++) {
+				Paragraph p1 = paragraphs.get(i);
+				for (int j = i + 1; j < paragraphs.size(); j++) {
+					Paragraph p2 = paragraphs.get(j);
+					if (nearlyIdenticalParagraph(p1, p2)) {
+						p1.setQuality(Paragraph.Quality.BAD, "identical paragraph "+p2.getId());
+						p2.setQuality(Paragraph.Quality.BAD, "identical paragraph "+p1.getId());
+					}
+				}
+			}
+			pw.t("removeRedundancyParagraphs");
 		}
 
 		/**
@@ -321,9 +388,11 @@ public class Extractor {
 							break;
 						}
 						if (p.getContextFreeQuality() == Paragraph.Quality.NEAR_GOOD) {
-							//a SHORT heading near a NEAR_GOOD paragraph: excerpt detected
-							shortHeading.setContextFreeQuality(Paragraph.Quality.NEAR_GOOD, "Pre-heading-tolerance");
-							p.setContextFreeQuality(Paragraph.Quality.GOOD, "Pre-heading-excerpt");
+							if (shortHeading.isH1orH2()) {
+								//a SHORT heading near a NEAR_GOOD paragraph: excerpt detected
+								shortHeading.setContextFreeQuality(Paragraph.Quality.NEAR_GOOD, "Pre-heading-tolerance-h1h2");
+								p.setContextFreeQuality(Paragraph.Quality.GOOD, "Pre-heading-excerpt");
+							}
 						}
 						distanceToFirstGood += p.getLength();
 					}
@@ -336,7 +405,7 @@ public class Extractor {
 			for (int i=0; i<paragraphs.size(); i++) {
 				Paragraph pf = paragraphs.get(i);
 
-				if (pf.isHeading() && "h1".equalsIgnoreCase(pf.getHeading().getName()) && pf.getContextFreeQuality()!= Paragraph.Quality.BAD) {
+				if (pf.isH1() && pf.getContextFreeQuality()!= Paragraph.Quality.BAD) {
 					if (pf.getQuality()== Paragraph.Quality.GOOD) {
 						break; //nothing to do, we had the title
 					}
@@ -362,7 +431,7 @@ public class Extractor {
 			checkCancellation();
 
 			for (Paragraph p : paragraphs) {
-				if (p.isHeading() && p.getQuality() == Paragraph.Quality.GOOD) {
+				if (p.isH1orH2() && p.getQuality() == Paragraph.Quality.GOOD) {
 					//we already has a GOOD heading paragraph, nothing to do here
 					return;
 				}
@@ -372,7 +441,7 @@ public class Extractor {
 			Paragraph lastNearGoodHeading = null;
 			for (int i=0; i<paragraphs.size(); i++) {
 				Paragraph p = paragraphs.get(i);
-				if (p.isHeading() && p.getContextFreeQuality() == Paragraph.Quality.NEAR_GOOD) {
+				if (p.isH1orH2() && p.getContextFreeQuality() == Paragraph.Quality.NEAR_GOOD) {
 					lastNearGoodHeading = p;
 				}
 				if (p.getQuality() == Paragraph.Quality.GOOD) {
@@ -397,7 +466,7 @@ public class Extractor {
 			//find all heading paragraph NON-BAD in Context-free which is not too far away from the first GOOD paragraph
 			for (int i=0; i<paragraphs.size(); i++) {
 				Paragraph nonBadHeading = paragraphs.get(i);
-				if (nonBadHeading.isHeading()) {
+				if (nonBadHeading.isH1orH2()) {
 					if (nonBadHeading.getQuality() == Paragraph.Quality.GOOD) {
 						//the title is already here, no need to search further
 						return;
@@ -416,6 +485,34 @@ public class Extractor {
 				}
 			}
 			pw.t("Post process heading");
+		}
+
+		/**
+		 * conf.processHeadings() && conf.contentAlwaysHasTitle() force the extractor find and promote heading h1, h2
+		 * sometimes it tolerate too much the heading paragraph and promote boiler plates heading at the end of the article
+		 * this function will remove all heading at the end of the article
+		 * Good-Good-headingToRemove-Bad-Bad-HeadingToRemove-Bad-Bad-Bad
+		 */
+		public void removeTrailHeading() {
+			if (conf.processHeadings() && conf.contentAlwaysHasTitle()) {
+				checkCancellation();
+				pw.resetStopwatch();
+				Iterator<Paragraph> it = paragraphs.descendingIterator();
+				//Start from bottom to top, remove heading which trail the articles
+				//after these trail headings there are only empty or bad paragraphs
+				while (it.hasNext()) {
+					Paragraph p = it.next();
+					if (p.isHeading() && p.getQuality()== Paragraph.Quality.GOOD) {
+						p.setQuality(Paragraph.Quality.BAD, "remove trail headings");
+						continue;
+					}
+					//jump over empty and BAD paragraphs
+					if (p.getQuality()== Paragraph.Quality.BAD || (!p.isImage() && p.getLength()==0))
+						continue;
+					break;
+				}
+				pw.t("remove trail headings");
+			}
 		}
 
 		private void processEdges(Iterator<Paragraph> it) {

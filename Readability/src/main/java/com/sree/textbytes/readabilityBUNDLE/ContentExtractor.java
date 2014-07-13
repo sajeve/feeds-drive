@@ -1,6 +1,9 @@
 package com.sree.textbytes.readabilityBUNDLE;
 
+import com.google.common.base.Strings;
 import com.google.common.html.HtmlEscapers;
+import com.sree.textbytes.StringHelpers.StopWords;
+import com.sree.textbytes.StringHelpers.StopwordsManager;
 import com.sree.textbytes.StringHelpers.StringSplitter;
 import com.sree.textbytes.StringHelpers.string;
 import com.sree.textbytes.readabilityBUNDLE.cleaner.DocumentCleaner;
@@ -9,6 +12,8 @@ import com.sree.textbytes.readabilityBUNDLE.extractor.ReadabilityExtractor;
 import com.sree.textbytes.readabilityBUNDLE.extractor.ReadabilitySnack;
 import com.sree.textbytes.readabilityBUNDLE.formatter.DocumentFormatter;
 import com.sree.textbytes.readabilityBUNDLE.image.BestImageGuesser;
+import dh.tool.common.PerfWatcher;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -34,93 +39,110 @@ public class ContentExtractor {
 
 	public static Logger logger = LoggerFactory.getLogger(ContentExtractor.class.getName());
 
-	public Article extractContent(String rawHtml, List<String> htmlSources, Algorithm extractionAlgorithm, String lang) {
-		return performExtraction(htmlSources, rawHtml, extractionAlgorithm, lang);
+	public Article extractContent(String rawHtml, List<String> htmlSources, String baseUri, Algorithm extractionAlgorithm, String lang) {
+		return performExtraction(htmlSources, rawHtml, baseUri, extractionAlgorithm, lang);
 	}
 	
-	public Article extractContent(String rawHtml, Algorithm extractionAlgorithm, String lang) {
+	public Article extractContent(String rawHtml, String baseUri, Algorithm extractionAlgorithm, String lang) {
 		List<String> htmlSources = new ArrayList<String>();
 		htmlSources = null;
-		return performExtraction(htmlSources, rawHtml, extractionAlgorithm, lang);
+		return performExtraction(htmlSources, rawHtml, baseUri, extractionAlgorithm, lang);
 	}
 
-	private Article performExtraction(List<String> htmlSources, String rawHtml, Algorithm algorithm, String lang) {
-		
-		Article article = new Article();
+	private Article performExtraction(List<String> htmlSources, String rawHtml, String baseUri, Algorithm algorithm, String lang) {
+		PerfWatcher pf = new PerfWatcher(logger, algorithm + " - " + baseUri);
 
+		Article article = new Article();
 		article.setRawHtml(rawHtml);
 
-		Document document = null;
+		Document document = Jsoup.parse(rawHtml, baseUri);
+		pf.d("Jsoup parse");
 
-		ParseWrapper parseWrapper = new ParseWrapper();
-		try {
-			document = parseWrapper.parse(rawHtml);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		if (Strings.isNullOrEmpty(lang)) {
+			lang = detectLanguage(document);
+			pf.d("detect language");
+		}
+
+		if (!Strings.isNullOrEmpty(lang)) {
+			try {
+				lang = StopwordsManager.getLanguage(lang);
+				StopwordsManager.loadStopwords(lang);
+				article.setLanguage(lang);
+				pf.d("load stopwords");
+			}
+			catch (Exception ex) {
+				lang = null;
+				pf.d("load stopwords", ex);
+			}
 		}
 
 		try {
 			article.setPublishDate(extractPublishedDate(document));
+			pf.d("detect publish date");
 		}catch(Exception e) {
-			logger.warn("Publish Date extraction failed ");
+			pf.d("Publish Date extraction failed", e);
 		}
 
 		try {
 			article.setTags(extractTags(document));
+			pf.d("detect tags");
 		}catch(Exception e) {
-			logger.warn("Extract tags failed");
+			pf.d("Extract tags failed", e);
 		}
 
 		try {
 			article.setTitle(getTitle(document));
+			pf.d("detect title");
 		} catch (Exception e) {
-			logger.warn("Article Set title failed ");
+			pf.d("Extract title failed", e);
 		}
 
 		try {
 			article.setMetaDescription(getMetaDescription(document));
 			article.setMetaKeywords(getMetaKeywords(document));
+			pf.d("set meta description and keywords");
 		} catch (Exception e) {
-			logger.warn("Meta Key & Des failed to set ");
+			pf.d("set meta description and keywords", e);
 		}
 
 		/**
 		 * Find out the possibility of Next Page in the input,
-		 *
 		 */
 		if(htmlSources != null) {
 			if(htmlSources.size() > 0) {
-				logger.debug("There are next pages, true with size : "+htmlSources.size());
-				article.setMultiPageStatus(true);
+				logger.trace("There are next pages, true with size : "+htmlSources.size());
+				article.setMultiPage(true);
 				article.setNextPageHtmlSources(htmlSources);
 			}
 		}
 
+		pf.resetStopwatch();
+
 		//now perform a nice deep cleansing
 		DocumentCleaner documentCleaner = new DocumentCleaner();
-		document = documentCleaner.clean(document);
-		logger.debug("Cleaned Document:" + document.toString());
+		document = documentCleaner.clean(document, pf);
+		pf.d("Cleaned Document");
 
 		article.setCleanedDocument(document);
 
 		switch (algorithm) {
 			case ReadabilityCore:
 				ReadabilityExtractor readabilityCore = new ReadabilityExtractor();
-				article.setTopNode(readabilityCore.grabArticle(article, lang));
+				article.setTopNode(readabilityCore.grabArticle(article, lang, pf));
 				break;
 			case ReadabilityGoose:
 				GooseExtractor gooseExtractor = new GooseExtractor();
-				article.setTopNode(gooseExtractor.grabArticle(article, lang));
+				article.setTopNode(gooseExtractor.grabArticle(article, lang, pf));
+				break;
 			default:
 				ReadabilitySnack readabilitySnack = new ReadabilitySnack();
-				article.setTopNode(readabilitySnack.grabArticle(article, lang));
+				article.setTopNode(readabilitySnack.grabArticle(article, lang, pf));
 				break;
 		}
 
+		pf.d("grabArticle");
 
 		if(article.getTopNode() != null) {
-			logger.trace("Extracted content Before CleanUP : "+article.getTopNode());
-
 			/**
 			 * Check out another Image Extraction algorithm to find out the best image
 			 */
@@ -136,42 +158,39 @@ public class ContentExtractor {
 					imageCandidates.add(imgElement.attr("src"));
 
 				}
-				logger.debug("Available size of images in top node : "+ imageCandidates.size());
+				pf.d("Available size of images in top node : "+ imageCandidates.size());
 
 				if(imageCandidates.size() > 0) {
-					logger.debug("Top node has images " + imageCandidates.size());
+					pf.trace("Top node has images " + imageCandidates.size());
 				}else {
-
-					logger.debug("Top node may miss image, searching");
 					article.setTopImage(bestImageGuesser.getTopImage(article.getTopNode(), document));
-					logger.debug("BestImage : "	+ article.getTopImage().getImageSrc());
+					pf.d("BestImage : "	+ article.getTopImage().getImageSrc());
 
 					String bestImage = article.getTopImage().getImageSrc();
 					if (!string.isNullOrEmpty(bestImage)) {
-						logger.debug("Best image found : " + bestImage);
+						pf.trace("Best image found : " + bestImage);
 						if(!imageCandidates.contains(bestImage)) {
-							logger.debug("Top node does not contain the same Best Image");
+							pf.trace("Top node does not contain the same Best Image");
 							try {
-								logger.debug("Child Node : "+article.getTopNode().children().size());
 								if(article.getTopNode().children().size() > 0) {
-									logger.debug("Child Nodes greater than Zero "+article.getTopNode().children().size());
+									pf.trace("Child Nodes greater than Zero "+article.getTopNode().children().size());
 									article.getTopNode().child(0).before("<p><img src=" + bestImage + "></p>");
 								} else {
-									logger.debug("Top node has 0 childs appending after");
+									pf.trace("Top node has 0 childs appending after");
 									article.getTopNode().append("<p><img src=" + bestImage + "></p>");
 								}
 
 							} catch (Exception e) {
-								logger.error(e.toString(), e);
+								pf.d("Find best image", e);
 							}
 
 						}else {
-							logger.debug("Top node already has the Best image found");
+							pf.trace("Top node already has the Best image found");
 						}
 					}
 				}
 			} catch (Exception e) {
-				logger.warn("Best Image Guesser failed " + e.toString());
+				pf.d("Best Image Guesser failed ", e);
 			}
 
 			/**
@@ -187,15 +206,13 @@ public class ContentExtractor {
 			 * check whether the extracted content lenght less than meta
 			 * description
 			 */
-			logger.debug("Meta des length : "+ article.getMetaDescription().length()+ "content length : "+ article.getTopNode().text().length());
+			pf.trace("Meta des length : "+ article.getMetaDescription().length()+ "content length : "+ article.getTopNode().text().length());
 			if (article.getMetaDescription().trim().length() > article.getTopNode().text().length()) {
-				logger.debug("Meta Description greater than extracted content , swapping");
+				pf.trace("Meta Description greater than extracted content , swapping");
 				article.setCleanedArticleText("<div><p>"+ article.getMetaDescription().trim() + "</p></div>");
 			}
-
-			logger.trace("After clean up : "+node);
 		}
-
+		pf.dg("extracted");
 		return article;
 	}
 	
@@ -232,7 +249,19 @@ public class ContentExtractor {
 		}
 		return string.empty;
 	}
-	
+
+
+	public static String detectLanguage(Document doc) {
+		Element htmlTag = doc.select("html").first();
+		if (htmlTag.attributes().hasKey("lang")) {
+			return htmlTag.attr("lang");
+		}
+		if (htmlTag.attributes().hasKey("xml:lang")) {
+			return htmlTag.attr("xml:lang");
+		}
+		return null;
+	}
+
 	/**
 	 * attemps to grab titles from the html pages, lots of sites use different
 	 * delimiters for titles so we'll try and do our best guess.
@@ -244,42 +273,38 @@ public class ContentExtractor {
 	private String getTitle(Document doc) {
 		String title = string.empty;
 
-		try {
-			Elements titleElem = doc.getElementsByTag("title");
-			if (titleElem == null || titleElem.isEmpty())
-				return string.empty;
+		Elements titleElem = doc.getElementsByTag("title");
+		if (titleElem == null || titleElem.isEmpty())
+			return string.empty;
 
-			String titleText = titleElem.first().text();
-			if (string.isNullOrEmpty(titleText))
-				return string.empty;
+		String titleText = titleElem.first().text();
+		if (string.isNullOrEmpty(titleText))
+			return string.empty;
 
-			boolean usedDelimeter = false;
+		boolean usedDelimeter = false;
 
-			if (titleText.contains("|")) {
-				titleText = doTitleSplits(titleText, Patterns.PIPE_SPLITTER);
-				usedDelimeter = true;
-			}
-
-			if (!usedDelimeter && titleText.contains("-")) {
-				titleText = doTitleSplits(titleText, Patterns.DASH_SPLITTER);
-				usedDelimeter = true;
-			}
-			if (!usedDelimeter && titleText.contains("»")) {
-				titleText = doTitleSplits(titleText, Patterns.ARROWS_SPLITTER);
-				usedDelimeter = true;
-			}
-
-			if (!usedDelimeter && titleText.contains(":")) {
-				titleText = doTitleSplits(titleText, Patterns.COLON_SPLITTER);
-			}
-
-			// encode unicode charz
-			title = HtmlEscapers.htmlEscaper().escape(titleText);
-			title = Patterns.MOTLEY_REPLACEMENT.replaceAll(title);
-
-		} catch (NullPointerException e) {
-			logger.error(e.toString());
+		if (titleText.contains("|")) {
+			titleText = doTitleSplits(titleText, Patterns.PIPE_SPLITTER);
+			usedDelimeter = true;
 		}
+
+		if (!usedDelimeter && titleText.contains("-")) {
+			titleText = doTitleSplits(titleText, Patterns.DASH_SPLITTER);
+			usedDelimeter = true;
+		}
+		if (!usedDelimeter && titleText.contains("»")) {
+			titleText = doTitleSplits(titleText, Patterns.ARROWS_SPLITTER);
+			usedDelimeter = true;
+		}
+
+		if (!usedDelimeter && titleText.contains(":")) {
+			titleText = doTitleSplits(titleText, Patterns.COLON_SPLITTER);
+		}
+
+		// encode unicode charz
+		title = HtmlEscapers.htmlEscaper().escape(titleText);
+		title = Patterns.MOTLEY_REPLACEMENT.replaceAll(title);
+
 		return title;
 	}
 	
@@ -339,7 +364,7 @@ public class ContentExtractor {
 		} else {
 			finalURL = urlToCrawl;
 		}
-		logger.debug("Extraction: " + finalURL);
+		//logger.trace("Extraction: " + finalURL);
 		return finalURL;
 	}
 }

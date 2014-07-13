@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.sree.textbytes.readabilityBUNDLE.*;
+import dh.tool.common.PerfWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jsoup.nodes.Document;
@@ -47,13 +48,13 @@ public class ReadabilitySnack {
 	
 	public static Logger logger = LoggerFactory.getLogger(ReadabilitySnack.class.getName());
 	
-	public Element grabArticle(Article article, String lang) {
+	public Element grabArticle(Article article, String lang, PerfWatcher pf) {
 		Element extractedContent = null;
 		extractedContent = fetchArticleContent(article.getCleanedDocument(), lang);
 		
-		if(article.getMultiPageStatus()) {
+		if(article.isMultiPage()) {
 			AppendNextPage appendNextPage = new AppendNextPage();
-			Element finalConsolidated = appendNextPage.appendNextPageContent(article, extractedContent, ContentExtractor.Algorithm.ReadabilitySnack, lang);
+			Element finalConsolidated = appendNextPage.appendNextPageContent(article, extractedContent, ContentExtractor.Algorithm.ReadabilitySnack, lang, pf);
 			return finalConsolidated;
 			
 		}else 
@@ -67,12 +68,12 @@ public class ReadabilitySnack {
 
 		for (Element element : nodesToCheck) {
 			if (element.text().length() < 25) {
-				logger.debug("Inner Text less than critical , ignoring "
+				logger.trace("Inner Text less than critical , ignoring "
 						+ element.tagName());
 				continue;
 			}
 			double contentScore = getElementScore(element);
-			logger.debug("Content Score : " + contentScore + "Element " + element.tagName());
+			logger.trace("Content Score : " + contentScore + "Element " + element.tagName());
 			ScoreInfo.updateContentScore(element.parent(), contentScore);
 			ScoreInfo.updateContentScore(element.parent().parent(), contentScore / 2);
 			if (!parentNodes.contains(element.parent())) {
@@ -141,7 +142,7 @@ public class ReadabilitySnack {
 			break;
 
 		default:
-			logger.debug("Scoreless Tag  " + element.tagName());
+			logger.trace("Scoreless Tag  " + element.tagName());
 			break;
 		}
 
