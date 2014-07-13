@@ -242,6 +242,7 @@ public class Extractor {
 
 	private class QualityComputation {
 		private final LinkedList<Paragraph> paragraphs;
+		private Paragraph title;
 
 		public QualityComputation(LinkedList<Paragraph> paragraphs) {
 			this.paragraphs = paragraphs;
@@ -297,23 +298,29 @@ public class Extractor {
 			postProcessHeading();
 
 			if (conf.contentAlwaysHasTitle()) {
-				findTitle();
+				title = findTitle();
 				pw.t("Find title");
 			}
 
 			removeTrailHeading();
 
-			if (conf.removeTitle()) {
-				//remove first good heading
-				for (int i=0; i<paragraphs.size(); i++) {
-					checkCancellation();
+			fillHoles();
 
-					Paragraph p = paragraphs.get(i);
-					if (p.isHeading() && p.getQuality()== Paragraph.Quality.GOOD) {
-						p.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
-						return;
+			if (conf.removeTitle()) {
+				if (title!=null) {
+					//find first good heading
+					for (int i=0; i<paragraphs.size(); i++) {
+						checkCancellation();
+
+						Paragraph p = paragraphs.get(i);
+						if (p.isH1orH2() && p.getQuality()== Paragraph.Quality.GOOD) {
+							title = p;
+							return;
+						}
 					}
 				}
+
+				title.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
 				pw.t("Remove title");
 			}
 		}
@@ -427,13 +434,13 @@ public class Extractor {
 		 * we will find the nearest context-free NEAR_GOOD heading before the first GOOD paragraph.
 		 * We will use this paragraph as Title, so promote it to GOOD.
 		 */
-		public void findTitle() {
+		public Paragraph findTitle() {
 			checkCancellation();
 
 			for (Paragraph p : paragraphs) {
 				if (p.isH1orH2() && p.getQuality() == Paragraph.Quality.GOOD) {
 					//we already has a GOOD heading paragraph, nothing to do here
-					return;
+					return p;
 				}
 			}
 
@@ -452,7 +459,9 @@ public class Extractor {
 			//promote it to GOOD (so we will have title)
 			if (lastNearGoodHeading != null) {
 				lastNearGoodHeading.setQuality(Paragraph.Quality.GOOD, "FindTitle");
+				return lastNearGoodHeading;
 			}
+			return null;
 		}
 
 		public void postProcessHeading() {
@@ -512,6 +521,70 @@ public class Extractor {
 					break;
 				}
 				pw.t("remove trail headings");
+			}
+		}
+
+		/**
+		 * If there is a big holes between two GOOD paragraphs. it means The distant between 2 GOOD paragraphs is
+		 * very far away with many NEAR_GOOD content in the middle, in this case, we will turn all the NEAR_GOOD
+		 * to GOOD to fill the holes.
+		 *
+		 * - holeSurface = distant between 2 GOOD paragraphs
+		 * -
+		 * This method find big holes (holeSurface > conf.maxHeadingDistance), compute the the density of NEAR_GOOD content
+		 * in this holes, if half of the holes is NEAR_GOOD (conf.NearGoodDensityRequiredToFillHoles=0.7), so we will promote all the
+		 * NEAR_GOOD to GOOD
+		 */
+		private void fillHoles() {
+			checkCancellation();
+
+			if (conf.nearGoodDensityRequiredToFillHoles() > 1) {
+				return;
+			}
+
+			int n = paragraphs.size();
+
+			for (int i = 0; i<n-1; i++) {
+				Paragraph p1 = paragraphs.get(i);
+				if (p1.getQuality()== Paragraph.Quality.GOOD) {
+					checkCancellation();
+
+					//find the nearest GOOD paragraph p2, and measure the distant between p1 and p2
+					int holeSurface = 0; //distant between 2 GOOD paragraphs p1 and p2
+					int nearGoodSurface = 0; //count NEAR_GOOD characters between p1 and p2
+					Paragraph p2 = null;
+					int j=i+1;
+					for (;j<n; j++) {
+						p2 = paragraphs.get(j);
+						if (p2.getQuality()== Paragraph.Quality.GOOD) {
+							break;
+						}
+						if (p2.getContextFreeQuality() == Paragraph.Quality.NEAR_GOOD) {
+							nearGoodSurface += p2.getLength();
+						}
+						holeSurface += p2.getLength();
+					}
+
+					if (p2!=null && p2.getQuality()== Paragraph.Quality.GOOD) {
+						if (holeSurface > conf.maxHeadingDistance()) {
+							double nearGoodDensity = (double)nearGoodSurface / holeSurface;
+							if (nearGoodDensity > conf.nearGoodDensityRequiredToFillHoles()) {
+								//the holes is big enough to fill
+								for (int k = i + 1; k < j; k++) {
+									Paragraph p = paragraphs.get(k);
+									if (p.getContextFreeQuality() == Paragraph.Quality.NEAR_GOOD) {
+										p.setQuality(Paragraph.Quality.GOOD,
+												String.format("Fill big holes (surface=%d > %d) between [%d] and [%d], because high nearGoodDensity=%.3g > %.3g",
+														holeSurface, conf.maxHeadingDistance(), p1.getId(), p2.getId(),
+														nearGoodDensity, conf.nearGoodDensityRequiredToFillHoles())
+										);
+									}
+								}
+							}
+						}
+						i = j-1; //jump to the next GOOD paragraph
+					}
+				}
 			}
 		}
 

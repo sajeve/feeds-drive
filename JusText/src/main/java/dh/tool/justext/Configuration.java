@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * {@link dh.tool.justext.Configuration} is read-only.
+ * {@link dh.tool.justext.Configuration} is immutable.
  * Use {@link dh.tool.justext.Configuration.Builder} to build it
  * Created by hiep on 24/06/2014.
  */
@@ -35,6 +35,7 @@ public class Configuration implements Serializable, Cloneable {
 	private boolean contentAlwaysHasTitle = true;
 	private boolean tolerateImage = true;
 	private boolean keepStyleAttribute = false;
+	private double nearGoodDensityRequiredToFillHoles = 0.7; //To disable this fixtures, put a value > 1
 
 	public boolean processHeadings() {
 		return processHeadings;
@@ -96,6 +97,9 @@ public class Configuration implements Serializable, Cloneable {
 	public boolean keepStyleAttribute() {
 		return keepStyleAttribute;
 	}
+	public double nearGoodDensityRequiredToFillHoles() {
+		return nearGoodDensityRequiredToFillHoles;
+	}
 
 	@Override
 	protected Configuration clone() throws CloneNotSupportedException {
@@ -117,6 +121,7 @@ public class Configuration implements Serializable, Cloneable {
 		resu.contentAlwaysHasTitle = contentAlwaysHasTitle;
 		resu.tolerateImage = tolerateImage;
 		resu.keepStyleAttribute = keepStyleAttribute;
+		resu.nearGoodDensityRequiredToFillHoles = nearGoodDensityRequiredToFillHoles;
 		return resu;
 	}
 
@@ -145,6 +150,7 @@ public class Configuration implements Serializable, Cloneable {
 			if ("contentAlwaysHasTitle".equalsIgnoreCase(key)) contentAlwaysHasTitle = Boolean.parseBoolean(value);
 			if ("tolerateImage".equalsIgnoreCase(key)) tolerateImage = Boolean.parseBoolean(value);
 			if ("keepStyleAttribute".equalsIgnoreCase(key)) keepStyleAttribute = Boolean.parseBoolean(value);
+			if ("nearGoodDensityRequiredToFillHoles".equalsIgnoreCase(key)) nearGoodDensityRequiredToFillHoles = format.parse(value).doubleValue();
 		}
 	}
 
@@ -168,6 +174,7 @@ public class Configuration implements Serializable, Cloneable {
 		sb.append("contentAlwaysHasTitle = " + contentAlwaysHasTitle + "; ");
 		sb.append("tolerateImage = " + tolerateImage + "; ");
 		sb.append("keepStyleAttribute = " + keepStyleAttribute + "; ");
+		sb.append("nearGoodDensityRequiredToFillHoles = " + nearGoodDensityRequiredToFillHoles + "; ");
 		return sb.toString().trim();
 	}
 
@@ -291,6 +298,10 @@ public class Configuration implements Serializable, Cloneable {
 		}
 		public Builder keepStyleAttribute(boolean keepStyleAttribute) {
 			configuration.keepStyleAttribute = keepStyleAttribute;
+			return this;
+		}
+		public Builder nearGoodDensityRequiredToFillHoles(double nearGoodDensityRequiredToFillHoles) {
+			configuration.nearGoodDensityRequiredToFillHoles = nearGoodDensityRequiredToFillHoles;
 			return this;
 		}
 	}
