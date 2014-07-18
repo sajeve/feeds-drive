@@ -22,6 +22,7 @@ public class Constants {
 	public static final int EXCERPT_LENGTH = 320;
 	public static final Duration ARTICLE_TTL = DEBUG ? new Duration(100) : new Duration(1000); //1s
 	public static final Duration SUBSCRIPTION_TTL = DEBUG ? new Duration(100) : new Duration(1000); //1s
+	//public static final Duration INFINITE_DURATION = new Duration(Long.MAX_VALUE);
 
 	/**
 	 * number of actual articles in memory cache, it is the windows size of the list view
@@ -53,11 +54,16 @@ public class Constants {
 
 	public static final int ARTICLE_MIN_LENGTH = 200; //90
 
-	public static final long SERVICE_START_AT = 5000; //updateTime.getTimeInMillis(),
+
+	public static final boolean ENABLE_ALARM = false;
 	public static final long SERVICE_INTERVAL = DEBUG ? 5*60*1000 : AlarmManager.INTERVAL_HOUR; //AlarmManager.INTERVAL_DAY
+	public static final long SERVICE_START_AT = 5000; //updateTime.getTimeInMillis(),
 
 	/**
 	 * In Background service, we won't download article which last updated is since 1 hour
 	 */
 	public static final Duration ARTICLE_TTL_SERVICE = DEBUG ? new Duration(SERVICE_INTERVAL) : new Duration(3600000); //1h
+
+	public static final String PREF_OFFLINE = "Offline";
+	public static final boolean PREF_OFFLINE_DEFAULT = false;
 }

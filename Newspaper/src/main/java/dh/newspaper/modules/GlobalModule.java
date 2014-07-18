@@ -26,6 +26,8 @@ import java.security.NoSuchAlgorithmException;
 	includes = AppContextModule.class,
 	injects = {
 			MyApplication.class,
+			MainActivity.class,
+			DetailActivity.class,
 			TagsFragment.class,
 			FeedsFragment.class,
 			ArticleFragment.class,

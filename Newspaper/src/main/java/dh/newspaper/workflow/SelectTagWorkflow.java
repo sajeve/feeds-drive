@@ -82,10 +82,12 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	private List<String> mNotices = new ArrayList<String>();
 	private Stopwatch mStopwatch;
 
+	private final boolean mOnlineMode;
+
 	private volatile boolean used = false;
 	private volatile boolean mRunning = true;
 
-	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, int pageSize, ExecutorService articlesLoader, SelectTagCallback callback) {
+	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, boolean onlineMode, int pageSize, ExecutorService articlesLoader, SelectTagCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 
 		mTag = tag;
@@ -95,6 +97,7 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 		mArticlesLoader = articlesLoader;
 		mCallback = callback;
 		mPageSize = pageSize;
+		mOnlineMode = onlineMode;
 	}
 
 	/**
@@ -130,18 +133,23 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 					log("Callback onFinishedLoadFromCache()");
 				}
 
-				downloadFeeds();
-				if (mCallback != null && !isCancelled()) {
-					resetStopwatch();
-					mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
-					log("Callback onFinishedDownloadFeeds()");
-				}
+				if (mOnlineMode) {
+					downloadFeeds();
+					if (mCallback != null && !isCancelled()) {
+						resetStopwatch();
+						mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
+						log("Callback onFinishedDownloadFeeds()");
+					}
 
-				downloadArticles();
-				if (mCallback != null && !isCancelled()) {
-					resetStopwatch();
-					mCallback.onFinishedDownloadArticles(this);
-					log("Callback onFinishedDownloadArticles()");
+					downloadArticles();
+					if (mCallback != null && !isCancelled()) {
+						resetStopwatch();
+						mCallback.onFinishedDownloadArticles(this);
+						log("Callback onFinishedDownloadArticles()");
+					}
+				}
+				else {
+					logSimple("Offline mode, only use cached articles");
 				}
 			}
 			finally {

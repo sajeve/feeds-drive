@@ -1,8 +1,11 @@
 package dh.newspaper;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
+import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import dh.newspaper.base.Injector;
 import dh.newspaper.model.generated.Article;
@@ -16,12 +19,13 @@ public class DetailActivity extends Activity {
 	private static final String TAG = DetailActivity.class.getName();
 
 	private boolean mSinglePane;
+	@Inject SharedPreferences mSharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
-		//((Injector) getApplication()).inject(this);
+		((Injector) getApplication()).inject(this);
 
         // Show the Up button in the action bar.
         getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -53,23 +57,6 @@ public class DetailActivity extends Activity {
 		getActionBar().setTitle(mTitle);
 	}
 
-	@Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            // This ID represents the Home or Up button. In the case of this
-            // activity, the Up button is shown. Use NavUtils to allow users
-            // to navigate up one level in the application structure. For
-            // more details, see the Navigation pattern on Android Design:
-            //
-            // http://developer.android.com/design/patterns/navigation.html#up-vs-back
-            //
-            NavUtils.navigateUpFromSameTask(this);
-			overridePendingTransition(R.anim.left_in, R.anim.right_out);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
 	@Override
 	public void onBackPressed() {
@@ -95,4 +82,64 @@ public class DetailActivity extends Activity {
 		super.onRestoreInstanceState(savedInstanceState);
 		mTitle = savedInstanceState.getCharSequence(STATE_TITLE);
 	}
+
+
+	/**
+	 * Menu
+	 */
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+//		if (isDrawerOpen()) {
+//			// Only show items in the action bar relevant to this screen
+//			// if the drawer is not showing. Otherwise, let the drawer
+//			// decide what to show in the action bar.
+//			getMenuInflater().inflate(R.menu.main, menu);
+//			restoreActionBar();
+//			return true;
+//		}
+//		restoreActionBar();
+//		return super.onCreateOptionsMenu(menu);
+
+
+
+		getMenuInflater().inflate(R.menu.main, menu);
+
+		//restore menu state
+		MenuItem offlineItem = menu.findItem(R.id.action_offline);
+		offlineItem.setChecked(mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT));
+
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			return true;
+		}
+		if (id == R.id.action_offline) {
+			boolean newState = !item.isChecked();
+			item.setChecked(newState);
+			Log.d(TAG, "Switch to " + (newState ? "offline" : "online") + " mode");
+			mSharedPreferences.edit().putBoolean(Constants.PREF_OFFLINE, newState).apply();
+			return true;
+		}
+		if (id == android.R.id.home) {
+			// This ID represents the Home or Up button. In the case of this
+			// activity, the Up button is shown. Use NavUtils to allow users
+			// to navigate up one level in the application structure. For
+			// more details, see the Navigation pattern on Android Design:
+			//
+			// http://developer.android.com/design/patterns/navigation.html#up-vs-back
+			//
+			NavUtils.navigateUpFromSameTask(this);
+			overridePendingTransition(R.anim.left_in, R.anim.right_out);
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
 }

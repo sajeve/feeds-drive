@@ -1,6 +1,7 @@
 package dh.newspaper.services;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
@@ -21,6 +22,7 @@ import dh.newspaper.tools.StrUtils;
 import dh.newspaper.tools.thread.PrifoExecutors;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
+import org.joda.time.Duration;
 
 import javax.inject.Inject;
 import java.io.Closeable;
@@ -56,6 +58,8 @@ public class BackgroundTasksManager implements Closeable {
 
 	@Inject RefData mRefData;
 
+	@Inject SharedPreferences mSharedPreferences;
+
 	private Handler mMainThreadHandler;
 
 	public BackgroundTasksManager(Context context) {
@@ -90,8 +94,11 @@ public class BackgroundTasksManager implements Closeable {
 			@Override
 			protected void onPostExecute(Boolean result) {
 				mRefData.initImageLoader();
-				if (mRefData.getTags().size() > 0) {
-					loadTag(mRefData.getTags().first());
+				if (!Constants.DEBUG) {
+					//load the first tag
+					if (mRefData.getTags().size() > 0) {
+						loadTag(mRefData.getTags().first());
+					}
 				}
 			}
 		};
@@ -129,6 +136,8 @@ public class BackgroundTasksManager implements Closeable {
 
 	private Runnable lastLoadTagCall;
 	public void loadTag(final String tag) {
+		if (tag == null) return;
+
 		if (lastLoadTagCall!=null) {
 			mMainThreadHandler.removeCallbacks(lastLoadTagCall); //we received new call, so remove the last one
 		}
@@ -148,7 +157,9 @@ public class BackgroundTasksManager implements Closeable {
 						mSelectTagWorkflow.cancel();
 					}
 
-					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
+					final boolean onlineMode = !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT);
+
+					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, onlineMode, Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
 						@Override
 						public void onFinishedLoadFromCache(SelectTagWorkflow sender, List<Article> articles, int count) {
 							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag(), articles, count));
@@ -227,7 +238,9 @@ public class BackgroundTasksManager implements Closeable {
 						mSelectArticleWorkflow.cancel();
 					}
 
-					mSelectArticleWorkflow = new SelectArticleWorkflow(mContext, article, Constants.ARTICLE_TTL, true, new SelectArticleWorkflow.SelectArticleCallback() {
+					final boolean onlineMode = !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT);
+
+					mSelectArticleWorkflow = new SelectArticleWorkflow(mContext, article, Constants.ARTICLE_TTL, onlineMode, new SelectArticleWorkflow.SelectArticleCallback() {
 						@Override
 						public void onFinishedCheckCache(SelectArticleWorkflow sender, Article article) {
 							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl()));

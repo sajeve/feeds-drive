@@ -74,13 +74,6 @@ public class TagsFragment extends Fragment {
         if (savedInstanceState != null) {
             mCurrentTag = savedInstanceState.getString(STATE_SELECTED_POSITION);
         }
-//		else {
-//			mCurrentTag = mAppBundle.getCurrentTag();
-//		}
-
-        // Select either the default item (0) or the last selected item.
-        //selectTag(mCurrentTag);
-
     }
 
 	private boolean mFirstAttach = true;
@@ -93,7 +86,6 @@ public class TagsFragment extends Fragment {
 		if (mFirstAttach) {
 			((Injector) activity.getApplication()).inject(this);
 			mFirstAttach = false;
-			//mCurrentTag = mAppBundle.getCurrentTag();
 		}
 	}
 

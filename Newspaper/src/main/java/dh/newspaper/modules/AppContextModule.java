@@ -1,16 +1,13 @@
 package dh.newspaper.modules;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import android.preference.PreferenceManager;
 import dagger.Module;
 import dagger.Provides;
-import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
-import dh.newspaper.adapter.ArticlesGridAdapter;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.DaoMaster;
@@ -97,5 +94,15 @@ public class AppContextModule {
 			mBackgroundTasksManager = new BackgroundTasksManager(mAppContext);
 		}
 		return mBackgroundTasksManager;
+	}
+
+	SharedPreferences mPreferences;
+
+	@Provides @Singleton
+	public SharedPreferences providePreferences() {
+		if (mPreferences == null) {
+			mPreferences = PreferenceManager.getDefaultSharedPreferences(mAppContext);
+		}
+		return mPreferences;
 	}
 }

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -82,11 +83,11 @@ public class SelectArticleWorkflow extends PrifoTask {
 	private final ReentrantLock lock = new ReentrantLock();
 	private PerfWatcher pw;
 
-	private SelectArticleWorkflow(Context context, Duration articleTimeToLive, boolean downloadFullContent, SelectArticleCallback callback) {
+	private SelectArticleWorkflow(Context context, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		mArticleTimeToLive = articleTimeToLive;
 		mCallback = callback;
-		mOnlineMode = downloadFullContent;
+		mOnlineMode = online;
 	}
 
 	/**
@@ -246,11 +247,12 @@ public class SelectArticleWorkflow extends PrifoTask {
 				null, //mPathToContent == null ? null : mPathToContent.getXpath(), //xpath
 				mParseNotice.toString().trim());
 
-		loadArticleImages();
-
 		resetStopwatch();
 		mDaoSession.getArticleDao().insert(mArticle);
 		log("Insert new", mArticle);
+
+		//load image or in offline mode, replace image source by cache URL
+		loadArticleImages();
 
 		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
@@ -299,10 +301,6 @@ public class SelectArticleWorkflow extends PrifoTask {
 			}
 		}
 
-		if (contentIsChanged) {
-			loadArticleImages(); //content changed, re-compute image
-		}
-
 //		if (mPathToContent!=null) {
 //			mArticle.setXpath(mPathToContent.getXpath());
 //		}
@@ -318,6 +316,9 @@ public class SelectArticleWorkflow extends PrifoTask {
 		mDaoSession.getArticleDao().update(mArticle);
 		log("Update article content", mArticle);
 
+		//load image or in offline mode, replace image source by cache URL
+		loadArticleImages(); //content changed, re-compute image
+
 		if (mCallback!=null && !isCancelled()) {
 			resetStopwatch();
 			mCallback.onFinishedUpdateCache(this, getArticle(), false);
@@ -326,47 +327,67 @@ public class SelectArticleWorkflow extends PrifoTask {
 	}
 
 	/**
-	 * load all image
+	 * load all image,
 	 * set avatar = the middle image to {@link dh.newspaper.model.generated.Article#imageUrl}
+	 *
+	 * in offline mode, replace all image sources by the corresponding cache file, this method must not be called
+	 * before save the article to the database. (Article image URL in the database must be the real one)
 	 */
 	private void loadArticleImages() {
-		if (isCancelled() || mDoc == null) return;
+		if (isCancelled() || getArticleContentDocument()==null) return;
 
-		Elements elems = mDoc.select("img");
+		Elements elems = getArticleContentDocument().select("img");
 		if (elems == null || elems.isEmpty()) {
+			log("No image found");
 			return;
 		}
 
-		for(Element e : elems) {
-			ImageLoader.getInstance().loadImage(e.attr("abs:src"), new ImageLoadingListener() {
-				@Override
-				public void onLoadingStarted(String imageUri, View view) {
-					if (isCancelled()) {
-						throw new CancellationException();
+		log("Found "+elems.size()+ " images");
+
+		if (mOnlineMode) {
+			for (Element e : elems) {
+				ImageLoader.getInstance().loadImage(e.attr("abs:src"), new ImageLoadingListener() {
+					@Override
+					public void onLoadingStarted(String imageUri, View view) {
+						if (isCancelled()) {
+							throw new CancellationException();
+						}
 					}
-				}
 
-				@Override
-				public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+					@Override
+					public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
 
-				}
+					}
 
-				@Override
-				public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+					@Override
+					public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
 
-				}
+					}
 
-				@Override
-				public void onLoadingCancelled(String imageUri, View view) {
+					@Override
+					public void onLoadingCancelled(String imageUri, View view) {
 
-				}
-			});
+					}
+				});
+			}
+
+			String avatar = elems.get((elems.size() - 1) / 2).attr("abs:src");
+			mArticle.setImageUrl(avatar);
+			log("Set avatar", avatar);
 		}
-
-		//if (Strings.isNullOrEmpty(mArticle.getImageUrl())) {
-		String avatar = elems.get((elems.size()-1)/2).attr("abs:src");
-		mArticle.setImageUrl(avatar);
-		//}
+		else {
+			/**
+			 * Mode offline: use image from cache instead
+			 */
+			for (Element e : elems) {
+				File imgFile = refData.getLruDiscCache().get(e.attr("abs:src"));
+				if (imgFile!=null) {
+					e.attr("src", imgFile.getAbsolutePath());
+					e.attr("style", "border:2px solid green;");
+				}
+			}
+			log("Change images border to recognise cached images");
+		}
 	}
 
 	/**
@@ -397,8 +418,8 @@ public class SelectArticleWorkflow extends PrifoTask {
 	 */
 	private void downloadAndExtractArticleContent() {
 		if (!mOnlineMode) {
-			mArticleContentDownloaded = mFeedItem.getDescription();
-			logSimple("Download Full content = false: use Feed Description as content");
+			mArticleContentDownloaded = mArticle == null ? mFeedItem.getDescription() : mArticle.getContent();
+			logSimple("Mode offline: use Feed Description as content");
 			return;
 		}
 
@@ -422,10 +443,10 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 			mSuccessDownloadAndExtraction = true;
 		} catch (IOException e) {
-			mParseNotice.append(" IOException: "+e.getMessage());
+			mParseNotice.append(" IOException: "+e.toString());
 			Log.w(TAG, e.toString());
 		} catch (Exception e) {
-			mParseNotice.append(" Exception: "+e.getMessage());
+			mParseNotice.append(" Exception: "+e.toString());
 			Log.w(TAG, e);
 		}
 

@@ -40,6 +40,7 @@ public class ContentParser {
 			.autoDetectLanguage(false)
 			.language(null)
 			.maxLinkDensity(0.5)
+			.nearGoodDensityRequiredToFillHoles(0.5)
 			.build();
 
 	private static final Configuration JusTextRelaxConfig = new Configuration.Builder(JusTextDefaultConfig)
@@ -49,7 +50,9 @@ public class ContentParser {
 			.stopwordsLow(0)
 			.stopwordsHigh(0)
 			.maxLinkDensity(0.8)
+			.nearGoodDensityRequiredToFillHoles(0.3)
 			.build();
+
 	public static final boolean ENABLE_JUSTEXT_RELAX_CONFIG = false;
 
 	public static final int AVATAR_MIN_WIDTH = 50;

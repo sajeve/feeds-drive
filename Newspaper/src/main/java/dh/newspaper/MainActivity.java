@@ -14,7 +14,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 import de.greenrobot.event.EventBus;
+import dh.newspaper.base.Injector;
 import dh.newspaper.view.FeedsFragment;
+
+import javax.inject.Inject;
 
 public class MainActivity extends Activity {
 	private static final String TAG = MainActivity.class.getName();
@@ -38,14 +41,16 @@ public class MainActivity extends Activity {
 
 	private DrawerLayout mDrawerLayout;
 
-	private SharedPreferences mSharedPreferences;
+	@Inject
+	SharedPreferences mSharedPreferences;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		((Injector)getApplication()).inject(this);
+		//mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
 		// Set up the drawer.
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -127,9 +132,13 @@ public class MainActivity extends Activity {
 
 
 		getMenuInflater().inflate(R.menu.main, menu);
+
+		//restore menu state
+		MenuItem offlineItem = menu.findItem(R.id.action_offline);
+		offlineItem.setChecked(mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT));
+
 		restoreActionBar();
 		return true;
-
 	}
 
 	@Override
@@ -141,6 +150,14 @@ public class MainActivity extends Activity {
 		if (id == R.id.action_settings) {
 			return true;
 		}
+		if (id == R.id.action_offline) {
+			boolean newState = !item.isChecked();
+			item.setChecked(newState);
+			Log.d(TAG, "Switch to "+(newState ? "offline": "online")+" mode");
+			mSharedPreferences.edit().putBoolean(Constants.PREF_OFFLINE, newState).apply();
+			return true;
+		}
+
 		return super.onOptionsItemSelected(item);
 	}
 

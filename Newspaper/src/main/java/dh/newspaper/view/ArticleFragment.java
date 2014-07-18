@@ -3,10 +3,12 @@ package dh.newspaper.view;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -76,11 +78,13 @@ public class ArticleFragment extends Fragment {
 		mTxtNotice = (TextView) mSwipeRefreshLayout.findViewById(R.id.txt_notice);
 		mPanelNotice = mSwipeRefreshLayout.findViewById(R.id.panel_notice);
 
+		mTxtDataSource.setMovementMethod(LinkMovementMethod.getInstance());
+
 		mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 			@Override
 			public void onRefresh() {
 				try {
-					mBackgroundTasksManager.loadArticle(mArticle);
+					refreshGUI(true);
 				}
 				catch (Exception ex) {
 					Log.w(TAG, ex);
@@ -96,7 +100,7 @@ public class ArticleFragment extends Fragment {
 	public void onResume() {
 		super.onResume();
 		EventBus.getDefault().register(this);
-		refreshGUI();
+		refreshGUI(false);
 	}
 
 	@Override
@@ -201,13 +205,21 @@ public class ArticleFragment extends Fragment {
 	}
 
 
-	private void refreshGUI() {
+	/**
+	 * if forced = true, then force to run Article loading workflow
+	 * otherwise, just refresh the UI base on the current state
+	 * @param forced
+	 */
+	private void refreshGUI(boolean forced) {
 		SelectArticleWorkflow selectArticleWorkflow = mBackgroundTasksManager.getActiveSelectArticleWorkflow();
-		if (selectArticleWorkflow!=null) {
-			refreshGUI(selectArticleWorkflow);
+
+		if (forced || selectArticleWorkflow == null) {
+			mBackgroundTasksManager.loadArticle(mArticle);
+			//GUI will be refreshed via EventBus
 		}
 		else {
-			mBackgroundTasksManager.loadArticle(mArticle);
+			//refresh GUI base on current state
+			refreshGUI(selectArticleWorkflow);
 		}
 	}
 	private void refreshGUI(SelectArticleWorkflow data) {

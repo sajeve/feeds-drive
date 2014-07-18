@@ -50,7 +50,9 @@ public class MyApplication extends InjectingApplication {
 		ResourceZoneInfoProvider.init(this);
 		mBackgroundTasksManager.runInitialisationWorkflow();
 
-		setupAlarm(getApplicationContext());
+		if (Constants.ENABLE_ALARM) {
+			setupAlarm(getApplicationContext());
+		}
 
 /*
 		mDb = mDbHelper.getWritableDatabase();
