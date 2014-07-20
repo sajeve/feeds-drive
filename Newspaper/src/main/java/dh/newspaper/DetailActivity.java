@@ -9,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import dh.newspaper.base.Injector;
 import dh.newspaper.model.generated.Article;
+import dh.newspaper.services.MainMenuHandler;
 import dh.newspaper.view.ArticleFragment;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.TagsFragment;
@@ -19,7 +20,10 @@ public class DetailActivity extends Activity {
 	private static final String TAG = DetailActivity.class.getName();
 
 	private boolean mSinglePane;
+
 	@Inject SharedPreferences mSharedPreferences;
+
+	@Inject MainMenuHandler mMainMenuHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,16 +121,10 @@ public class DetailActivity extends Activity {
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
-		if (id == R.id.action_settings) {
+		if (mMainMenuHandler.onOptionsItemSelected(item)) {
 			return true;
 		}
-		if (id == R.id.action_offline) {
-			boolean newState = !item.isChecked();
-			item.setChecked(newState);
-			Log.d(TAG, "Switch to " + (newState ? "offline" : "online") + " mode");
-			mSharedPreferences.edit().putBoolean(Constants.PREF_OFFLINE, newState).apply();
-			return true;
-		}
+
 		if (id == android.R.id.home) {
 			// This ID represents the Home or Up button. In the case of this
 			// activity, the Up button is shown. Use NavUtils to allow users
