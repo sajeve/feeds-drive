@@ -10,26 +10,16 @@ import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.Toast;
-import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
-import dh.newspaper.MyApplication;
 import dh.newspaper.R;
 import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
-import dh.newspaper.event.RefreshTagsListEvent;
-import dh.newspaper.tools.PriorityThreadFactory;
-import dh.newspaper.tools.StrUtils;
-import dh.newspaper.tools.thread.PrifoExecutors;
-import dh.newspaper.workflow.SelectArticleWorkflow;
+import dh.tool.thread.prifo.PrifoExecutors;
 import dh.newspaper.workflow.SelectTagWorkflow;
-import org.joda.time.DateTime;
 
 import javax.inject.Inject;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by hiep on 30/05/2014.

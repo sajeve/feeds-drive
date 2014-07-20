@@ -24,7 +24,7 @@ import dh.newspaper.event.BaseEventOneArg;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.services.BackgroundTasksManager;
-import dh.newspaper.tools.StrUtils;
+import dh.tool.common.StrUtils;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
 import javax.inject.Inject;

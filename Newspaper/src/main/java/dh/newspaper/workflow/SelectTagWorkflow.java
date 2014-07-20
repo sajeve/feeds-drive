@@ -18,8 +18,8 @@ import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
 import dh.tool.thread.ICancellation;
-import dh.newspaper.tools.StrUtils;
-import dh.newspaper.tools.thread.PrifoTask;
+import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.PrifoTask;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 

@@ -4,8 +4,8 @@ import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.Subscription;
+import dh.tool.common.StrUtils;
 import dh.tool.thread.ICancellation;
-import dh.newspaper.tools.StrUtils;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;

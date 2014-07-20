@@ -24,7 +24,7 @@ import dh.newspaper.event.BaseEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.tools.ArrayAdapterCompat;
-import dh.newspaper.tools.StrUtils;
+import dh.tool.common.StrUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

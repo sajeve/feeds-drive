@@ -41,10 +41,6 @@ public class MyApplication extends InjectingApplication {
 
 		if (Constants.DEBUG) {
 			StrictMode.enableDefaults();
-			AndroidLoggerAdapter.setLogLevel(LogLevel.ERROR);
-		}
-		else {
-			AndroidLoggerAdapter.setLogLevel(LogLevel.ERROR);
 		}
 
 		ResourceZoneInfoProvider.init(this);

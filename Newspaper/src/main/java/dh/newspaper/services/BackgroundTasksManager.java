@@ -11,6 +11,8 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import de.greenrobot.event.EventBus;
+import de.psdev.slf4j.android.logger.AndroidLoggerAdapter;
+import de.psdev.slf4j.android.logger.LogLevel;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
@@ -18,8 +20,8 @@ import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.model.generated.Article;
-import dh.newspaper.tools.StrUtils;
-import dh.newspaper.tools.thread.PrifoExecutors;
+import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.PrifoExecutors;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
 import org.joda.time.Duration;
@@ -82,6 +84,7 @@ public class BackgroundTasksManager implements Closeable {
 			protected Boolean doInBackground(Object[] params) {
 				EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_START_LOADING));
 				try {
+					AndroidLoggerAdapter.setLogLevel(LogLevel.ERROR);
 					mRefData.getLruDiscCache(); //setupLruDiscCache
 					mRefData.loadTags();
 				}

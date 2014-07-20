@@ -1,7 +1,7 @@
 package dh.newspaper.test;
 
 import com.google.common.base.Strings;
-import dh.newspaper.tools.StrUtils;
+import dh.newspaper.tools.DateUtils;
 import junit.framework.TestCase;
 
 import java.io.UnsupportedEncodingException;
@@ -18,7 +18,7 @@ public class JavaLanguageTest extends TestCase {
 		if (Strings.isNullOrEmpty(s)) {
 			return null;
 		}
-		return StrUtils.bytesToHex(md5.digest(s.toUpperCase().replaceAll("\\s", "").getBytes("UTF-8")));
+		return DateUtils.bytesToHex(md5.digest(s.toUpperCase().replaceAll("\\s", "").getBytes("UTF-8")));
 	}
 
 	public void testCalculateChecksum() throws NoSuchAlgorithmException, UnsupportedEncodingException {

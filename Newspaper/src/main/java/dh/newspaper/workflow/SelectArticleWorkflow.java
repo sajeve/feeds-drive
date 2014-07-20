@@ -16,9 +16,10 @@ import dh.newspaper.cache.RefData;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
+import dh.newspaper.tools.DateUtils;
 import dh.newspaper.tools.NetworkUtils;
-import dh.newspaper.tools.StrUtils;
-import dh.newspaper.tools.thread.PrifoTask;
+import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.PrifoTask;
 import dh.tool.common.PerfWatcher;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -240,7 +241,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 				mArticleLanguage,
 				0L, //openedCount
 				mFeedItem.getPublishedDate(),
-				StrUtils.parseDateTime(mFeedItem.getPublishedDate()).toDate(),
+				DateUtils.parseDateTime(mFeedItem.getPublishedDate()).toDate(),
 				null,//date archive
 				null,//last open
 				DateTime.now().toDate(), //last updated

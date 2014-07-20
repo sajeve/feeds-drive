@@ -1,4 +1,4 @@
-package dh.newspaper.tools.thread;
+package dh.tool.common;
 
 import android.test.ActivityInstrumentationTestCase2;
 import dh.newspaper.MainActivity;

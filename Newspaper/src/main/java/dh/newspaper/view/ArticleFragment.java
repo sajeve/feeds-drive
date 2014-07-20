@@ -3,7 +3,6 @@ package dh.newspaper.view;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -30,7 +29,8 @@ import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.services.BackgroundTasksManager;
-import dh.newspaper.tools.StrUtils;
+import dh.newspaper.tools.DateUtils;
+import dh.tool.common.StrUtils;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 
 import javax.inject.Inject;
@@ -263,7 +263,7 @@ public class ArticleFragment extends Fragment {
 			return null;
 		}
 		StringBuilder sb = new StringBuilder();
-		sb.append(StrUtils.getTimeAgo(getResources(), article.getPublishedDateString()));
+		sb.append(DateUtils.getTimeAgo(getResources(), article.getPublishedDateString()));
 		sb.append(" | ");
 
 		sb.append(getArticleSourceName(article));

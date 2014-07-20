@@ -1,6 +1,5 @@
 package dh.newspaper.adapter;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -14,11 +13,8 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import dh.newspaper.Constants;
 import dh.newspaper.R;
 import dh.newspaper.model.generated.Article;
-import dh.newspaper.tools.StrUtils;
+import dh.newspaper.tools.DateUtils;
 import dh.newspaper.workflow.SelectTagWorkflow;
-
-import javax.inject.Inject;
-import java.util.List;
 
 /**
 * Created by hiep on 8/05/2014.
@@ -150,7 +146,7 @@ public class ArticlesGridAdapter extends BaseAdapter {
 			Article article = (Article)this.getItem(position);
 			if (article != null) {
 				titleLabel.setText(article.getTitle());
-				dateLabel.setText(StrUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString()));
+				dateLabel.setText(DateUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString()));
 				excerptLabel.setText(article.getExcerpt());
 
 				//imageView.setVisibility(View.VISIBLE);
