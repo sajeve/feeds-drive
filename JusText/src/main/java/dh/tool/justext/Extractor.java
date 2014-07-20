@@ -311,20 +311,20 @@ public class Extractor {
 
 
 			if (conf.removeTitle()) {
-				if (title==null) {
-					//find first good heading
-					for (int i=0; i<paragraphs.size(); i++) {
-						checkCancellation();
+				//find first good heading
+				for (int i=0; i<paragraphs.size(); i++) {
+					checkCancellation();
 
-						Paragraph p = paragraphs.get(i);
-						if (p.isH1orH2() && p.getQuality()== Paragraph.Quality.GOOD) {
+					Paragraph p = paragraphs.get(i);
+					if (p.isH1orH2() && p.getQuality()== Paragraph.Quality.GOOD) {
+						while (p.isH1orH2() && p.getQuality()== Paragraph.Quality.GOOD) {
 							title = p;
-							return;
+							p.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
+							i++;
+							p = paragraphs.get(i);
 						}
+						break;
 					}
-				}
-				if (title!=null) {
-					title.setQuality(Paragraph.Quality.BAD, "RemoveTitle");
 				}
 				pw.t("Remove title");
 			}
