@@ -56,7 +56,7 @@ public class StrUtils {
 	}
 
 	/**
-	 * Use to log a long string, give a quick glimpse at the first 60 characters
+	 * Use to log a long string, give a quick glimpse at the first 60 characters and replace return line by space
 	 */
 	public static String glimpse(String text) {
 		if (text == null) {
@@ -65,7 +65,7 @@ public class StrUtils {
 		if (text.length()<GLIMPSE_SIZE) {
 			return text;
 		}
-		return text.substring(0, GLIMPSE_SIZE)+".. (length="+text.length()+")";
+		return text.substring(0, GLIMPSE_SIZE).replace('\n', ' ').replace('\r', ' ')+".. (length="+text.length()+")";
 	}
 
 	public static String ellipsize(String text, int max) {
