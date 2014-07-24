@@ -3,6 +3,8 @@ package dh.tool.common;
 import com.google.common.base.Strings;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.MessageDigest;
 
 /**
@@ -133,5 +135,9 @@ public class StrUtils {
 		int lenRef =  Strings.isNullOrEmpty(ref) ? 0 : ref.length();
 		int shortestLenAllowed = lenRef*percent/100;
 		return lenStr < shortestLenAllowed;
+	}
+
+	public static String hostName(String address) throws MalformedURLException {
+		return (new URL(address)).getHost();
 	}
 }
