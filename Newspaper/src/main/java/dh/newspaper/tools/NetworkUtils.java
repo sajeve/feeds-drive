@@ -22,6 +22,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -101,6 +102,47 @@ public class NetworkUtils {
 
 		Log.v(TAG, "Download HG end "+content.length+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 		return content;
+	}
+
+	public static String quickDownloadXml(String address, String userAgent, ICancellation cancelListener) throws IOException {
+		Stopwatch sw = Stopwatch.createStarted();
+
+		HttpURLConnection httpConnection = okHttpClient.open(new URL(address));
+		httpConnection.addRequestProperty("User-Agent", userAgent);
+		int responseCode = httpConnection.getResponseCode();
+
+		if (200<=responseCode && responseCode<300) {
+			InputStream input = httpConnection.getInputStream();
+			try {
+				BufferedReader r = new BufferedReader(new InputStreamReader(input, Charset.forName("utf8")));
+				StringBuilder content = new StringBuilder();
+
+				String firstLine = r.readLine();
+				if (firstLine!=null) {
+					if (!firstLine.trim().startsWith("<?xml")) {
+						return null; //not a valid xml, no need to continue downloading the page
+					}
+				}
+				content.append(firstLine);
+
+				String line;
+				while ((line = r.readLine()) != null) {
+					if (cancelListener!=null && cancelListener.isCancelled()) {
+						return null;
+					}
+					content.append(line);
+				}
+				return content.toString();
+			}
+			finally {
+				if (input != null) {
+					input.close();
+				}
+			}
+		}
+		else {
+			throw new IllegalStateException("Failed to connect to " + address + ": " + httpConnection.getResponseMessage() + " (" + responseCode + ")");
+		}
 	}
 
 	/**
@@ -191,6 +233,8 @@ public class NetworkUtils {
 		}
 		return content;
 	}
+
+
 }
 
 //	/**

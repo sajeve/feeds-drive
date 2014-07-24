@@ -43,6 +43,8 @@ public class MyApplication extends InjectingApplication {
 			StrictMode.enableDefaults();
 		}
 
+		AndroidLoggerAdapter.setLogLevel(Constants.DEBUG ? LogLevel.DEBUG : LogLevel.INFO);
+
 		ResourceZoneInfoProvider.init(this);
 		mBackgroundTasksManager.runInitialisationWorkflow();
 

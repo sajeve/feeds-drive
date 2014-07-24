@@ -50,7 +50,7 @@ public class BackgroundTasksManager implements Closeable {
 	//private ExecutorService mSelectTagLoader = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LifoBlockingDeque<Runnable>());
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
-	private ExecutorService mSelectArticleLoader = PrifoExecutors.newCachedThreadExecutor(1, Integer.MAX_VALUE);
+	private ExecutorService mSelectArticleLoader = PrifoExecutors.newCachedThreadExecutor(8, Integer.MAX_VALUE);
 	//private ExecutorService mSelectArticleLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
 	//private ExecutorService mSelectArticleLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
@@ -80,7 +80,6 @@ public class BackgroundTasksManager implements Closeable {
 			protected Boolean doInBackground(Object[] params) {
 				EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_START_LOADING));
 				try {
-					AndroidLoggerAdapter.setLogLevel(LogLevel.ERROR);
 					mRefData.getLruDiscCache(); //setupLruDiscCache
 					mRefData.loadTags();
 				}

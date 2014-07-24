@@ -114,6 +114,13 @@ public class SubscriptionActivity extends Activity {
 				}
 				setGui(lastTask);
 			}
+			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_DONE_LOADING)) {
+				if (lastTask !=null && !StrUtils.equalsString(lastTask.getMissionId(), event.getFlowId())) {
+					//this event is fired by a sender which is no more concerning by this activity -> do nothing
+					return;
+				}
+				setGui(lastTask);
+			}
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
 			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
@@ -123,14 +130,16 @@ public class SubscriptionActivity extends Activity {
 	private void setGui(SearchFeedsTask currentTask) {
 		if (currentTask == null) {return;}
 
+/*
 		if (currentTask.isCancelled()) {
 			resultList.setVisibility(View.VISIBLE);
 			panelNotice.setVisibility(View.GONE);
 			swipeRefresh.setRefreshing(false);
 			return;
 		}
+*/
 
-		swipeRefresh.setRefreshing(!currentTask.isDone());
+		swipeRefresh.setRefreshing(!currentTask.isDone() || currentTask.isCancelled());
 
 		SearchFeedsEvent event = currentTask.getSearchResultEvent();
 		if (event==null) { return; }

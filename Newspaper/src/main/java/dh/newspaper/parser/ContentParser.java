@@ -307,7 +307,7 @@ public class ContentParser {
 		if (cancelListener!=null && cancelListener.isCancelled()) return null;
 
 		if (itemCount==0) {
-			throw new FeedParserException(doc.baseUri(), "Cannot parse: '"+ StrUtils.ellipsize(doc.text(), 50)+"'");
+			throw new FeedParserException(doc.baseUri(), "No feed item found: '"+ StrUtils.glimpse(doc.text())+"'");
 		}
 
 		String feedsLanguage = parseFeedsLanguage(feedFormat, doc);
@@ -322,17 +322,22 @@ public class ContentParser {
 			if (cancelListener!=null && cancelListener.isCancelled()) return null;
 
 			Element elem = itemsElem.get(i);
-			FeedItem item = new FeedItem(
-					doc.baseUri(),
-					parseItemTitle(elem, i, feedFormat),
-					parseItemPublishDate(elem, i, feedFormat),
-					parseItemDescription(elem, i, feedFormat),
-					parseItemUri(elem, i, feedFormat),
-					parseItemLanguage(elem, feedFormat, feedsLanguage),
-					parseItemAuthor(elem, i, feedFormat)
-			);
-			item.initImageAndExcerpt();
-			resu.add(item);
+			try {
+				FeedItem item = new FeedItem(
+						doc.baseUri(),
+						parseItemTitle(elem, i, feedFormat),
+						parseItemPublishDate(elem, i, feedFormat),
+						parseItemDescription(elem, i, feedFormat),
+						parseItemUri(elem, i, feedFormat),
+						parseItemLanguage(elem, feedFormat, feedsLanguage),
+						parseItemAuthor(elem, i, feedFormat)
+				);
+				item.initImageAndExcerpt();
+				resu.add(item);
+			}
+			catch (FeedParserException ex) {
+				Log.i(TAG, "Failed parse ", ex);
+			}
 		}
 
 		return resu;
