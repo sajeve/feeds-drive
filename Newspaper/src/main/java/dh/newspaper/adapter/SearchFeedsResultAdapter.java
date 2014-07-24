@@ -12,8 +12,10 @@ import android.view.ViewGroup;
 import android.widget.*;
 import com.google.common.base.Strings;
 import com.nostra13.universalimageloader.core.ImageLoader;
+import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.R;
+import dh.newspaper.event.SubscribeClickedEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.tools.DateUtils;
@@ -77,6 +79,17 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 				v.setTag(new View[]{title, description, source, subscribe});
 
 				title.setMovementMethod(LinkMovementMethod.getInstance());
+				subscribe.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						try {
+							EventBus.getDefault().post(new SubscribeClickedEvent(SearchFeedsResultAdapter.this, (String)v.getTag()));
+						}
+						catch (Exception ex) {
+							Log.w(TAG, ex);
+						}
+					}
+				});
 			} else {
 				v = convertView;
 				View[] viewsHolder = (View[]) v.getTag();
@@ -90,6 +103,8 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 
 			SearchFeedsResult.ResponseData.Entry itemData = (SearchFeedsResult.ResponseData.Entry)this.getItem(position);
 			if (itemData != null) {
+				subscribe.setTag(itemData.getUrl());
+
 				title.setLinkTextColor(1234);
 				title.setText(Html.fromHtml(String.format("<font color=\"black\"><a href=\"%s\"=>%s</a></font>", itemData.getLink(), itemData.getTitle())));
 				description.setText(Html.fromHtml(itemData.getContentSnippet()));

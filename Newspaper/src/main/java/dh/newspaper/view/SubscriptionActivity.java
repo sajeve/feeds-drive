@@ -11,6 +11,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
@@ -19,6 +20,7 @@ import dh.newspaper.R;
 import dh.newspaper.adapter.SearchFeedsResultAdapter;
 import dh.newspaper.base.Injector;
 import dh.newspaper.event.SearchFeedsEvent;
+import dh.newspaper.event.SubscribeClickedEvent;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.workflow.SearchFeedsTask;
 import dh.tool.common.StrUtils;
@@ -127,17 +129,17 @@ public class SubscriptionActivity extends Activity {
 		}
 	}
 
+	public void onEventMainThread(SubscribeClickedEvent event) {
+		try {
+			Toast.makeText(this, event.getFeedUrl(), Toast.LENGTH_LONG).show();
+		} catch (Exception ex) {
+			Log.w(TAG, ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
+		}
+	}
+
 	private void setGui(SearchFeedsTask currentTask) {
 		if (currentTask == null) {return;}
-
-/*
-		if (currentTask.isCancelled()) {
-			resultList.setVisibility(View.VISIBLE);
-			panelNotice.setVisibility(View.GONE);
-			swipeRefresh.setRefreshing(false);
-			return;
-		}
-*/
 
 		swipeRefresh.setRefreshing(!currentTask.isDone() || currentTask.isCancelled());
 
