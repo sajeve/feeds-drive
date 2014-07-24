@@ -2,6 +2,7 @@ package dh.newspaper;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -15,8 +16,10 @@ import android.view.View;
 import android.widget.Toast;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.Injector;
+import dh.newspaper.services.AlarmReceiver;
 import dh.newspaper.services.MainMenuHandler;
 import dh.newspaper.view.FeedsFragment;
+import dh.newspaper.view.SubscriptionActivity;
 
 import javax.inject.Inject;
 
@@ -165,26 +168,14 @@ public class MainActivity extends Activity {
 		if (mMainMenuHandler.onOptionsItemSelected(item)) {
 			return true;
 		}
+		switch (item.getItemId()) {
+			case R.id.action_subscribe:
+				this.startActivity(new Intent(this, SubscriptionActivity.class));
+				return true;
+		}
 
 		return super.onOptionsItemSelected(item);
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	/**
 	 * Invoke by EventBus when {@link dh.newspaper.view.FeedsFragment} attached

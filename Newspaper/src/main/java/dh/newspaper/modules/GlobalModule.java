@@ -11,7 +11,9 @@ import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.services.FeedsDownloaderService;
 import dh.newspaper.view.ArticleFragment;
 import dh.newspaper.view.FeedsFragment;
+import dh.newspaper.view.SubscriptionActivity;
 import dh.newspaper.view.TagsFragment;
+import dh.newspaper.workflow.SearchFeedsTask;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
@@ -28,12 +30,14 @@ import java.security.NoSuchAlgorithmException;
 			MyApplication.class,
 			MainActivity.class,
 			DetailActivity.class,
+			SubscriptionActivity.class,
 			TagsFragment.class,
 			FeedsFragment.class,
 			ArticleFragment.class,
 			SubscriptionFactory.class,
 			SelectArticleWorkflow.class,
 			SelectTagWorkflow.class,
+			SearchFeedsTask.class,
 			ContentParser.class,
 			BackgroundTasksManager.class,
 			FeedsDownloaderService.class

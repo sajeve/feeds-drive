@@ -10,20 +10,7 @@ import java.util.List;
  * Created by hiep on 4/06/2014.
  */
 public class RefreshFeedsListEvent extends BaseEvent<SelectTagWorkflow> {
-	private final List<Article> mArticles;
-	private final int mCount;
-
-	public RefreshFeedsListEvent(SelectTagWorkflow sender, String subject, String flowId, List<Article> articles, int count) {
+	public RefreshFeedsListEvent(SelectTagWorkflow sender, String subject, String flowId) {
 		super(sender, subject, flowId);
-		mArticles = articles;
-		mCount = count;
-	}
-
-	public List<Article> getArticles() {
-		return mArticles;
-	}
-
-	public int getCount() {
-		return mCount;
 	}
 }

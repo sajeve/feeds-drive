@@ -23,9 +23,7 @@ import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.R;
 import dh.newspaper.base.Injector;
-import dh.newspaper.event.BaseEventOneArg;
 import dh.newspaper.event.RefreshArticleEvent;
-import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.services.BackgroundTasksManager;
@@ -169,7 +167,7 @@ public class ArticleFragment extends Fragment {
 				}
 
 				mSwipeRefreshLayout.setRefreshing(true);
-				refreshGUI(event.getSender());
+				setGui(event.getSender());
 
 				return;
 			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_REFRESH)) {
@@ -184,7 +182,7 @@ public class ArticleFragment extends Fragment {
 					swRae.reset().start();
 				}
 
-				refreshGUI(event.getSender());
+				setGui(event.getSender());
 				return;
 			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_DONE_LOADING)) {
 				if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
@@ -204,7 +202,6 @@ public class ArticleFragment extends Fragment {
 		}
 	}
 
-
 	/**
 	 * if forced = true, then force to run Article loading workflow
 	 * otherwise, just refresh the UI base on the current state
@@ -219,10 +216,10 @@ public class ArticleFragment extends Fragment {
 		}
 		else {
 			//refresh GUI base on current state
-			refreshGUI(selectArticleWorkflow);
+			setGui(selectArticleWorkflow);
 		}
 	}
-	private void refreshGUI(SelectArticleWorkflow data) {
+	private void setGui(SelectArticleWorkflow data) {
 		if (data == null) {
 			Log.w(TAG, "data is null");
 			if (Constants.DEBUG) {
@@ -301,6 +298,7 @@ public class ArticleFragment extends Fragment {
 	}
 
 
+/*
 	public class Event extends BaseEventOneArg<ArticleFragment> {
 		public FeedItem rssItem;
 		public Event() {
@@ -310,4 +308,5 @@ public class ArticleFragment extends Fragment {
 			super(ArticleFragment.this, subject);
 		}
 	}
+*/
 }

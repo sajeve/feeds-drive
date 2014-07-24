@@ -106,7 +106,7 @@ public class DetailActivity extends Activity {
 
 
 
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.detail, menu);
 
 		//restore menu state
 		MenuItem offlineItem = menu.findItem(R.id.action_offline);

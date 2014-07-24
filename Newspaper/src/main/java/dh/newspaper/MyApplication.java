@@ -122,7 +122,7 @@ public class MyApplication extends InjectingApplication {
 
 	public static void showErrorDialog(final FragmentManager fm, final String message, final Throwable ex) {
 		try {
-			Log.e(TAG, message, ex);
+			//Log.w(TAG, message, ex);
 			if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
 				showErrorDialogOnMainThread(fm, message, ex);
 			}

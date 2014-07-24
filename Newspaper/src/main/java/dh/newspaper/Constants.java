@@ -34,7 +34,8 @@ public class Constants {
 
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
 	public static final String SUBJECT_TAGS_REFRESH = "Tags.Refresh";
-	//public static final String SUBJECT_TAGS_DONE_LOADING = "Tags.DoneLoading";
+	public static final String SUBJECT_SEARCH_FEEDS_START_LOADING = "SearchFeeds.StartLoading";
+	public static final String SUBJECT_SEARCH_FEEDS_REFRESH = "SearchFeeds.Refresh";
 	public static final String SUBJECT_FEEDS_START_LOADING = "Feeds.StartLoading";
 	public static final String SUBJECT_FEEDS_REFRESH = "Feeds.Refresh";
 	public static final String SUBJECT_FEEDS_DONE_LOADING = "Feeds.DoneLoading";

@@ -25,11 +25,6 @@ public interface IArticleCollection {
 	 */
 	public Article getArticle(int position);
 
-	/**
-	 * this callback is fire each time the buffer is updated
-	 */
-	public void setCacheChangeListener(OnInMemoryCacheChangeCallback callback);
-
 	public static interface OnInMemoryCacheChangeCallback {
 		public void onChanged(IArticleCollection sender, List<Article> buffer, int offset, int pageSize);
 	}

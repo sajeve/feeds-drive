@@ -53,7 +53,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SelectArticleWorkflow extends PrifoTask {
 	private static final String TAG = SelectArticleWorkflow.class.getName();
-	private static final Logger LOG = LoggerFactory.getLogger(SelectArticleWorkflow.class);
 
 	@Inject DaoSession mDaoSession;
 	@Inject ContentParser mContentParser;

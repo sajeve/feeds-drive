@@ -82,4 +82,7 @@
 		<item name="android:textColor">@android:color/secondary_text_light</item>
 	</style>
 
+	<style name="LabelTop">
+		<item name="android:paddingTop">16dp</item>
+	</style>
 </resources>

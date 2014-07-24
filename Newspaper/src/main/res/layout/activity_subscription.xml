@@ -1,0 +1,134 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		xmlns:tools="http://schemas.android.com/tools"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		tools:context=".view.SubscriptionFragment">
+
+	<EditText
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:id="@+id/query_editor"
+			android:drawableRight="@drawable/search_gray"
+			android:imeOptions="actionSearch"
+			android:singleLine="true"
+			/>
+	<android.support.v4.widget.SwipeRefreshLayout
+			android:id="@+id/swipe_refresh"
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			>
+		<ListView
+				android:id="@+id/search_result"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:padding="12dp"
+				/>
+	</android.support.v4.widget.SwipeRefreshLayout>
+	<LinearLayout
+			android:id="@+id/panel_notice"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:padding="12dp"
+			android:orientation="horizontal">
+		<ImageView
+				android:layout_width="32dp"
+				android:layout_height="32dp"
+				android:src="@drawable/ic_action_warning"
+				/>
+		<TextView
+				android:id="@+id/txt_notice"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="status"
+				android:textIsSelectable="true"
+				android:autoLink="web"
+				style="@style/Article.Info"
+				/>
+	</LinearLayout>
+	<!--
+	ListView is with cardbackground
+	<ListView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:id="@+id/search_result"
+			android:divider="@null"
+			android:dividerHeight="10dp"
+			android:listSelector="@android:color/transparent"
+			android:cacheColorHint="@android:color/transparent"
+			android:headerDividersEnabled="true"
+			android:footerDividersEnabled="true"
+			android:padding="12dp"
+			/>-->
+
+	<!--<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:padding="24dp"
+			>
+
+		<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="@string/url" />
+
+		<EditText
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"/>
+
+		<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				style="@style/LabelTop"
+				android:text="@string/category" />
+
+		<Spinner
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				/>
+
+		<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				style="@style/LabelTop"
+				android:text="@string/encoding" />
+
+		<EditText
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"/>
+
+		<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				style="@style/LabelTop"
+				android:text="@string/language" />
+
+		<EditText
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"/>
+
+	</LinearLayout>
+	<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:orientation="horizontal">
+		<Button
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				style="?android:attr/buttonBarButtonStyle"
+				android:text="Cancel"
+				android:layout_weight="1"
+				/>
+		<Button
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				style="?android:attr/buttonBarButtonStyle"
+				android:text="Subscribe"
+				android:textStyle="bold"
+				android:layout_weight="1"
+				/>
+
+	</LinearLayout>-->
+</LinearLayout>

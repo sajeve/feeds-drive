@@ -5,11 +5,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
-import com.nostra13.universalimageloader.cache.disc.impl.ext.LruDiscCache;
-import com.nostra13.universalimageloader.core.DefaultConfigurationFactory;
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
 import de.psdev.slf4j.android.logger.AndroidLoggerAdapter;
 import de.psdev.slf4j.android.logger.LogLevel;
@@ -20,17 +16,17 @@ import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.model.generated.Article;
+import dh.newspaper.workflow.SearchFeedsTask;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.PrifoExecutors;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
-import org.joda.time.Duration;
 
 import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -165,12 +161,12 @@ public class BackgroundTasksManager implements Closeable {
 					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, onlineMode, Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
 						@Override
 						public void onFinishedLoadFromCache(SelectTagWorkflow sender, List<Article> articles, int count) {
-							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag(), articles, count));
+							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag()));
 						}
 
 						@Override
 						public void onFinishedDownloadFeeds(SelectTagWorkflow sender, List<Article> articles, int count) {
-							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag(), articles, count));
+							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag()));
 						}
 
 						@Override
@@ -179,29 +175,16 @@ public class BackgroundTasksManager implements Closeable {
 
 						@Override
 						public void done(SelectTagWorkflow sender, List<Article> articles, int count, List<String> notices, boolean isCancelled) {
-							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_DONE_LOADING, sender.getTag(), articles, count));
+							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_DONE_LOADING, sender.getTag()));
 						}
 					});
 					mSelectTagWorkflow.setFocus(true);
-
-					EventBus.getDefault().post(new RefreshFeedsListEvent(mSelectTagWorkflow, Constants.SUBJECT_FEEDS_START_LOADING, mSelectTagWorkflow.getTag(), null, 0));
+					EventBus.getDefault().post(new RefreshFeedsListEvent(mSelectTagWorkflow, Constants.SUBJECT_FEEDS_START_LOADING, mSelectTagWorkflow.getTag()));
 					mSelectTagLoader.execute(mSelectTagWorkflow);
-
-					/*mSelectTagLoader.execute(new Runnable() {
-						@Override
-						public void run() {
-							try {
-								EventBus.getDefault().post(new RefreshFeedsListEvent(mSelectTagWorkflow, Constants.SUBJECT_FEEDS_START_LOADING, null, 0));
-								mSelectTagWorkflow.run();
-							} catch (Exception ex) {
-								Log.w(TAG, ex);
-								EventBus.getDefault().post(new RefreshFeedsListEvent(mSelectTagWorkflow, Constants.SUBJECT_FEEDS_DONE_LOADING, null, 0));
-							}
-						}
-					});*/
 				}
 				catch (Exception ex) {
 					Log.w(TAG, ex);
+					EventBus.getDefault().post(new RefreshFeedsListEvent(mSelectTagWorkflow, Constants.SUBJECT_FEEDS_DONE_LOADING, mSelectTagWorkflow.getTag()));
 				}
 			}
 		};
@@ -265,22 +248,9 @@ public class BackgroundTasksManager implements Closeable {
 
 					EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_START_LOADING, mSelectArticleWorkflow.getArticleUrl()));
 					mSelectArticleLoader.execute(mSelectArticleWorkflow);
-
-					/*mSelectArticleLoader.execute(new Runnable() {
-						@Override
-						public void run() {
-							try {
-								EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_START_LOADING));
-								mSelectArticleWorkflow.run();
-							} catch (Exception ex) {
-								Log.w(TAG, ex);
-							}
-						}
-					});*/
-				}
-				catch (Exception ex)
-				{
+				} catch (Exception ex) {
 					Log.w(TAG, ex);
+					EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_DONE_LOADING, mSelectArticleWorkflow.getArticleUrl()));
 				}
 			}
 		};
@@ -288,12 +258,29 @@ public class BackgroundTasksManager implements Closeable {
 		mMainThreadHandler.postDelayed(lastLoadArticleCall, Constants.EVENT_DELAYED);
 	}
 
+
+	private SearchFeedsTask activeSearchFeedsTask;
+	public void searchFeedsSources(final String query) throws UnsupportedEncodingException {
+		if (Strings.isNullOrEmpty(query)) {
+			return;
+		}
+		//cancel last task
+		if (activeSearchFeedsTask != null) {
+			activeSearchFeedsTask.cancel();
+		}
+		activeSearchFeedsTask = new SearchFeedsTask(mContext, query);
+		activeSearchFeedsTask.setFocus(true);
+		mSelectArticleLoader.execute(activeSearchFeedsTask);
+	}
+
 	public SelectTagWorkflow getActiveSelectTagWorkflow() {
 		return mSelectTagWorkflow;
 	}
-
 	public SelectArticleWorkflow getActiveSelectArticleWorkflow() {
 		return mSelectArticleWorkflow;
+	}
+	public SearchFeedsTask getActiveSearchFeedsTask() {
+		return activeSearchFeedsTask;
 	}
 
 	@Override

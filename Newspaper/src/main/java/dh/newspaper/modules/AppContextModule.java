@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.preference.PreferenceManager;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dagger.Module;
 import dagger.Provides;
 import dh.newspaper.MyApplication;
@@ -40,7 +41,6 @@ public class AppContextModule {
 	private DaoSession mDaoSession;
 	private RefData mRefData;
 	private BackgroundTasksManager mBackgroundTasksManager;
-	private boolean isImageLoaderInitialized = false;
 
 	public AppContextModule(Context mAppContext) {
 		this.mAppContext = mAppContext;
@@ -104,5 +104,10 @@ public class AppContextModule {
 			mPreferences = PreferenceManager.getDefaultSharedPreferences(mAppContext);
 		}
 		return mPreferences;
+	}
+
+	@Provides @Singleton
+	public ObjectMapper provideObjectMapper() {
+		return new ObjectMapper();
 	}
 }
