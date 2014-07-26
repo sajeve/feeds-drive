@@ -17,8 +17,8 @@ package dh.tool.thread.prifo;
 public abstract class PrifoTask implements IPrifosable, Comparable {
 //	private static final String TAG = PrifoTask.class.getName();
 
-	private int priority;
-	private boolean focused;
+	private volatile int priority;
+	private volatile boolean focused;
 	private volatile boolean cancelled = false;
 
 //	private final Stopwatch insideSw = Stopwatch.createUnstarted();
@@ -80,7 +80,7 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 
 	/**
 	 * Use to recognise if the two task has the same mission,
-	 * in {@link PrifoExecutors} if we add 2 task of the same id (a twin) into the queue, it will not
+	 * in {@link PrifoExecutorFactory} if we add 2 task of the same id (a twin) into the queue, it will not
 	 * add the task but increase the priority of the existing twin-task in the queue.
 	 */
 	public abstract String getMissionId();
