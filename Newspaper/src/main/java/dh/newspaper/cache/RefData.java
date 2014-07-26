@@ -26,12 +26,13 @@ import java.util.concurrent.TimeUnit;
 public class RefData {
 	private static final String TAG = RefData.class.getName();
 	private final DaoSession mDaoSession;
-	private List<PathToContent> mPathToContents;
+	//private List<PathToContent> mPathToContents;
 	private TreeSet<String> mTags;
 	private LruDiscCache mLruDiscCache;
-	private boolean pathToContentsStale = false;
-	private boolean mTagsStale = false;
+	//private boolean pathToContentsStale = false;
+	//private boolean mTagsStale = false;
 	private Context mContext;
+	private List<Subscription> activeSubscriptions;
 
 	@Inject
 	public RefData(DaoSession daoSession, Context context) {
@@ -39,21 +40,21 @@ public class RefData {
 		mContext = context;
 	}
 
-	/**
-	 * Return list of enabled PathToContent order by priority
-	 */
-	public synchronized List<PathToContent> pathToContentList() {
-		if (mPathToContents==null || pathToContentsStale) {
-			checkAccessDiskOnMainThread();
-			Stopwatch sw = Stopwatch.createStarted();
-			mPathToContents = mDaoSession.getPathToContentDao().queryBuilder()
-					.where(PathToContentDao.Properties.Enable.eq(Boolean.TRUE))
-					.orderDesc(PathToContentDao.Properties.Priority)
-					.list();
-			Log.i(TAG, "Get PathToContent returned "+mPathToContents.size()+" records ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
-		}
-		return mPathToContents;
-	}
+//	/**
+//	 * Return list of enabled PathToContent order by priority
+//	 */
+//	public synchronized List<PathToContent> pathToContentList() {
+//		if (mPathToContents==null || pathToContentsStale) {
+//			checkAccessDiskOnMainThread();
+//			Stopwatch sw = Stopwatch.createStarted();
+//			mPathToContents = mDaoSession.getPathToContentDao().queryBuilder()
+//					.where(PathToContentDao.Properties.Enable.eq(Boolean.TRUE))
+//					.orderDesc(PathToContentDao.Properties.Priority)
+//					.list();
+//			Log.i(TAG, "Get PathToContent returned "+mPathToContents.size()+" records ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+//		}
+//		return mPathToContents;
+//	}
 
 	/**
 	 * Get all possible tags from active subscription (alphabetic order)
@@ -62,27 +63,46 @@ public class RefData {
 		checkAccessDiskOnMainThread();
 
 		Stopwatch sw = Stopwatch.createStarted();
-		List<Subscription> subscriptions = mDaoSession.getSubscriptionDao().queryBuilder()
-				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE))
-				.list();
+		loadActiveSubscriptions();
 		mTags = new TreeSet<String>();
-		for (Subscription sub : subscriptions) {
+		for (Subscription sub : getActiveSubscription()) {
 			Iterable<String> subTags = Splitter.on('|').omitEmptyStrings().split(sub.getTags());
 			for (String tag : subTags) {
 				mTags.add(tag);
 			}
 		}
 
-		Log.i(TAG, "Found " + mTags.size() + " tags from " + subscriptions.size() + " active subscription ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+		Log.i(TAG, "Found " + mTags.size() + " tags from " + getActiveSubscription().size() + " active subscriptions ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 
 		return mTags;
 	}
 
-	public boolean isTagsListReadyInMemory() {
-		return mTags!=null && !mTagsStale;
+	/**
+	 * Must be called each time add/remove/update a subscription
+	 * @return
+	 */
+	public synchronized void loadActiveSubscriptions() {
+		checkAccessDiskOnMainThread();
+		activeSubscriptions = mDaoSession.getSubscriptionDao().queryBuilder()
+				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE))
+				.list();
 	}
 
+	public List<Subscription> getActiveSubscription() {
+		if (activeSubscriptions == null) {
+			loadActiveSubscriptions();
+		}
+		return activeSubscriptions;
+	}
+
+	/*public boolean isTagsListReadyInMemory() {
+		return mTags!=null && !mTagsStale;
+	}*/
+
 	public TreeSet<String> getTags() {
+		if (activeSubscriptions == null) {
+			loadTags();
+		}
 		return mTags;
 	}
 

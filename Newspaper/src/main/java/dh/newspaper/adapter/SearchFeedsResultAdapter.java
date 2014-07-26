@@ -1,6 +1,7 @@
 package dh.newspaper.adapter;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.text.Html;
@@ -109,6 +110,12 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 				title.setText(Html.fromHtml(String.format("<font color=\"black\"><a href=\"%s\"=>%s</a></font>", itemData.getLink(), itemData.getTitle())));
 				description.setText(Html.fromHtml(itemData.getContentSnippet()));
 				source.setText(itemData.getUrl());
+
+				if (subscribe.getTag() != itemData.getSubscription()) {
+					subscribe.setTag(itemData.getSubscription());
+					int res = itemData.getSubscription()==null ? R.drawable.add_259b24ff : R.drawable.checked_circle_72d572ff;
+					subscribe.setImageDrawable(mContext.getResources().getDrawable(res));
+				}
 			}
 
 			return v;

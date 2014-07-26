@@ -10,6 +10,7 @@
             res/values-vXX/styles.xml, while customizations related to
             backward-compatibility can go here.
         -->
+	    <item name="android:windowActionBarOverlay">true</item>
     </style>
 
     <!-- Application theme. -->
@@ -84,5 +85,26 @@
 
 	<style name="LabelTop">
 		<item name="android:paddingTop">16dp</item>
+	</style>
+
+<!--	<style name="ButtonBar">
+		<item name="android:paddingTop">5dip</item>
+		<item name="android:paddingStart">4dip</item>
+		<item name="android:paddingEnd">4dip</item>
+		<item name="android:paddingBottom">1dip</item>
+		<item name="android:background">@android:drawable/bottom_bar</item>
+	</style>
+	<style name="Holo.ButtonBar" parent="ButtonBar">
+		<item name="android:paddingTop">0dip</item>
+		<item name="android:paddingStart">0dip</item>
+		<item name="android:paddingEnd">0dip</item>
+		<item name="android:paddingBottom">0dip</item>
+		<item name="divider">?android:attr/dividerVertical</item>
+		<item name="showDividers">middle</item>
+		<item name="dividerPadding">12dip</item>
+		<item name="background">@null</item>
+	</style>-->
+	<style name="ButtonBar.OK" parent="@android:style/Holo.ButtonBar">
+		<item name="background">@android:color/holo_blue_dark</item>
 	</style>
 </resources>

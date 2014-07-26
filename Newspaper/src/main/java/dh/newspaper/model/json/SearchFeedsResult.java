@@ -3,6 +3,7 @@ package dh.newspaper.model.json;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import dh.newspaper.model.generated.Subscription;
 
 import java.util.List;
 
@@ -86,6 +87,7 @@ public class SearchFeedsResult {
 			private String link;
 			private String title;
 			private String url;
+			private Subscription subscription;
 
 			public String getContentSnippet() {
 				return contentSnippet;
@@ -117,6 +119,16 @@ public class SearchFeedsResult {
 
 			public void setUrl(String url) {
 				this.url = url;
+			}
+
+			@JsonIgnore
+			public Subscription getSubscription() {
+				return subscription;
+			}
+
+			@JsonIgnore
+			public void setSubscription(Subscription subscription) {
+				this.subscription = subscription;
 			}
 		}
 	}

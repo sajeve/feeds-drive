@@ -7,8 +7,6 @@ import android.os.Handler;
 import android.util.Log;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
-import de.psdev.slf4j.android.logger.AndroidLoggerAdapter;
-import de.psdev.slf4j.android.logger.LogLevel;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
@@ -18,7 +16,8 @@ import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.workflow.SearchFeedsTask;
 import dh.tool.common.StrUtils;
-import dh.tool.thread.prifo.PrifoExecutors;
+import dh.tool.thread.prifo.PrifoExecutor;
+import dh.tool.thread.prifo.PrifoExecutorFactory;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
@@ -40,19 +39,19 @@ public class BackgroundTasksManager implements Closeable {
 	private Context mContext;
 
 	private ExecutorService mTagsListLoader;
-	private ExecutorService mArticlesLoader = PrifoExecutors.newCachedThreadExecutor(1, Constants.THREAD_ARTICLES_LOADER);
+	private PrifoExecutor mArticlesLoader = PrifoExecutorFactory.newPrifoExecutor(1, Constants.THREAD_ARTICLES_LOADER);
 	//private ExecutorService mArticlesLoader = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
 	//private PriorityExecutor mArticlesLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
 	private SelectTagWorkflow mSelectTagWorkflow;
-	private ExecutorService mSelectTagLoader = PrifoExecutors.newCachedThreadExecutor(1, Integer.MAX_VALUE);
+	private ExecutorService mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(1, Integer.MAX_VALUE);
 	//private ExecutorService mSelectTagLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
 	//private ExecutorService mSelectTagLoader = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LifoBlockingDeque<Runnable>());
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
-	private ExecutorService mSelectArticleLoader = PrifoExecutors.newCachedThreadExecutor(8, Integer.MAX_VALUE);
-	//private ExecutorService mSelectArticleLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
-	//private ExecutorService mSelectArticleLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
+	private PrifoExecutor mMainLoader = PrifoExecutorFactory.newPrifoExecutor(8, Integer.MAX_VALUE);
+	//private ExecutorService mMainLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
+	//private ExecutorService mMainLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
 	@Inject RefData mRefData;
 
@@ -114,9 +113,9 @@ public class BackgroundTasksManager implements Closeable {
 
 		mTagsListLoader = Executors.newSingleThreadExecutor();
 
-		if (mRefData.isTagsListReadyInMemory()) {
+		/*if (mRefData.isTagsListReadyInMemory()) {
 			EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_REFRESH));
-		}
+		}*/
 
 		mTagsListLoader.execute(new Runnable() {
 			@Override
@@ -212,7 +211,7 @@ public class BackgroundTasksManager implements Closeable {
 			public void run() {
 				try
 				{
-					if (mSelectArticleWorkflow != null) {
+					/*if (mSelectArticleWorkflow != null) {
 						//the same article is loading
 						if (mSelectArticleWorkflow.getFeedItem().getUri().equals(article.getArticleUrl()) && mSelectArticleWorkflow.isRunning()) {
 							Log.d(TAG, String.format("%s is running (priority=%d%s)",
@@ -221,7 +220,7 @@ public class BackgroundTasksManager implements Closeable {
 									mSelectArticleWorkflow.isFocused() ? " focused" : ""));
 						}
 						mSelectArticleWorkflow.cancel();
-					}
+					}*/
 
 					final boolean onlineMode = !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT);
 
@@ -246,7 +245,7 @@ public class BackgroundTasksManager implements Closeable {
 					mSelectArticleWorkflow.setFocus(true);
 
 					EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_START_LOADING, mSelectArticleWorkflow.getArticleUrl()));
-					mSelectArticleLoader.execute(mSelectArticleWorkflow);
+					mMainLoader.executeUnique(mSelectArticleWorkflow);
 				} catch (Exception ex) {
 					Log.w(TAG, ex);
 					EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_DONE_LOADING, mSelectArticleWorkflow.getArticleUrl()));
@@ -263,13 +262,13 @@ public class BackgroundTasksManager implements Closeable {
 		if (Strings.isNullOrEmpty(query)) {
 			return;
 		}
-		//cancel last task
+		/*//cancel last task
 		if (activeSearchFeedsTask != null) {
 			activeSearchFeedsTask.cancel();
-		}
+		}*/
 		activeSearchFeedsTask = new SearchFeedsTask(mContext, query);
 		activeSearchFeedsTask.setFocus(true);
-		mSelectArticleLoader.execute(activeSearchFeedsTask);
+		mMainLoader.executeUnique(activeSearchFeedsTask);
 	}
 
 	public SelectTagWorkflow getActiveSelectTagWorkflow() {

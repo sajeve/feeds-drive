@@ -132,6 +132,8 @@ public class SubscriptionActivity extends Activity {
 	public void onEventMainThread(SubscribeClickedEvent event) {
 		try {
 			Toast.makeText(this, event.getFeedUrl(), Toast.LENGTH_LONG).show();
+
+
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
 			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);

@@ -19,6 +19,7 @@ import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
 import dh.tool.thread.ICancellation;
 import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoTask;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -51,7 +52,7 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	private final String mTag;
 	private final Duration mSubscriptionsTimeToLive;
 	private final Duration mArticleTimeToLive;
-	private final ExecutorService mArticlesLoader;
+	private final PrifoExecutor mArticlesLoader;
 	private final SelectTagCallback mCallback;
 	private final Context mContext;
 
@@ -87,7 +88,7 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	private volatile boolean used = false;
 	private volatile boolean mRunning = true;
 
-	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, boolean onlineMode, int pageSize, ExecutorService articlesLoader, SelectTagCallback callback) {
+	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, boolean onlineMode, int pageSize, PrifoExecutor articlesLoader, SelectTagCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 
 		mTag = tag;

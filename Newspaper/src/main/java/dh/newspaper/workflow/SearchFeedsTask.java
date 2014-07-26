@@ -7,8 +7,12 @@ import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
+import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SearchFeedsEvent;
 import dh.newspaper.model.Feeds;
+import dh.newspaper.model.generated.DaoSession;
+import dh.newspaper.model.generated.Subscription;
+import dh.newspaper.model.generated.SubscriptionDao;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.NetworkUtils;
@@ -56,6 +60,7 @@ public class SearchFeedsTask extends PrifoTask {
 
 	@Inject ObjectMapper objectMapper;
 	@Inject ContentParser contentParser;
+	@Inject RefData refData;
 	private final String query;
 	private PerfWatcher pf;
 
@@ -259,6 +264,9 @@ public class SearchFeedsTask extends PrifoTask {
 			searchResult.getResponseData().setEntries(new ArrayList<SearchFeedsResult.ResponseData.Entry>());
 		}
 
+		//check if the result is already subscribed
+		entry.setSubscription(findSubscription(feedsLink));
+
 		searchResult.getResponseData().getEntries().add(entry);
 	}
 
@@ -276,6 +284,14 @@ public class SearchFeedsTask extends PrifoTask {
 		if (isCancelled()) { return true; }
 		SearchFeedsResult searchResult = objectMapper.readValue(rawData, SearchFeedsResult.class);
 
+		//check if the result is already subscribed
+		if (isCancelled()) { return true; }
+		if (searchResult!=null && searchResult.getResponseData()!=null && searchResult.getResponseData().getEntries()!=null) {
+			for (SearchFeedsResult.ResponseData.Entry entry : searchResult.getResponseData().getEntries()) {
+				entry.setSubscription(findSubscription(entry.getUrl()));
+			}
+		}
+
 		if (isCancelled()) { return true; }
 		sendFinalResult(searchResult);
 		return false;
@@ -289,6 +305,15 @@ public class SearchFeedsTask extends PrifoTask {
 	private void sendPartialResult(SearchFeedsResult searchResult) {
 		searchResultEvent = new SearchFeedsEvent(this, Constants.SUBJECT_SEARCH_FEEDS_REFRESH, query, searchResult);
 		EventBus.getDefault().post(searchResultEvent);
+	}
+
+	private Subscription findSubscription(String url) {
+		for(Subscription sub : refData.getActiveSubscription()) {
+			if (StrUtils.equalsIgnoreCases(sub.getFeedsUrl(), url) || StrUtils.equalsIgnoreCases(sub.getFeedsUrl(), url+"/")) {
+				return sub;
+			}
+		}
+		return null;
 	}
 
 	public String getQuery() {

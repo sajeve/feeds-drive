@@ -3,7 +3,6 @@ package dh.newspaper.workflow;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
@@ -20,15 +19,13 @@ import dh.newspaper.tools.DateUtils;
 import dh.newspaper.tools.NetworkUtils;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.PrifoTask;
-import dh.tool.common.PerfWatcher;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import android.util.Log;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -81,7 +78,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 
 	private Stopwatch mStopwatch;
 	private final ReentrantLock lock = new ReentrantLock();
-	private PerfWatcher pw;
+	//private PerfWatcher pw;
 
 	private SelectArticleWorkflow(Context context, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
@@ -138,7 +135,8 @@ public class SelectArticleWorkflow extends PrifoTask {
 				resetStopwatch();
 
 				mParentSubscription = mDaoSession.getSubscriptionDao().queryBuilder()
-						.where(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()))
+						.whereOr(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()),
+								SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()+"/"))
 						.unique();
 				log("Find Parent subscription", mArticle);
 

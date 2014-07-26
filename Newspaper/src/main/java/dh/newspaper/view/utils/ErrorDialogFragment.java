@@ -30,7 +30,7 @@ public class ErrorDialogFragment extends DialogFragment
         
         return dlg;
     }
-	
+
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState)
 	{

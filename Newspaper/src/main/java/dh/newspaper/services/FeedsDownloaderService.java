@@ -15,7 +15,8 @@ import dh.newspaper.MainActivity;
 import dh.newspaper.R;
 import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
-import dh.tool.thread.prifo.PrifoExecutors;
+import dh.tool.thread.prifo.PrifoExecutor;
+import dh.tool.thread.prifo.PrifoExecutorFactory;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
 import javax.inject.Inject;
@@ -48,8 +49,8 @@ public class FeedsDownloaderService extends Service {
 	}
 
 	@Inject RefData mRefData;
-	private ExecutorService mArticlesLoader = PrifoExecutors.newCachedThreadExecutor(1, Constants.THREAD_ARTICLES_LOADER);
-	private ExecutorService mSelectTagLoader = PrifoExecutors.newCachedThreadExecutor(1, 2);
+	private PrifoExecutor mArticlesLoader = PrifoExecutorFactory.newPrifoExecutor(1, Constants.THREAD_ARTICLES_LOADER);
+	private PrifoExecutor mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(1, 2);
 
 	public void downloadAll() {
 		new AsyncTask<Object, Object, Boolean>() {
