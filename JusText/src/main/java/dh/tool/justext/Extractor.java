@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.concurrent.CancellationException;
 
 public class Extractor {
-	Logger log = LoggerFactory.getLogger(Extractor.class);
+	private static final Logger log = LoggerFactory.getLogger(Extractor.class);
 
 	private PerfWatcher pw;
 	private Configuration conf;
