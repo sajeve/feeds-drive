@@ -1,5 +1,9 @@
 package dh.tool.thread.prifo;
 
+import dh.tool.common.PerfWatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A {@link PrifoTask} must implement {@link #run()} which constantly check for {@link #isCancelled()}
  * so that the task can properly terminate as soon as the {@link #cancel()} is called.
@@ -15,13 +19,14 @@ package dh.tool.thread.prifo;
  * Created by hiep on 12/06/2014.
  */
 public abstract class PrifoTask implements IPrifosable, Comparable {
-//	private static final String TAG = PrifoTask.class.getName();
+	//private static final String TAG = PrifoTask.class.getName();
+	private static final Logger log = LoggerFactory.getLogger(PrifoTask.class);
 
 	private volatile int priority;
 	private volatile boolean focused;
 	private volatile boolean cancelled = false;
 
-//	private final Stopwatch insideSw = Stopwatch.createUnstarted();
+	private final PerfWatcher pw = new PerfWatcher(log, getMissionId());
 
 	@Override
 	public int getPriority() {
@@ -44,29 +49,11 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 
 	@Override
 	public void onEnterQueue(PrifoQueue queue) {
-//		try {
-//			if (Constants.DEBUG) {
-//				insideSw.start();
-//			}
-//		}
-//		catch (Exception ex) {
-//			Log.w(TAG, ex);
-//		}
+		pw.t("Enter-Queue (size = "+queue.size()+")");
 	}
 	@Override
 	public void onDequeue(PrifoQueue queue) {
-//		try {
-//			if (Constants.DEBUG) {
-//				Log.v(TAG, String.format("Poll (inQueue=%d ms, priority=%d%s) N=%d - %s",
-//						insideSw.elapsed(TimeUnit.MILLISECONDS),
-//						getPriority(),
-//						isFocused() ? " focused" : "",
-//						queue.size(), this.getMissionId()));
-//			}
-//		}
-//		catch (Exception ex) {
-//			Log.w(TAG, ex);
-//		}
+		pw.t("De-Queue (size = "+queue.size()+")");
 	}
 
 	@Override
