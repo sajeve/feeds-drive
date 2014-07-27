@@ -34,29 +34,29 @@
 
 	<style name="Feed">
 		<item name="android:textSize">14sp</item>
-		<item name="android:textColor">@android:color/primary_text_light</item>
+		<item name="android:textColor">@color/gray_text</item>
 	</style>
 
-	<style name="Feed.Title">
+	<style name="Feed.Title" parent="Feed">
 		<item name="android:textSize">16sp</item>
 		<item name="android:textStyle">bold</item>
-		<item name="android:textColor">@android:color/primary_text_light</item>
+		<item name="android:textColor">@color/gray_text</item>
 		<item name="android:fontFamily">sans-serif-condensed</item>
 	</style>
 
-	<style name="Feed.TitleSmall">
+	<style name="Feed.TitleSmall" parent="Feed">
 		<item name="android:textSize">12sp</item>
 		<item name="android:textStyle">bold</item>
 	</style>
 
-	<style name="Feed.Date">
+	<style name="Feed.Date" parent="Feed">
 		<item name="android:textSize">12sp</item>
-		<item name="android:textColor">@android:color/primary_text_light</item>
+		<item name="android:textColor">@color/gray_text</item>
 	</style>
 
-	<style name="Feed.Content">
+	<style name="Feed.Content" parent="Feed">
 		<item name="android:textSize">12sp</item>
-		<item name="android:textColor">@android:color/secondary_text_light</item>
+		<item name="android:textColor">@color/gray_secondary</item>
 	</style>
 
 
@@ -64,23 +64,23 @@
 
 	<style name="Article">
 		<item name="android:textSize">14sp</item>
-		<item name="android:textColor">@android:color/primary_text_light</item>
+		<item name="android:textColor">@color/gray_text</item>
 	</style>
 
-	<style name="Article.Title">
+	<style name="Article.Title" parent="Article">
 		<item name="android:textSize">20sp</item>
 		<item name="android:textStyle">bold</item>
-		<item name="android:textColor">@android:color/primary_text_light</item>
+		<item name="android:textColor">@color/gray_text</item>
 		<item name="android:fontFamily">sans-serif-condensed</item>
 	</style>
 
-	<style name="Article.Info">
+	<style name="Article.Info" parent="Article">
 		<item name="android:textSize">12sp</item>
-		<item name="android:textColor">@android:color/primary_text_light</item>
+		<item name="android:textColor">@color/gray_text</item>
 	</style>
 
-	<style name="Article.Info.Gray">
-		<item name="android:textColor">@android:color/secondary_text_light</item>
+	<style name="Article.Info.Gray" parent="Article">
+		<item name="android:textColor">@color/gray_secondary</item>
 	</style>
 
 	<style name="LabelTop">
@@ -104,7 +104,15 @@
 		<item name="dividerPadding">12dip</item>
 		<item name="background">@null</item>
 	</style>-->
-	<style name="ButtonBar.OK" parent="@android:style/Holo.ButtonBar">
+	<!--<style name="ButtonBar.OK" parent="@android:style/Holo.ButtonBar">
 		<item name="background">@android:color/holo_blue_dark</item>
+	</style>-->
+	<style name="ButtonBar" parent="android:ButtonBar">
+		<item name="android:background">?android:attr/selectableItemBackground</item>
+	</style>
+	<style name="ButtonBar.Accent" parent="ButtonBar">
+		<item name="android:background">@color/primary_500</item>
+		<item name="android:textStyle">bold</item>
+		<item name="android:textColor">@color/white_text</item>
 	</style>
 </resources>

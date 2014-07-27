@@ -20,6 +20,6 @@
 
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
        android:shape="rectangle">
-    <solid android:color="@color/demo_card_background_gray1"/>
+    <solid android:color="@color/gray_divider"/>
     <corners android:radius="@dimen/card_background_default_radius"/>
 </shape>

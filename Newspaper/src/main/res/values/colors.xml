@@ -18,30 +18,44 @@
   -->
 
 <resources>
+	<color name="primary_50">#d0f8ce</color>
+	<color name="primary_100">#a3e9a4</color>
+	<color name="primary_200">#72d572</color>
+	<color name="primary_300">#42bd41</color>
+	<color name="primary_400">#2baf2b</color>
+	<color name="primary_500">#259b24</color>
+	<color name="primary_600">#0a8f08</color>
+	<color name="primary_700">#0a7e07</color>
+	<color name="primary_800">#056f00</color>
+	<color name="primary_900">#0d5302</color>
+	<color name="primary_A100">#a2f78d</color>
+	<color name="primary_A200">#5af158</color>
+	<color name="primary_A400">#14e715</color>
+	<color name="primary_A700">#12c700</color>
 
-    <color name="demo_title_section_textcolor">#2a84a5</color>
+	<color name="secondary_50">#e1f5fe</color>
+	<color name="secondary_100">#b3e5fc</color>
+	<color name="secondary_200">#81d4fa</color>
+	<color name="secondary_300">#4fc3f7</color>
+	<color name="secondary_400">#29b6f6</color>
+	<color name="secondary_500">#03a9f4</color>
+	<color name="secondary_600">#039be5</color>
+	<color name="secondary_700">#0288d1</color>
+	<color name="secondary_800">#0277bd</color>
+	<color name="secondary_900">#01579b</color>
+	<color name="secondary_A100">#80d8ff</color>
+	<color name="secondary_A200">#40c4ff</color>
+	<color name="secondary_A400">#00b0ff</color>
+	<color name="secondary_A700">#0091ea</color>
 
-    <!-- customize header standard title
-    <color name="card_text_color_header">#990066</color>
-    -->
+	<color name="gray_divider">#1f000000</color>
+	<color name="gray_hint">#42000000</color>
+	<color name="gray_secondary">#8a000000</color>
+	<color name="gray_text">#de000000</color>
 
-    <color name="carddemo_googlenowbirth_title">@android:color/holo_blue_dark</color>
-
-    <!-- Purchase -->
-    <color name="demo_purchase_normal">#ececec</color>
-    <color name="demo_purchase_pressed">#CC2A84A5</color>
-
-    <!-- color card -->
-    <color name="demo_card_background_yellow">#FFBB33</color>
-    <color name="demo_card_background_green_light">#98CC00</color>
-    <color name="demo_card_background_violet">#A966CC</color>
-    <color name="demo_card_background_cyan">#33B4E4</color>
-    <color name="demo_card_background_red">#FF4343</color>
-	<color name="demo_card_background_gray1">#aaaaaa</color>
-
-    <!-- Birth new-->
-    <color name="demo_card_header_birth_color">#707070</color>
-    <color name="demo_card_line_birth_color">#E5E5E5</color>
-
-
+	<color name="white_divider">#1fffffff</color>
+	<color name="white_hint">#42ffffff</color>
+	<color name="white_secondary">#8affffff</color>
+	<color name="white_text">#deffffff</color>
+	
 </resources>

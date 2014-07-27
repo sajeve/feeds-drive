@@ -1,18 +1,23 @@
 package dh.newspaper.event;
 
 import dh.newspaper.adapter.SearchFeedsResultAdapter;
+import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
 
 /**
- * Tell GUI to update search result
+ * This event is sent when user click on the subscribe button
  * Created by hiep on 4/06/2014.
  */
 public class SubscribeClickedEvent<SearchFeedsResultAdapter> extends BaseEvent<SearchFeedsResultAdapter> {
-	public SubscribeClickedEvent(SearchFeedsResultAdapter sender, String feedUrl) {
-		super(sender, "Subscribe", feedUrl);
+
+	SearchFeedsResult.ResponseData.Entry feedsSource;
+
+	public SubscribeClickedEvent(SearchFeedsResultAdapter sender, SearchFeedsResult.ResponseData.Entry feedsSource) {
+		super(sender, "Subscribe", feedsSource.getUrl());
+		this.feedsSource = feedsSource;
 	}
 
-	public String getFeedUrl() {
-		return getFlowId();
+	public SearchFeedsResult.ResponseData.Entry getFeedsSource() {
+		return feedsSource;
 	}
 }

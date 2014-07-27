@@ -10,9 +10,7 @@ import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SearchFeedsEvent;
 import dh.newspaper.model.Feeds;
-import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
-import dh.newspaper.model.generated.SubscriptionDao;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.NetworkUtils;
@@ -308,7 +306,7 @@ public class SearchFeedsTask extends PrifoTask {
 	}
 
 	private Subscription findSubscription(String url) {
-		for(Subscription sub : refData.getActiveSubscription()) {
+		for(Subscription sub : refData.getSubscriptions()) {
 			if (StrUtils.equalsIgnoreCases(sub.getFeedsUrl(), url) || StrUtils.equalsIgnoreCases(sub.getFeedsUrl(), url+"/")) {
 				return sub;
 			}

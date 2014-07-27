@@ -1,6 +1,7 @@
 package dh.newspaper.view;
 
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -131,9 +132,9 @@ public class SubscriptionActivity extends Activity {
 
 	public void onEventMainThread(SubscribeClickedEvent event) {
 		try {
-			Toast.makeText(this, event.getFeedUrl(), Toast.LENGTH_LONG).show();
-
-
+			//Toast.makeText(this, event.getFeedsSourceUrl(), Toast.LENGTH_LONG).show();
+			SubscriptionDialog subDlg = SubscriptionDialog.newInstance(event.getFeedsSource());
+			subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
 			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);

@@ -2,6 +2,8 @@ package dh.newspaper.event;
 
 import com.google.common.base.Strings;
 
+import java.io.Serializable;
+
 /**
  * Created by hiep on 11/05/2014.
  */

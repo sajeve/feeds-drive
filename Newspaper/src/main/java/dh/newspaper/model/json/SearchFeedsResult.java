@@ -5,13 +5,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dh.newspaper.model.generated.Subscription;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
+ * The json structure of search result came from Google API
+ * with some more attribute, to hold view state.
  * Created by hiep on 22/07/2014.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SearchFeedsResult {
+public class SearchFeedsResult implements Serializable {
 	private ResponseData responseData;
 	private String responseDetails;
 	private Integer responseStatus;
@@ -62,7 +65,7 @@ public class SearchFeedsResult {
 		return this.getResponseData().getEntries().get(position);
 	}
 
-	public static class ResponseData {
+	public static class ResponseData implements Serializable {
 		private List<Entry> entries;
 		private String query;
 
@@ -82,7 +85,11 @@ public class SearchFeedsResult {
 			this.query = query;
 		}
 
-		public static class Entry {
+		/**
+		 * Hold info about a feed source. The {@link #subscription} won't null
+		 * if the feed source had been already subscribed
+		 */
+		public static class Entry implements Serializable {
 			private String contentSnippet;
 			private String link;
 			private String title;

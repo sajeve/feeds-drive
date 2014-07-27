@@ -63,16 +63,16 @@ public class RefData {
 		checkAccessDiskOnMainThread();
 
 		Stopwatch sw = Stopwatch.createStarted();
-		loadActiveSubscriptions();
+		loadSubscriptions();
 		mTags = new TreeSet<String>();
-		for (Subscription sub : getActiveSubscription()) {
+		for (Subscription sub : getSubscriptions()) {
 			Iterable<String> subTags = Splitter.on('|').omitEmptyStrings().split(sub.getTags());
 			for (String tag : subTags) {
 				mTags.add(tag);
 			}
 		}
 
-		Log.i(TAG, "Found " + mTags.size() + " tags from " + getActiveSubscription().size() + " active subscriptions ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+		Log.i(TAG, "Found " + mTags.size() + " tags from " + getSubscriptions().size() + " active subscriptions ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 
 		return mTags;
 	}
@@ -81,17 +81,17 @@ public class RefData {
 	 * Must be called each time add/remove/update a subscription
 	 * @return
 	 */
-	public synchronized void loadActiveSubscriptions() {
+	public synchronized void loadSubscriptions() {
 		checkAccessDiskOnMainThread();
 		activeSubscriptions = mDaoSession.getSubscriptionDao().queryBuilder()
 				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE))
 				.list();
 	}
 
-	public List<Subscription> getActiveSubscription() {
-		if (activeSubscriptions == null) {
-			loadActiveSubscriptions();
-		}
+	public List<Subscription> getSubscriptions() {
+		/*if (activeSubscriptions == null) {
+			loadSubscriptions();
+		}*/
 		return activeSubscriptions;
 	}
 
@@ -100,9 +100,9 @@ public class RefData {
 	}*/
 
 	public TreeSet<String> getTags() {
-		if (activeSubscriptions == null) {
+		/*if (activeSubscriptions == null) {
 			loadTags();
-		}
+		}*/
 		return mTags;
 	}
 

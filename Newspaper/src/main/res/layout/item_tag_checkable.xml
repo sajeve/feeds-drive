@@ -5,7 +5,14 @@
 		android:checkMark="?android:attr/textCheckMark"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:text="lorem"/>
+		android:paddingTop="4dp"
+		android:paddingBottom="4dp"
+		android:paddingLeft="24dp"
+		android:paddingRight="24dp"
+		android:gravity="center_vertical"
+		android:text="lorem"
+		android:background="?android:selectableItemBackground"
+		/>
 
 
 <!--

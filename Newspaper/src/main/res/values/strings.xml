@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="PERIOD_YEAR_AGO">%s years ago</string>
     <string name="PERIOD_LAST_YEAR">Last year</string>
     <string name="PERIOD_MONTH_AGO">%s months ago</string>
@@ -26,8 +25,9 @@
     <string name="encoding">Encoding</string>
     <string name="language">Language</string>
     <string name="title_activity_subscription">Subscription</string>
+	<string name="title_tag_selector">Select category</string>
     <string name="SEARCH_FAILED" formatted="false">Failed search query %s: %s</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
-	<string name="add">Add...</string>
+	<string name="add">Add new Category...</string>
 
 </resources>

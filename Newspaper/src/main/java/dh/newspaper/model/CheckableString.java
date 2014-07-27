@@ -36,4 +36,24 @@ public class CheckableString implements Serializable {
 	public void setChecked(boolean checked) {
 		this.checked = checked;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof CheckableString)) return false;
+
+		CheckableString that = (CheckableString) o;
+
+		if (checked != that.checked) return false;
+		if (text != null ? !text.equals(that.text) : that.text != null) return false;
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = text != null ? text.hashCode() : 0;
+		result = 31 * result + (checked ? 1 : 0);
+		return result;
+	}
 }

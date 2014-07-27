@@ -1,5 +1,6 @@
 package dh.newspaper.test;
 
+import android.os.Bundle;
 import android.test.ActivityInstrumentationTestCase2;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.MainActivity;
@@ -28,4 +29,9 @@ public class EventBusBasicTest extends ActivityInstrumentationTestCase2<MainActi
 	public void onEvent(String i) {
 		System.out.println("Received "+i);
 	}
+
+	/*public void testBundle() {
+		Bundle bundle = new Bundle();
+
+	}*/
 }

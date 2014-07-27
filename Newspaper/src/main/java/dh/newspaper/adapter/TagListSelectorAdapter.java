@@ -8,18 +8,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.CheckedTextView;
-import android.widget.ImageButton;
-import android.widget.TextView;
+import android.widget.*;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.R;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SubscribeClickedEvent;
+import dh.newspaper.model.AddNewItem;
 import dh.newspaper.model.CheckableString;
 import dh.newspaper.model.json.SearchFeedsResult;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,23 +30,23 @@ public class TagListSelectorAdapter extends BaseAdapter {
 
 	private final Context context;
 	private final LayoutInflater inflater;
-	private Handler mainThreadHandler;
-	List<CheckableString> data;
+	//private Handler mainThreadHandler;
+	private List<CheckableString> data;
 
 	public TagListSelectorAdapter(Context context) {
 		this.context = context;
 		inflater = LayoutInflater.from(context);
-		mainThreadHandler = new Handler();
+		//mainThreadHandler = new Handler();
 	}
 
 	@Override
 	public int getCount() {
-		return data.size();
+		return data==null ? 0 : data.size();
 	}
 
 	@Override
 	public Object getItem(final int position) {
-		return data.get(position);
+		return data==null ? null : data.get(position);
 	}
 
 	@Override
@@ -61,7 +60,7 @@ public class TagListSelectorAdapter extends BaseAdapter {
 			/* create (or get) view */
 			View v;
 			CheckableString itemData = (CheckableString)getItem(position);
-			boolean isSpecialItem = itemData instanceof CheckableString;
+			boolean isSpecialItem = itemData instanceof AddNewItem;
 			if (convertView == null) {
 				v = createViewItem(parent, isSpecialItem);
 			} else {
@@ -74,6 +73,7 @@ public class TagListSelectorAdapter extends BaseAdapter {
 				((CheckedTextView)v).setText(itemData.getText());
 				((CheckedTextView)v).setChecked(itemData.isChecked());
 			}
+			v.setTag(itemData);
 
 			return v;
 		} catch (Exception ex) {
@@ -91,9 +91,30 @@ public class TagListSelectorAdapter extends BaseAdapter {
 	}
 
 	private View createViewItem(ViewGroup parent, boolean isSpecialItem) {
-		return isSpecialItem ?
+		View v = isSpecialItem ?
 				inflater.inflate(R.layout.item_tag_new, parent, false)
 				: inflater.inflate(R.layout.item_tag_checkable, parent, false);
+
+		//if user click on item: reverse the selection and update the view
+		v.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				CheckableString itemData = (CheckableString)v.getTag();
+				boolean isSpecialItem = itemData instanceof AddNewItem;
+				if (isSpecialItem) {
+					//TODO send event to add category
+					Toast.makeText(context, "Add category", Toast.LENGTH_SHORT).show();
+					//EventBus.getDefault().post( );
+				}
+				else {
+					//reverse the selection
+					itemData.setChecked(!itemData.isChecked());
+					//update the view
+					((CheckedTextView)v).setChecked(itemData.isChecked());
+				}
+			}
+		});
+		return v;
 	}
 
 	public List<CheckableString> getData() {
@@ -103,5 +124,18 @@ public class TagListSelectorAdapter extends BaseAdapter {
 	public void setData(List<CheckableString> data) {
 		this.data = data;
 		notifyDataSetChanged();
+	}
+
+	public List<String> getSelectedTags() {
+		if (data==null) {
+			return null;
+		}
+		List<String> ret = new ArrayList<String>();
+		for (CheckableString cs : data) {
+			if (cs.isChecked()) {
+				ret.add(cs.getText());
+			}
+		}
+		return ret;
 	}
 }

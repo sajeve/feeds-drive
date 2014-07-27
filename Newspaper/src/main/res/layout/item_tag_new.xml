@@ -4,8 +4,16 @@
 		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
+		android:paddingTop="4dp"
+		android:paddingBottom="4dp"
+		android:paddingLeft="24dp"
+		android:paddingRight="24dp"
+		android:gravity="center_vertical"
+		style="@android:style/TextAppearance.Medium"
 		android:drawableRight="@drawable/add_259b24ff"
-		android:text="@string/add"/>
+		android:text="@string/add"
+		android:background="?android:selectableItemBackground"
+		/>
 
 <!--
 <LinearLayout
