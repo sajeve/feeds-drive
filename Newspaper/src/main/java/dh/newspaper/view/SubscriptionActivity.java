@@ -1,7 +1,6 @@
 package dh.newspaper.view;
 
 import android.app.Activity;
-import android.app.DialogFragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -12,9 +11,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
+import de.keyboardsurfer.android.widget.crouton.Crouton;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.R;
@@ -23,7 +22,7 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.event.SearchFeedsEvent;
 import dh.newspaper.event.SubscribeClickedEvent;
 import dh.newspaper.services.BackgroundTasksManager;
-import dh.newspaper.workflow.SearchFeedsTask;
+import dh.newspaper.workflow.SearchFeedsWorkflow;
 import dh.tool.common.StrUtils;
 
 import javax.inject.Inject;
@@ -98,16 +97,16 @@ public class SubscriptionActivity extends Activity {
 			}
 		});
 
-		lastTask = mBackgroundTasksManager.getActiveSearchFeedsTask();
+		lastTask = mBackgroundTasksManager.getActiveSearchFeedsWorkflow();
 		setGui(lastTask);
     }
 
-	private SearchFeedsTask lastTask;
+	private SearchFeedsWorkflow lastTask;
 
 	public void onEventMainThread(SearchFeedsEvent event) {
 		try {
 			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_START_LOADING)) {
-				lastTask = (SearchFeedsTask)event.getSender();
+				lastTask = (SearchFeedsWorkflow)event.getSender();
 				swipeRefresh.setRefreshing(true);
 			}
 			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_REFRESH)) {
@@ -132,7 +131,6 @@ public class SubscriptionActivity extends Activity {
 
 	public void onEventMainThread(SubscribeClickedEvent event) {
 		try {
-			//Toast.makeText(this, event.getFeedsSourceUrl(), Toast.LENGTH_LONG).show();
 			SubscriptionDialog subDlg = SubscriptionDialog.newInstance(event.getFeedsSource());
 			subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
 		} catch (Exception ex) {
@@ -141,10 +139,10 @@ public class SubscriptionActivity extends Activity {
 		}
 	}
 
-	private void setGui(SearchFeedsTask currentTask) {
+	private void setGui(SearchFeedsWorkflow currentTask) {
 		if (currentTask == null) {return;}
 
-		swipeRefresh.setRefreshing(!currentTask.isDone() || currentTask.isCancelled());
+		swipeRefresh.setRefreshing(currentTask.isRunning());
 
 		SearchFeedsEvent event = currentTask.getSearchResultEvent();
 		if (event==null) { return; }
@@ -165,7 +163,7 @@ public class SubscriptionActivity extends Activity {
 	@Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
-		lastTask = mBackgroundTasksManager.getActiveSearchFeedsTask();
+		lastTask = mBackgroundTasksManager.getActiveSearchFeedsWorkflow();
 		setGui(lastTask);
 	}
 
@@ -179,5 +177,15 @@ public class SubscriptionActivity extends Activity {
 	public void onPause() {
 		super.onPause();
 		EventBus.getDefault().unregister(this);
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		/*
+		workaround: cancel all scheduled Croutons.
+		https://github.com/keyboardsurfer/Crouton
+		 */
+		Crouton.cancelAllCroutons();
 	}
 }

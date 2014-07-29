@@ -57,13 +57,11 @@ dependencies {
 	compile fileTree(dir: 'libs', include: ['*.jar', '*.properties'])
 	compile project(':SqliteAssetHelper')
 	compile project(':AndroidUniversalImageLoader')
-	//compile project(':boilerpipe')
+	compile project(':Crouton')
 	compile project(':JusText')
 	compile(name:'android.joda-2.3.3-SNAPSHOT', ext:'aar')
-
 	compile 'com.android.support:support-v4:20.+'
-	//compile 'com.android.support:cardview-v7:+'
-	compile 'com.github.gabrielemariotti.cards:library:1.+'
+
 	compile 'org.jsoup:jsoup:1.7.3'
 	compile 'com.google.guava:guava:15.0'
 	compile 'com.squareup.dagger:dagger:1.2.1'
@@ -76,7 +74,10 @@ dependencies {
 	//compile 'org.slf4j:slf4j-android:1.7+' //official slf4j implementation
 	compile 'de.psdev.slf4j-android-logger:slf4j-android-logger:1.+'
 
+	//compile('de.keyboardsurfer.android.widget:crouton:1.+');
 
+	//compile 'com.android.support:cardview-v7:+'
+	//compile 'com.github.gabrielemariotti.cards:library:1.+'
 	//compile 'org.lucasr.smoothie:smoothie:0.1.+'
 	//compile 'com.octo.android.robospice:robospice:1.+'
 	/*compile 'net.danlew:android.joda:2.3.+'*/
@@ -87,5 +88,4 @@ dependencies {
 	//compile 'com.android.support:appcompat-v7:19.1.+'
 	//compile 'com.google.code.android-rome-feed-reader:android-rome-feed-reader:1.0.0-r2'
 	//compile project(':EtsyStaggeredGrid')
-
 }

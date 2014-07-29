@@ -82,7 +82,7 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 							Object[] dataHolder = (Object[]) v.getTag();
 							if (dataHolder!=null) {
 								SearchFeedsResult.ResponseData.Entry entry = (SearchFeedsResult.ResponseData.Entry)dataHolder[0];
-								EventBus.getDefault().post(new SubscribeClickedEvent(SearchFeedsResultAdapter.this, entry));
+								EventBus.getDefault().post(new SubscribeClickedEvent(entry));
 							}
 						}
 						catch (Exception ex) {
@@ -117,7 +117,7 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 					subscribe.setImageDrawable(mContext.getResources().getDrawable(res));
 				}
 
-				//the subscribe button hold all the information
+				//the saveSubscription button hold all the information
 				subscribe.setTag(new Object[] {itemData, itemData.getSubscription()});
 			}
 

@@ -140,4 +140,8 @@ public class StrUtils {
 	public static String hostName(String address) throws MalformedURLException {
 		return (new URL(address)).getHost();
 	}
+
+	public static String removeTrailingSlash(String str) {
+		return str.replaceFirst("/*$", "");
+	}
 }

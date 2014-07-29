@@ -1,0 +1,25 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "20.0.0"
+
+    defaultConfig {
+        applicationId "de.keyboardsurfer.android.widget.crouton"
+        minSdkVersion 8
+        targetSdkVersion 20
+        versionCode 7
+        versionName "1.8.5"
+    }
+    buildTypes {
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+	compile 'com.android.support:support-v4:20.+'
+}

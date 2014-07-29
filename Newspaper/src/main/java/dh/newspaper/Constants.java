@@ -43,6 +43,9 @@ public class Constants {
 	public static final String SUBJECT_ARTICLE_START_LOADING = "Article.StartLoading";
 	public static final String SUBJECT_ARTICLE_REFRESH = "Article.Refresh";
 	public static final String SUBJECT_ARTICLE_DONE_LOADING = "Article.DoneLoading";
+	public static final String SUBJECT_SAVE_SUBSCRIPTION_PROGRESS_MESSAGE = "SaveSubscrption.SendProgressMessage";
+	public static final String SUBJECT_SAVE_SUBSCRIPTION_DONE = "SaveSubscrption.Done";
+	public static final String SUBJECT_SAVE_SUBSCRIPTION_ERROR = "SaveSubscrption.SendError";
 
 	public static final int EVENT_DELAYED = 200;
 	public static final String ACTIONBAR_TITLE = "ActionBar.Title";
@@ -57,7 +60,7 @@ public class Constants {
 	public static final int ARTICLE_MIN_LENGTH = 200; //90
 
 
-	public static final boolean ENABLE_ALARM = false;
+	public static final boolean ENABLE_ALARM = true;
 	public static final long SERVICE_INTERVAL = DEBUG ? 5*60*1000 : AlarmManager.INTERVAL_HOUR; //AlarmManager.INTERVAL_DAY
 	public static final long SERVICE_START_AT = 5000; //updateTime.getTimeInMillis(),
 

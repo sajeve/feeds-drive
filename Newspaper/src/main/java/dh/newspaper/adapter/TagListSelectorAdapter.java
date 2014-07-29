@@ -18,8 +18,7 @@ import dh.newspaper.model.CheckableString;
 import dh.newspaper.model.json.SearchFeedsResult;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * The tag list, with last element is "Add new.."
@@ -31,7 +30,7 @@ public class TagListSelectorAdapter extends BaseAdapter {
 	private final Context context;
 	private final LayoutInflater inflater;
 	//private Handler mainThreadHandler;
-	private List<CheckableString> data;
+	private ArrayList<CheckableString> data;
 
 	public TagListSelectorAdapter(Context context) {
 		this.context = context;
@@ -71,7 +70,8 @@ public class TagListSelectorAdapter extends BaseAdapter {
 			/* bind value to view */
 			if (!isSpecialItem) {
 				((CheckedTextView)v).setText(itemData.getText());
-				((CheckedTextView)v).setChecked(itemData.isChecked());
+				//((CheckedTextView)v).setChecked(itemData.isChecked());
+				((ListView)parent).setItemChecked(position, itemData.isChecked());
 			}
 			v.setTag(itemData);
 
@@ -117,20 +117,20 @@ public class TagListSelectorAdapter extends BaseAdapter {
 		return v;
 	}
 
-	public List<CheckableString> getData() {
+	public ArrayList<CheckableString> getData() {
 		return data;
 	}
 
-	public void setData(List<CheckableString> data) {
+	public void setData(ArrayList<CheckableString> data) {
 		this.data = data;
 		notifyDataSetChanged();
 	}
 
-	public List<String> getSelectedTags() {
+	public Set<String> getSelectedTags() {
 		if (data==null) {
 			return null;
 		}
-		List<String> ret = new ArrayList<String>();
+		Set<String> ret = new TreeSet<String>();
 		for (CheckableString cs : data) {
 			if (cs.isChecked()) {
 				ret.add(cs.getText());

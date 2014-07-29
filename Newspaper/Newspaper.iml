@@ -69,7 +69,6 @@
     <orderEntry type="library" exported="" name="jackson-annotations-2.3.0" level="project" />
     <orderEntry type="library" exported="" name="jsoup-1.7.3" level="project" />
     <orderEntry type="library" exported="" name="support-v4-20.0.0" level="project" />
-    <orderEntry type="library" exported="" name="library-1.8.0" level="project" />
     <orderEntry type="library" exported="" name="dagger-compiler-1.2.1" level="project" />
     <orderEntry type="library" exported="" name="slf4j-android-logger-1.0.4" level="project" />
     <orderEntry type="library" exported="" name="slf4j-api-1.7.7" level="project" />
@@ -79,6 +78,7 @@
     <orderEntry type="library" exported="" name="support-annotations-20.0.0" level="project" />
     <orderEntry type="library" exported="" name="android.joda-2.3.3-SNAPSHOT" level="project" />
     <orderEntry type="library" exported="" name="okhttp-1.5.4" level="project" />
+    <orderEntry type="module" module-name="Crouton" exported="" />
     <orderEntry type="module" module-name="JusText" exported="" />
     <orderEntry type="module" module-name="ToolsPack" exported="" />
     <orderEntry type="module" module-name="AndroidUniversalImageLoader" exported="" />

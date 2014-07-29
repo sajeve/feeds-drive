@@ -5,21 +5,19 @@ import com.google.common.base.Strings;
 import java.io.Serializable;
 
 /**
+ * A context aware version of RawEvent, hold reference to the sender.
+ * This one is not serializable so, don't use it to persist Activity state
  * Created by hiep on 11/05/2014.
  */
-public class BaseEvent<T> {
-	private String flowId;
+public class BaseEvent<T> extends RawEvent {
 	private T sender;
-	private String subject;
-
 
 	public BaseEvent(T sender, String subject, String flowId) {
+		super(subject, flowId);
 		if (sender == null) {
 			throw new IllegalStateException("Null event sender");
 		}
 		this.sender = sender;
-		this.subject = subject;
-		this.flowId = flowId;
 	}
 
 	public BaseEvent(T sender) {
@@ -34,19 +32,14 @@ public class BaseEvent<T> {
 		return sender;
 	}
 
-	public String getSubject() {
-		return subject;
-	}
-
-	public String getFlowId() {
-		return flowId;
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("[Event sender=" + this.getSender());
 		if (!Strings.isNullOrEmpty(getSubject())) {
 			sb.append(" subject='"+this.getSubject()+"'");
+		}
+		if (!Strings.isNullOrEmpty(getFlowId())) {
+			sb.append(" flowId='" + this.getFlowId() + "'");
 		}
 		sb.append("]");
 		return sb.toString();

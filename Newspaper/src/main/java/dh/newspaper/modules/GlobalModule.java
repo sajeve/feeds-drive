@@ -10,7 +10,8 @@ import dh.newspaper.parser.SubscriptionFactory;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.services.FeedsDownloaderService;
 import dh.newspaper.view.*;
-import dh.newspaper.workflow.SearchFeedsTask;
+import dh.newspaper.workflow.SaveSubscriptionWorkflow;
+import dh.newspaper.workflow.SearchFeedsWorkflow;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
@@ -35,7 +36,8 @@ import java.security.NoSuchAlgorithmException;
 			SubscriptionFactory.class,
 			SelectArticleWorkflow.class,
 			SelectTagWorkflow.class,
-			SearchFeedsTask.class,
+			SearchFeedsWorkflow.class,
+			SaveSubscriptionWorkflow.class,
 			ContentParser.class,
 			BackgroundTasksManager.class,
 			FeedsDownloaderService.class

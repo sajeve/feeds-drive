@@ -2,8 +2,9 @@ package dh.newspaper.model.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.Subscription;
+import dh.tool.common.StrUtils;
 
 import java.io.Serializable;
 import java.util.List;
@@ -87,14 +88,24 @@ public class SearchFeedsResult implements Serializable {
 
 		/**
 		 * Hold info about a feed source. The {@link #subscription} won't null
-		 * if the feed source had been already subscribed
+		 * if the feed source had been already subscribed.
+		 *
+		 * The validity is checked (true) if the page (feeds source) is successfully parsed
 		 */
 		public static class Entry implements Serializable {
 			private String contentSnippet;
+			/**
+			 * Website url
+			 */
 			private String link;
 			private String title;
+			/**
+			 * Feeds Source URL
+			 */
 			private String url;
+			private FeedsSourceValidity validity = FeedsSourceValidity.UNKNOWN;
 			private Subscription subscription;
+			private Feeds feeds;
 
 			public String getContentSnippet() {
 				return contentSnippet;
@@ -120,12 +131,15 @@ public class SearchFeedsResult implements Serializable {
 				this.title = title;
 			}
 
+			/**
+			 * URL of Feeds Source
+			 */
 			public String getUrl() {
 				return url;
 			}
 
 			public void setUrl(String url) {
-				this.url = url;
+				this.url = StrUtils.removeTrailingSlash(url);
 			}
 
 			@JsonIgnore
@@ -137,6 +151,25 @@ public class SearchFeedsResult implements Serializable {
 			public void setSubscription(Subscription subscription) {
 				this.subscription = subscription;
 			}
+
+			@JsonIgnore
+			public FeedsSourceValidity getValidity() {
+				return subscription!=null ? FeedsSourceValidity.OK : validity;
+			}
+
+			@JsonIgnore
+			public void setValidity(FeedsSourceValidity validity) {
+				this.validity = validity;
+			}
+			@JsonIgnore
+			public Feeds getFeeds() {
+				return feeds;
+			}
+			@JsonIgnore
+			public void setFeeds(Feeds feeds) {
+				this.feeds = feeds;
+			}
 		}
 	}
+	public static enum FeedsSourceValidity {OK, KO, UNKNOWN};
 }

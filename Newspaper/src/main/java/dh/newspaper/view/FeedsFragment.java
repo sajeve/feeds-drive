@@ -192,7 +192,10 @@ public class FeedsFragment extends Fragment {
 			return;
 		}
 		try {
-
+			if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
+				//this event is fired by a sender which is no more concerning by this fragment -> do nothing
+				return;
+			}
 			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_FEEDS_START_LOADING)) {
 				if (Constants.DEBUG) {
 					swRfle = Stopwatch.createStarted();
@@ -203,11 +206,10 @@ public class FeedsFragment extends Fragment {
 				setData(event.getSender());
 				return;
 			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_FEEDS_REFRESH)) {
-				if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
+				/*if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
 					//this event is fired by a sender which is no more concerning by this fragment -> do nothing
 					return;
-				}
-
+				}*/
 				if (Constants.DEBUG) {
 					Log.d(TAG, "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag());
 					swRfle.reset().start();
@@ -216,12 +218,11 @@ public class FeedsFragment extends Fragment {
 				mGridViewAdapter.notifyDataSetChanged();
 				return;
 			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_FEEDS_DONE_LOADING)) {
-				if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
+				/*if (!StrUtils.equalsString(mCurrentTag, event.getSender().getTag())) {
 					//this event is fired by a sender which is no more concerning by this fragment -> do nothing
 					Log.d(TAG, "FeedsFragment DONE ignored " + event.getSender().getTag() + " <> currentTag=" + mCurrentTag);
 					return;
-				}
-
+				}*/
 				if (Constants.DEBUG)
 					Log.d(TAG, "FeedsFragment DONE (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag());
 

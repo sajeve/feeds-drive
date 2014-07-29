@@ -24,11 +24,11 @@ public class PrifoBlockingQueue<E extends IPrifosable> extends AbstractQueue<E> 
 	private final Condition notEmpty = lock.newCondition();
 
 	@Override
-	public Iterator<E> iterator() {
+	public Iterator iterator() {
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
-			return Arrays.asList((E[])queue.toArray()).iterator();
+			return Arrays.asList(queue.toArray()).iterator();
 		} finally {
 			lock.unlock();
 		}

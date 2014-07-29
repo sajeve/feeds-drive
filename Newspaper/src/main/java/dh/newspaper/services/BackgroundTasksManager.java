@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
+import android.webkit.URLUtil;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
@@ -14,7 +15,11 @@ import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.model.generated.Article;
-import dh.newspaper.workflow.SearchFeedsTask;
+import dh.newspaper.model.generated.DaoSession;
+import dh.newspaper.model.json.SearchFeedsResult;
+import dh.newspaper.parser.ContentParser;
+import dh.newspaper.workflow.SaveSubscriptionWorkflow;
+import dh.newspaper.workflow.SearchFeedsWorkflow;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoExecutorFactory;
@@ -25,7 +30,9 @@ import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidParameterException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -54,7 +61,6 @@ public class BackgroundTasksManager implements Closeable {
 	//private ExecutorService mMainLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
 	@Inject RefData mRefData;
-
 	@Inject SharedPreferences mSharedPreferences;
 
 	private Handler mMainThreadHandler;
@@ -77,13 +83,13 @@ public class BackgroundTasksManager implements Closeable {
 		mInitThread = new AsyncTask<Object, Object, Boolean>() {
 			@Override
 			protected Boolean doInBackground(Object[] params) {
-				EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_START_LOADING));
+				EventBus.getDefault().post(new RefreshTagsListEvent(Constants.SUBJECT_TAGS_START_LOADING));
 				try {
 					mRefData.getLruDiscCache(); //setupLruDiscCache
 					mRefData.loadTags();
 				}
 				finally {
-					EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_REFRESH));
+					EventBus.getDefault().post(new RefreshTagsListEvent(Constants.SUBJECT_TAGS_REFRESH));
 				}
 				return true;
 			}
@@ -121,9 +127,9 @@ public class BackgroundTasksManager implements Closeable {
 			@Override
 			public void run() {
 				try {
-					EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_START_LOADING));
+					EventBus.getDefault().post(new RefreshTagsListEvent(Constants.SUBJECT_TAGS_START_LOADING));
 					mRefData.loadTags();
-					EventBus.getDefault().post(new RefreshTagsListEvent(BackgroundTasksManager.this, Constants.SUBJECT_TAGS_REFRESH));
+					EventBus.getDefault().post(new RefreshTagsListEvent(Constants.SUBJECT_TAGS_REFRESH));
 				} catch (Exception ex) {
 					Log.w(TAG, ex);
 				}
@@ -256,8 +262,7 @@ public class BackgroundTasksManager implements Closeable {
 		mMainThreadHandler.postDelayed(lastLoadArticleCall, Constants.EVENT_DELAYED);
 	}
 
-
-	private SearchFeedsTask activeSearchFeedsTask;
+	private SearchFeedsWorkflow activeSearchFeedsWorkflow;
 	public void searchFeedsSources(final String query) throws UnsupportedEncodingException {
 		if (Strings.isNullOrEmpty(query)) {
 			return;
@@ -266,9 +271,27 @@ public class BackgroundTasksManager implements Closeable {
 		if (activeSearchFeedsTask != null) {
 			activeSearchFeedsTask.cancel();
 		}*/
-		activeSearchFeedsTask = new SearchFeedsTask(mContext, query);
-		activeSearchFeedsTask.setFocus(true);
-		mMainLoader.executeUnique(activeSearchFeedsTask);
+		activeSearchFeedsWorkflow = new SearchFeedsWorkflow(mContext, query);
+		activeSearchFeedsWorkflow.setFocus(true);
+		mMainLoader.executeUnique(activeSearchFeedsWorkflow);
+	}
+
+	private SaveSubscriptionWorkflow activeSaveSubscriptionWorkflow;
+	public void saveSubscription(final SearchFeedsResult.ResponseData.Entry feedsSource, final Set<String> tags) {
+		if (feedsSource==null || !URLUtil.isValidUrl(feedsSource.getUrl())) {
+			if (Constants.DEBUG) {
+				throw new InvalidParameterException("Feeds Source invalid");
+			}
+			return; //nothing to do
+		}
+		if (tags==null || tags.size()==0) {
+			if (Constants.DEBUG) {
+				throw new InvalidParameterException("No Tags selected");
+			}
+			return; //nothing to do
+		}
+		activeSaveSubscriptionWorkflow = new SaveSubscriptionWorkflow(mContext, feedsSource, tags);
+		mMainLoader.executeUnique(activeSaveSubscriptionWorkflow);
 	}
 
 	public SelectTagWorkflow getActiveSelectTagWorkflow() {
@@ -277,8 +300,11 @@ public class BackgroundTasksManager implements Closeable {
 	public SelectArticleWorkflow getActiveSelectArticleWorkflow() {
 		return mSelectArticleWorkflow;
 	}
-	public SearchFeedsTask getActiveSearchFeedsTask() {
-		return activeSearchFeedsTask;
+	public SearchFeedsWorkflow getActiveSearchFeedsWorkflow() {
+		return activeSearchFeedsWorkflow;
+	}
+	public SaveSubscriptionWorkflow getActiveSaveSubscriptionWorkflow() {
+		return activeSaveSubscriptionWorkflow;
 	}
 
 	@Override
@@ -296,4 +322,5 @@ public class BackgroundTasksManager implements Closeable {
 			mInitThread.cancel(false);
 		}
 	}
+
 }

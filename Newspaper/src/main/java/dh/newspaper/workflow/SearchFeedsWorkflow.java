@@ -16,6 +16,7 @@ import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.NetworkUtils;
 import dh.tool.common.PerfWatcher;
 import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.OncePrifoTask;
 import dh.tool.thread.prifo.PrifoTask;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -43,17 +44,18 @@ import java.util.concurrent.locks.ReentrantLock;
  * Hold state of the Subscription activity:
  * - Search result {@link #getSearchResultEvent()}
  * - Search error {@link #getSearchResultEvent()}
- * - Progression {@link #isDone()}
+ *
+ * Post events:
+ * - {@link dh.newspaper.Constants#SUBJECT_SEARCH_FEEDS_START_LOADING}
+ * - {@link dh.newspaper.Constants#SUBJECT_SEARCH_FEEDS_REFRESH}
+ * - {@link dh.newspaper.Constants#SUBJECT_SEARCH_FEEDS_DONE_LOADING}
  *
  * Created by hiep on 23/07/2014.
  */
-public class SearchFeedsTask extends PrifoTask {
+public class SearchFeedsWorkflow extends OncePrifoTask {
 	//private static final String TAG = SearchFeedsTask.class.getName();
-	private static final Logger Log = LoggerFactory.getLogger(SearchFeedsTask.class);
+	private static final Logger Log = LoggerFactory.getLogger(SearchFeedsWorkflow.class);
 
-	private final ReentrantLock lock = new ReentrantLock();
-
-	private volatile boolean done = false;
 	private volatile SearchFeedsEvent searchResultEvent;
 
 	@Inject ObjectMapper objectMapper;
@@ -62,7 +64,7 @@ public class SearchFeedsTask extends PrifoTask {
 	private final String query;
 	private PerfWatcher pf;
 
-	public SearchFeedsTask(Context context, String query) {
+	public SearchFeedsWorkflow(Context context, String query) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		this.query = query;
 		this.pf = new PerfWatcher(Log, query);
@@ -74,13 +76,8 @@ public class SearchFeedsTask extends PrifoTask {
 	}
 
 	@Override
-	public void run() {
-		if (isCancelled()) { return; }
-
-		final ReentrantLock lock = this.lock;
-		lock.lock();
+	public void perform() {
 		try {
-			done = false;
 			searchResultEvent = new SearchFeedsEvent(this, Constants.SUBJECT_SEARCH_FEEDS_START_LOADING, query);
 			EventBus.getDefault().post(searchResultEvent);
 
@@ -92,12 +89,10 @@ public class SearchFeedsTask extends PrifoTask {
 			}
 		} catch (Exception ex) {
 			pf.error("Search error", ex);
-			done = true;
 			searchResultEvent = new SearchFeedsEvent(this, Constants.SUBJECT_SEARCH_FEEDS_DONE_LOADING, query, ex);
 			EventBus.getDefault().post(searchResultEvent);
 		} finally {
 			pf.dg("Search done");
-			lock.unlock();
 		}
 	}
 
@@ -253,6 +248,8 @@ public class SearchFeedsTask extends PrifoTask {
 		entry.setTitle(StrUtils.hostName(feeds.getUrl()));
 		entry.setLink(feeds.getUrl());
 		entry.setUrl(feedsLink);
+		entry.setValidity(SearchFeedsResult.FeedsSourceValidity.OK);
+		entry.setFeeds(feeds);
 
 		if (searchResult.getResponseData() == null) {
 			searchResult.setResponseData(new SearchFeedsResult.ResponseData());
@@ -296,7 +293,6 @@ public class SearchFeedsTask extends PrifoTask {
 	}
 
 	private void sendFinalResult(SearchFeedsResult searchResult) {
-		done = true;
 		searchResultEvent = new SearchFeedsEvent(this, Constants.SUBJECT_SEARCH_FEEDS_DONE_LOADING, query, searchResult);
 		EventBus.getDefault().post(searchResultEvent);
 	}
@@ -306,8 +302,9 @@ public class SearchFeedsTask extends PrifoTask {
 	}
 
 	private Subscription findSubscription(String url) {
+		url = StrUtils.removeTrailingSlash(url);
 		for(Subscription sub : refData.getSubscriptions()) {
-			if (StrUtils.equalsIgnoreCases(sub.getFeedsUrl(), url) || StrUtils.equalsIgnoreCases(sub.getFeedsUrl(), url+"/")) {
+			if (StrUtils.equalsIgnoreCases(StrUtils.removeTrailingSlash(sub.getFeedsUrl()), url)) {
 				return sub;
 			}
 		}
@@ -320,9 +317,5 @@ public class SearchFeedsTask extends PrifoTask {
 
 	public SearchFeedsEvent getSearchResultEvent() {
 		return searchResultEvent;
-	}
-
-	public boolean isDone() {
-		return done;
 	}
 }

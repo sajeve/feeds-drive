@@ -1,1 +1,1 @@
-include ':Newspaper', ':Generator', ':SqliteAssetHelper', ':AndroidUniversalImageLoader', ':JusText', ':JusTextDemo', ':ToolsPack', ':Readability'
+include ':Newspaper', ':Generator', ':SqliteAssetHelper', ':AndroidUniversalImageLoader', ':JusText', ':JusTextDemo', ':ToolsPack', ':Readability', ':Crouton'

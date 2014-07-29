@@ -26,7 +26,7 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 	private volatile boolean focused;
 	private volatile boolean cancelled = false;
 
-	private final PerfWatcher pw = new PerfWatcher(log, getMissionId());
+	private PerfWatcher pw;
 
 	@Override
 	public int getPriority() {
@@ -49,6 +49,7 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 
 	@Override
 	public void onEnterQueue(PrifoQueue queue) {
+		pw = new PerfWatcher(log, getMissionId());
 		pw.t("Enter-Queue (size = "+queue.size()+")");
 	}
 	@Override
