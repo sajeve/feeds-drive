@@ -49,13 +49,15 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 	@Override
 	public void perform() {
 		try {
-			sendProgressMessage("Checking feeds source validity: downloading.."); //TODO: translate
+			String feedsSourceUrl = feedsSource.getUrl();
+
+			sendProgressMessage("Checking feeds source validity: downloading.."+feedsSourceUrl); //TODO: translate
 			Thread.sleep(2000);
-			sendProgressMessage("Checking feeds source validity: parsing.."); //TODO: translate
+			sendProgressMessage("Checking feeds source validity: parsing.."+feedsSourceUrl); //TODO: translate
 			Thread.sleep(1000);
-			sendProgressMessage("Checking feeds source validity: parse OK"); //TODO: translate
+			sendProgressMessage("Checking feeds source validity: parse OK"+feedsSourceUrl); //TODO: translate
 			Thread.sleep(1000);
-			sendProgressMessage("Saving subscription..."); //TODO: translate
+			sendProgressMessage("Saving subscription..."+feedsSourceUrl); //TODO: translate
 			Thread.sleep(1000);
 			sendDone();
 		} catch (InterruptedException e) {
