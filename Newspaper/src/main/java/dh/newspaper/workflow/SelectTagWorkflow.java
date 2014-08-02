@@ -219,10 +219,14 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 			return false;
 		}
 
+
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
 			if (mSelectArticleQueryBuilder == null) {
+				return false;
+			}
+			if (mArticles==null || mArticles.size()==0) {
 				return false;
 			}
 
