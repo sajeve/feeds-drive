@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+		xmlns:app="http://schemas.android.com/apk/res-auto"
+		xmlns:tools="http://schemas.android.com/tools"
+		tools:context="dh.newspaper.MainActivity" >
+	<item android:id="@+id/action_search"
+			android:title="@string/search_subscription"
+			android:icon="@android:drawable/ic_menu_search"
+			android:showAsAction="always|collapseActionView"
+			android:actionViewClass="android.widget.SearchView" />
+	<item android:id="@+id/action_help"
+			android:title="@string/help"
+			android:icon="@android:drawable/ic_menu_help"
+			android:showAsAction="always" />
+</menu>

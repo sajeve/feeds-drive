@@ -11,7 +11,7 @@
 		android:gravity="center_vertical"
 		style="@android:style/TextAppearance.Medium"
 		android:drawableRight="@drawable/add_259b24ff"
-		android:text="@string/add"
+		android:text="@string/add_new_category"
 		android:background="?android:selectableItemBackground"
 		/>
 

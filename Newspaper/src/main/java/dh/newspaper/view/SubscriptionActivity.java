@@ -1,15 +1,22 @@
 package dh.newspaper.view;
 
+import android.app.ActionBar;
 import android.app.Activity;
+import android.app.SearchManager;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.TextView;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
@@ -21,6 +28,7 @@ import dh.newspaper.adapter.SearchFeedsResultAdapter;
 import dh.newspaper.base.Injector;
 import dh.newspaper.event.SearchFeedsEvent;
 import dh.newspaper.event.SubscribeClickedEvent;
+import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.workflow.SearchFeedsWorkflow;
 import dh.tool.common.StrUtils;
@@ -30,7 +38,8 @@ import javax.inject.Inject;
 public class SubscriptionActivity extends Activity {
 	private static final String TAG = SubscriptionActivity.class.getName();
 
-	private EditText edtQuery;
+	//private EditText edtQuery;
+	private SearchView searchView;
 	private SwipeRefreshLayout swipeRefresh;
 	private ListView resultList;
 	private TextView txtNotice;
@@ -45,8 +54,8 @@ public class SubscriptionActivity extends Activity {
         setContentView(R.layout.activity_subscription);
 		((Injector)getApplication()).inject(this);
 
-		getActionBar().setTitle(R.string.title_activity_subscription);
-		edtQuery = (EditText)findViewById(R.id.query_editor);
+		getActionBar().setTitle(R.string.search_subscription);
+		//edtQuery = (EditText)findViewById(R.id.query_editor);
 		swipeRefresh = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
 		resultList = (ListView)findViewById(R.id.search_result);
 		txtNotice = (TextView) findViewById(R.id.txt_notice);
@@ -55,26 +64,26 @@ public class SubscriptionActivity extends Activity {
 		searchFeedsResultAdapter = new SearchFeedsResultAdapter(this);
 		resultList.setAdapter(searchFeedsResultAdapter);
 
-		edtQuery.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-			@Override
-			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-				try {
-					if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-						mBackgroundTasksManager.searchFeedsSources(v.getText().toString());
-
-						//hide keyboard
-						InputMethodManager imm= (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
-						imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-
-						return true;
-					}
-				} catch (Exception ex) {
-					Log.w(TAG, ex);
-					MyApplication.showErrorDialog(SubscriptionActivity.this.getFragmentManager(), "IME_ACTION_SEARCH", ex);
-				}
-				return false;
-			}
-		});
+//		edtQuery.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+//			@Override
+//			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+//				try {
+//					if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+//						mBackgroundTasksManager.searchFeedsSources(v.getText().toString());
+//
+//						//hide keyboard
+//						InputMethodManager imm= (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+//						imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+//
+//						return true;
+//					}
+//				} catch (Exception ex) {
+//					Log.w(TAG, ex);
+//					MyApplication.showErrorDialog(SubscriptionActivity.this.getFragmentManager(), "IME_ACTION_SEARCH", ex);
+//				}
+//				return false;
+//			}
+//		});
 		swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 			@Override
 			public void onRefresh() {
@@ -83,12 +92,11 @@ public class SubscriptionActivity extends Activity {
 						mBackgroundTasksManager.searchFeedsSources(lastTask.getMissionId());
 					}
 					else {
-						if (Strings.isNullOrEmpty(edtQuery.getText().toString())) {
+						if (searchView==null || TextUtils.isEmpty(searchView.getQuery())) {
 							swipeRefresh.setRefreshing(false);
+							return;
 						}
-						else {
-							mBackgroundTasksManager.searchFeedsSources(edtQuery.getText().toString());
-						}
+						mBackgroundTasksManager.searchFeedsSources(searchView.getQuery().toString());
 					}
 				} catch (Exception ex) {
 					Log.w(TAG, ex);
@@ -97,9 +105,78 @@ public class SubscriptionActivity extends Activity {
 			}
 		});
 
-		lastTask = mBackgroundTasksManager.getActiveSearchFeedsWorkflow();
-		setGui(lastTask);
+		/*lastTask = mBackgroundTasksManager.getActiveSearchFeedsWorkflow();
+		setGui(lastTask);*/
     }
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.search_subscription, menu);
+		SearchManager manager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+
+		MenuItem searchViewItem = menu.findItem(R.id.action_search);
+		searchView = (SearchView) searchViewItem.getActionView();
+
+		searchView.setIconifiedByDefault(false);
+		ActionBar.LayoutParams params = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.MATCH_PARENT);
+		searchView.setLayoutParams(params);
+
+		searchViewItem.expandActionView();
+		/*searchView.setMaxWidth(4000);
+		searchView.setFocusable(true);
+		searchView.requestFocusFromTouch();*/
+
+		searchView.setSearchableInfo(manager.getSearchableInfo(getComponentName()));
+		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+			@Override
+			public boolean onQueryTextSubmit(String query) {
+				try {
+					mBackgroundTasksManager.searchFeedsSources(query);
+
+					//hide keyboard
+					if (resultList!=null) {
+						InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+						txtNotice.getWindowToken();
+						imm.hideSoftInputFromWindow(resultList.getWindowToken(), 0);
+					}
+
+					return true;
+				} catch (Exception ex) {
+					Log.w(TAG, ex);
+					MyApplication.showErrorDialog(SubscriptionActivity.this.getFragmentManager(), "Search", ex);
+				}
+				return false;
+			}
+
+			@Override
+			public boolean onQueryTextChange(String newText) {
+				return false;
+			}
+		});
+
+		searchViewItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+			@Override
+			public boolean onMenuItemActionExpand(MenuItem item) {
+				return true;
+			}
+
+			@Override
+			public boolean onMenuItemActionCollapse(MenuItem item) {
+				return false; //never collapse
+			}
+		});
+
+		//restore value
+		restoreSearchView();
+
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	private void restoreSearchView() {
+		if (lastTask!=null && searchView!=null) {
+			searchView.setQuery(lastTask.getQuery(), false);
+		}
+	}
 
 	private SearchFeedsWorkflow lastTask;
 
@@ -143,7 +220,7 @@ public class SubscriptionActivity extends Activity {
 		if (currentTask == null) {return;}
 
 		swipeRefresh.setRefreshing(currentTask.isRunning());
-
+		restoreSearchView();
 		SearchFeedsEvent event = currentTask.getSearchResultEvent();
 		if (event==null) { return; }
 

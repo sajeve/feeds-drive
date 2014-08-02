@@ -13,13 +13,18 @@
 			android:id="@+id/action_subscribe"
 			app:showAsAction="ifRoom"
 			android:icon="@drawable/ic_action_new"
-			android:title="@string/action_subscribe"/>
+			android:title="@string/subscribe"/>
 	<item
 			android:id="@+id/action_offline"
 			app:showAsAction="never"
 			android:icon="@drawable/ic_action_airplane_mode_on"
 			android:checkable="true"
-			android:title="@string/action_offline"/>
+			android:title="@string/offline"/>
+	<item
+			android:id="@+id/action_manage_subscription"
+			app:showAsAction="never"
+			android:icon="@drawable/rss_0000008a"
+			android:title="@string/manage_subscriptions"/>
 	<item
 			android:id="@+id/action_settings"
 			app:showAsAction="never"

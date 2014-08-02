@@ -13,13 +13,13 @@
 			android:id="@+id/action_share"
 			app:showAsAction="ifRoom"
 			android:icon="@drawable/ic_action_share"
-			android:title="@string/action_share"/>
+			android:title="@string/share"/>
 	<item
 			android:id="@+id/action_offline"
 			app:showAsAction="never"
 			android:icon="@drawable/ic_action_airplane_mode_on"
 			android:checkable="true"
-			android:title="@string/action_offline"/>
+			android:title="@string/offline"/>
 	<item
 			android:id="@+id/action_settings"
 			app:showAsAction="never"

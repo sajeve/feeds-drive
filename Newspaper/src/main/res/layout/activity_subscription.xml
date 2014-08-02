@@ -5,14 +5,14 @@
 		android:orientation="vertical"
 		tools:context=".view.SubscriptionFragment">
 
-	<EditText
+	<!--<EditText
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:id="@+id/query_editor"
 			android:drawableRight="@drawable/search_00000042"
 			android:imeOptions="actionSearch"
 			android:singleLine="true"
-			/>
+			/>-->
 	<android.support.v4.widget.SwipeRefreshLayout
 			android:id="@+id/swipe_refresh"
 			xmlns:android="http://schemas.android.com/apk/res/android"

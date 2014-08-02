@@ -6,6 +6,7 @@ import com.google.common.base.Joiner;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
+import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.DaoSession;
@@ -13,6 +14,7 @@ import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.NetworkUtils;
+import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.OncePrifoTask;
 import org.joda.time.DateTime;
 import org.jsoup.Jsoup;
@@ -29,16 +31,17 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 	private final static String TAG = SaveSubscriptionWorkflow.class.getName();
 	private final SearchFeedsResult.ResponseData.Entry feedsSource;
 	private final Set<String> tags;
-	private final Context context;
+	//private final Context context;
 	private SaveSubscriptionEvent saveSubscriptionState;
 	@Inject ContentParser contentParser;
 	@Inject DaoSession daoSession;
+	@Inject RefData refData;
 
 	public SaveSubscriptionWorkflow(Context context, SearchFeedsResult.ResponseData.Entry feedsSource, Set<String> tags) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		this.feedsSource = feedsSource;
 		this.tags = tags;
-		this.context = context;
+		//this.context = context;
 	}
 
 	@Override
@@ -46,28 +49,28 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 		return feedsSource.getUrl();
 	}
 
-	@Override
+//	@Override
+//	public void perform() {
+//		try {
+//			String feedsSourceUrl = feedsSource.getUrl();
+//
+//			sendProgressMessage("Checking feeds source validity: downloading.."+feedsSourceUrl); //TODO: translate
+//			Thread.sleep(2000);
+//			sendProgressMessage("Checking feeds source validity: parsing.."+feedsSourceUrl); //TODO: translate
+//			Thread.sleep(1000);
+//			sendProgressMessage("Checking feeds source validity: parse OK"+feedsSourceUrl); //TODO: translate
+//			Thread.sleep(1000);
+//			sendProgressMessage("Saving subscription..."+feedsSourceUrl); //TODO: translate
+//			Thread.sleep(1000);
+//			sendDone();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
+//	}
+
 	public void perform() {
 		try {
-			String feedsSourceUrl = feedsSource.getUrl();
-
-			sendProgressMessage("Checking feeds source validity: downloading.."+feedsSourceUrl); //TODO: translate
-			Thread.sleep(2000);
-			sendProgressMessage("Checking feeds source validity: parsing.."+feedsSourceUrl); //TODO: translate
-			Thread.sleep(1000);
-			sendProgressMessage("Checking feeds source validity: parse OK"+feedsSourceUrl); //TODO: translate
-			Thread.sleep(1000);
-			sendProgressMessage("Saving subscription..."+feedsSourceUrl); //TODO: translate
-			Thread.sleep(1000);
-			sendDone();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void perform2() {
-		try {
-			String feedsSourceUrl = feedsSource.getUrl();
+			String feedsSourceUrl = StrUtils.removeTrailingSlash(feedsSource.getUrl());
 
 			if (feedsSource.getValidity() == SearchFeedsResult.FeedsSourceValidity.UNKNOWN) {
 				sendProgressMessage("Checking feeds source validity: downloading.."); //TODO: translate
@@ -114,6 +117,10 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 					daoSession.insert(new Subscription(null, feedsSourceUrl, tagsValue,
 							description, language, true, null, pubDate, DateTime.now().toDate()));
 				}
+
+				sendProgressMessage("update cache..."); //TODO: translate
+				refData.loadSubscriptions();
+
 				sendDone();
 			}
 			else {

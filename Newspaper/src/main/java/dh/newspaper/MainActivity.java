@@ -172,6 +172,9 @@ public class MainActivity extends Activity {
 			case R.id.action_subscribe:
 				this.startActivity(new Intent(this, SubscriptionActivity.class));
 				return true;
+
+			case R.id.action_manage_subscription:
+
 		}
 
 		return super.onOptionsItemSelected(item);

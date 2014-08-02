@@ -1,56 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-		package="dh.newspaper"
-		android:versionCode="1"
-		android:versionName="1.0" >
+    package="dh.newspaper"
+    android:versionCode="1"
+    android:versionName="1.0" >
 
-	<uses-sdk
-			android:minSdkVersion="14"
-			android:targetSdkVersion="19" />
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="19" />
 
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-	<uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-	<application
-			android:name=".MyApplication"
-			android:allowBackup="true"
-			android:icon="@drawable/ic_launcher"
-			android:label="@string/app_name"
-			android:theme="@style/AppTheme" >
-		<activity
-				android:name=".MainActivity"
-				android:label="@string/app_name" >
-			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
+    <application
+        android:name=".MyApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+	    <service android:name=".services.FeedsDownloaderService" />
+	    <receiver android:name=".services.AlarmReceiver" />
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-				<category android:name="android.intent.category.LAUNCHER" />
-			</intent-filter>
-		</activity>
-		<activity
-				android:name=".DetailActivity"
-				android:label="Detail"
-				android:parentActivityName=".MainActivity" >
-			<meta-data
-					android:name="android.support.PARENT_ACTIVITY"
-					android:value="MainActivity" />
-		</activity>
-		<activity
-				android:name=".view.SubscriptionActivity"
-				android:label="@string/title_activity_subscription"
-				android:parentActivityName=".MainActivity" >
-			<meta-data
-					android:name="android.support.PARENT_ACTIVITY"
-					android:value="MainActivity" />
-
-		</activity>
-
-		<service android:name=".services.FeedsDownloaderService" />
-
-		<receiver android:name=".services.AlarmReceiver" />
-
-
-	</application>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".DetailActivity"
+            android:label="Detail"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="MainActivity" />
+        </activity>
+        <activity
+            android:name=".view.SubscriptionActivity"
+            android:label="@string/search_subscription"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="MainActivity" />
+        </activity>
+        <activity
+            android:name=".view.ManageSubscriptionActivity"
+            android:label="@string/title_activity_manage_subscription"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="dh.newspaper.MainActivity" />
+        </activity>
+    </application>
 
 </manifest>
