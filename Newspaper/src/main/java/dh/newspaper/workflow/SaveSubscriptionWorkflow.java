@@ -96,12 +96,15 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 			if (feedsSource.getValidity()== SearchFeedsResult.FeedsSourceValidity.OK) {
 				sendProgressMessage("Saving subscription..."); //TODO: translate
 
-				String tagsValue = Joiner.on('|').join(tags).toUpperCase();
+				StringBuilder tagsValue = new StringBuilder("|");
+				for (String t : tags) {
+					tagsValue.append(t.toUpperCase()).append("|");
+				}
 
 				Subscription existedSubscription = feedsSource.getSubscription();
 
 				if (existedSubscription!=null) {
-					existedSubscription.setTags(tagsValue);
+					existedSubscription.setTags(tagsValue.toString());
 					existedSubscription.setLastUpdate(DateTime.now().toDate());
 					daoSession.getSubscriptionDao().update(existedSubscription);
 				}

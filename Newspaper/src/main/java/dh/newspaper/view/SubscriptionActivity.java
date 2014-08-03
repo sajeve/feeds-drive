@@ -154,7 +154,7 @@ public class SubscriptionActivity extends Activity {
 			}
 		});
 
-		searchViewItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+		/*searchViewItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
 			@Override
 			public boolean onMenuItemActionExpand(MenuItem item) {
 				return true;
@@ -165,7 +165,7 @@ public class SubscriptionActivity extends Activity {
 				return false; //never collapse
 			}
 		});
-
+*/
 		//restore value
 		restoreSearchView();
 
