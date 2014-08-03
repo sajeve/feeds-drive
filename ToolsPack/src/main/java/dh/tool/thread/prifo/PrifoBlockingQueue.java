@@ -15,7 +15,17 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class PrifoBlockingQueue<E extends IPrifosable> extends AbstractQueue<E> implements BlockingQueue<E> {
 
-	private final PrifoQueue<E> queue = new PrifoQueue<E>();
+	private final PrifoQueue<E> queue;
+
+	public PrifoBlockingQueue() {
+		super();
+		queue = new PrifoQueue<E>();
+	}
+
+	public PrifoBlockingQueue(IQueueEmptyCallback queueEmptyCallback) {
+		super();
+		queue = new PrifoQueue<E>(queueEmptyCallback);
+	}
 
 	/**
 	 * Lock used for all public operations
@@ -150,5 +160,12 @@ public class PrifoBlockingQueue<E extends IPrifosable> extends AbstractQueue<E> 
 		} finally {
 			lock.unlock();
 		}
+	}
+
+	public IQueueEmptyCallback getQueueEmptyCallback() {
+		return queue.getQueueEmptyCallback();
+	}
+	public void setQueueEmptyCallback(IQueueEmptyCallback queueEmptyCallback) {
+		queue.setQueueEmptyCallback(queueEmptyCallback);
 	}
 }

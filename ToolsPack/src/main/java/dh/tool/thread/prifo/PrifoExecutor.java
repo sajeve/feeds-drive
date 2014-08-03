@@ -65,4 +65,11 @@ public class PrifoExecutor extends ThreadPoolExecutor {
 			}
 		}
 	}
+
+	public IQueueEmptyCallback getQueueEmptyCallback() {
+		return  ((PrifoBlockingQueue)getQueue()).getQueueEmptyCallback();
+	}
+	public void setQueueEmptyCallback(IQueueEmptyCallback queueEmptyCallback) {
+		((PrifoBlockingQueue)getQueue()).setQueueEmptyCallback(queueEmptyCallback);
+	}
 }

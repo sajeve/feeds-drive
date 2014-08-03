@@ -162,7 +162,11 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 				mRunning = false;
 				logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 			}
-		} finally {
+		}
+		catch (Exception ex) {
+			Log.w(TAG, ex);
+		}
+		finally {
 			lock.unlock();
 		}
 	}

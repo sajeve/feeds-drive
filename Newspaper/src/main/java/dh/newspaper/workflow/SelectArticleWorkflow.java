@@ -199,6 +199,8 @@ public class SelectArticleWorkflow extends PrifoTask {
 				mRunning = false;
 				logInfo("Workflow complete (" + genericStopWatch.elapsed(TimeUnit.MILLISECONDS) + " ms)");
 			}
+		}catch (Exception ex) {
+			Log.w(TAG, ex);
 		} finally {
 			lock.unlock();
 		}
@@ -226,6 +228,8 @@ public class SelectArticleWorkflow extends PrifoTask {
 			mArticleLanguage = mFeedItem.getLanguage();
 		}
 
+		DateTime publishedDateTime = DateUtils.parseDateTime(mFeedItem.getPublishedDate());
+
 		mArticle = new Article(null, //id
 				mFeedItem.getUri(),
 				mFeedItem.getParentUrl(),
@@ -238,7 +242,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 				mArticleLanguage,
 				0L, //openedCount
 				mFeedItem.getPublishedDate(),
-				DateUtils.parseDateTime(mFeedItem.getPublishedDate()).toDate(),
+				publishedDateTime==null ? null : publishedDateTime.toDate(),
 				null,//date archive
 				null,//last open
 				DateTime.now().toDate(), //last updated

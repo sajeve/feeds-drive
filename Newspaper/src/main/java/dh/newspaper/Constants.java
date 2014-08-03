@@ -61,7 +61,7 @@ public class Constants {
 
 
 	public static final boolean ENABLE_ALARM = true;
-	public static final long SERVICE_INTERVAL = DEBUG ? 5*60*1000 : AlarmManager.INTERVAL_HOUR; //AlarmManager.INTERVAL_DAY
+	public static final long SERVICE_INTERVAL = DEBUG ? 5*60*1000 : 2*AlarmManager.INTERVAL_HOUR; //AlarmManager.INTERVAL_DAY
 	public static final long SERVICE_START_AT = 5000; //updateTime.getTimeInMillis(),
 
 	/**

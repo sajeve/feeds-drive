@@ -1,7 +1,10 @@
-package dh.tool.common;
+package dh.newspaper.tools.thread;
 
 import android.test.ActivityInstrumentationTestCase2;
 import dh.newspaper.MainActivity;
+import dh.tool.thread.prifo.IPrifosable;
+import dh.tool.thread.prifo.PrifoQueue;
+import dh.tool.thread.prifo.PrifoTask;
 
 /**
  * Created by hiep on 9/06/2014.

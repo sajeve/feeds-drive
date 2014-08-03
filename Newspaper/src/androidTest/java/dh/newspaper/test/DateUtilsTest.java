@@ -71,11 +71,26 @@ public class DateUtilsTest extends ActivityInstrumentationTestCase2<MainActivity
 
 	public void testParseDateTime() {
 		Log.i("StrUtilsTest", Arrays.toString(DateTimeZone.getAvailableIDs().toArray()));
-
 		{
+			String format = "M-d-y K:m:ss a";
+
+			DateTimeParser[] parsers = {
+					DateTimeFormat.forPattern(format).getParser() //  08/03/2014 4:37:00 AM
+			};
+
+			String s = DateTime.now().toString(DateTimeFormat.forPattern(format));
+			System.out.println(s);
+
+			DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder().append(null, parsers).toFormatter();
+
+			DateTime d = dateTimeFormatter.parseDateTime("08-03-2014 4:37:00 AM");
+			assertEquals(2014, d.getYear());
+			assertEquals(3, d.getDayOfMonth());
+		}
+		/*{
 			DateTime d = DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzz").parseDateTime("Sun, 25 May 2014 14:09:29 EDT");
 			assertEquals(2014, d.getYear());
-		}
+		}*/
 		{
 			DateTime d = DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzz").parseDateTime("Sun, 25 May 2014 14:09:29 GMT");
 			assertEquals(2014, d.getYear());
@@ -97,6 +112,7 @@ public class DateUtilsTest extends ActivityInstrumentationTestCase2<MainActivity
 			DateTime d = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").parseDateTime("2014-05-25T05:39:45Z");
 			assertEquals(2014, d.getYear());
 		}
+
 		/*{
 			DateTimeParser parser = ISODateTimeFormat.dateTimeParser().getParser();
 			DateTimeParserBucket dateTimeParserBucket = null;
@@ -132,6 +148,10 @@ public class DateUtilsTest extends ActivityInstrumentationTestCase2<MainActivity
 			System.out.print(d.getZone().getID());
 			assertEquals(2014, d.getYear());
 		}
+	}
+	public void testFormatDate() {
+		String s = DateTime.now().toString("HH:m");
+		assertEquals("12:16", s);
 	}
 
 }

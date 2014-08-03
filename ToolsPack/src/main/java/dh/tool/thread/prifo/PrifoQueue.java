@@ -1,5 +1,8 @@
 package dh.tool.thread.prifo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.AbstractQueue;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -17,13 +20,22 @@ import java.util.TreeSet;
  * Created by hiep on 11/06/2014.
  */
 public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
+	private static final Logger log = LoggerFactory.getLogger(PrifoQueue.class);
 	private transient TreeSet<E> queue;
+	private IQueueEmptyCallback queueEmptyCallback;
 
-	public PrifoQueue(Comparator<? super E> comparator) {
+	public PrifoQueue(Comparator<? super E> comparator, IQueueEmptyCallback queueEmptyCallback) {
 		this.queue = new TreeSet<E>(comparator);
+		this.queueEmptyCallback = queueEmptyCallback;
+	}
+	public PrifoQueue(IQueueEmptyCallback queueEmptyCallback) {
+		this(null, queueEmptyCallback);
+	}
+	public PrifoQueue(Comparator<? super E> comparator) {
+		this(comparator, null);
 	}
 	public PrifoQueue() {
-		this(null);
+		this(null, null);
 	}
 
 	@Override
@@ -128,13 +140,30 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 	@Override
 	public E poll() {
 		E e = queue.pollFirst();
-		if (e!=null)
+		if (e!=null) {
 			e.onDequeue(this);
+		}
+		if (queueEmptyCallback!=null && queue.isEmpty()) {
+			try {
+				queueEmptyCallback.onQueueEmpty();
+			}
+			catch (Exception ex) {
+				log.warn("onQueueEmpty ", ex);
+			}
+		}
 		return e;
 	}
 
 	@Override
 	public E peek() {
 		return queue.first();
+	}
+
+	public IQueueEmptyCallback getQueueEmptyCallback() {
+		return queueEmptyCallback;
+	}
+
+	public void setQueueEmptyCallback(IQueueEmptyCallback queueEmptyCallback) {
+		this.queueEmptyCallback = queueEmptyCallback;
 	}
 }

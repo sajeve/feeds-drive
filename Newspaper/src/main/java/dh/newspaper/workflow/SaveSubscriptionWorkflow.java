@@ -117,7 +117,7 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 						language = feedsSource.getFeeds().getLanguage();
 						pubDate = feedsSource.getFeeds().getPubDate();
 					}
-					daoSession.insert(new Subscription(null, feedsSourceUrl, tagsValue,
+					daoSession.insert(new Subscription(null, feedsSourceUrl, tagsValue.toString(),
 							description, language, true, null, pubDate, DateTime.now().toDate()));
 				}
 

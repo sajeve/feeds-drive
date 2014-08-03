@@ -7,7 +7,9 @@ import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import dh.newspaper.Constants;
@@ -15,9 +17,11 @@ import dh.newspaper.MainActivity;
 import dh.newspaper.R;
 import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
+import dh.tool.thread.prifo.IQueueEmptyCallback;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoExecutorFactory;
 import dh.newspaper.workflow.SelectTagWorkflow;
+import org.joda.time.DateTime;
 
 import javax.inject.Inject;
 import java.util.concurrent.ExecutorService;
@@ -75,9 +79,7 @@ public class FeedsDownloaderService extends Service {
 						return;
 					}
 					mRefData.initImageLoader();
-
-					Log.i(TAG, "Start download all "+mRefData.getTags().size()+ " tags");
-					displayNotification("Start download articles", "Start download all articles from "+mRefData.getTags().size()+ " tags");
+					displayNotificationOnMainThread("Start download articles", "Start download all articles from " + mRefData.getTags().size() + " tags");
 
 					for (String tag : mRefData.getTags()) {
 						SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(getApplicationContext(), tag,
@@ -86,12 +88,17 @@ public class FeedsDownloaderService extends Service {
 
 						mSelectTagLoader.execute(selectTagWorkflow);
 					}
+					
+					mSelectTagLoader.setQueueEmptyCallback(feedsDownloadFinished);
+					mArticlesLoader.setQueueEmptyCallback(articleDownloadFinished);
 				}
 				catch (Exception ex) {
 					Log.w(TAG, ex);
 				}
 			}
 		}.execute();
+
+
 
 //		Executors.newSingleThreadExecutor(PriorityThreadFactory.MIN).execute(new Runnable() {
 //			@Override
@@ -106,37 +113,85 @@ public class FeedsDownloaderService extends Service {
 //		});
 	}
 
-	public void displayNotification(String title, String text) {
-		Intent resultIntent = new Intent(this, MainActivity.class);
 
-		// The stack builder object will contain an artificial back stack for the started Activity.
-		// This ensures that navigating backward from the Activity leads out of your application to the Home screen.
+	private final IQueueEmptyCallback feedsDownloadFinished = new IQueueEmptyCallback() {
+		@Override
+		public void onQueueEmpty() {
+			displayNotification("Download tags finished", "All feeds pages downloaded");
+		}
+	};
+	private final IQueueEmptyCallback articleDownloadFinished = new IQueueEmptyCallback() {
+		@Override
+		public void onQueueEmpty() {
+			displayNotification("Download articles finished", "All articles downloaded");
+		}
+	};
 
-		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-		// Adds the back stack for the Intent (but not the Intent itself)
-		stackBuilder.addParentStack(MainActivity.class);
+	public void displayNotification(final String title, final String text) {
+		try {
+			//Log.w(TAG, message, ex);
+			if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
+				displayNotificationOnMainThread(title, text);
+			}
+			else {
+				Handler mainThread = new Handler(Looper.getMainLooper());
+				mainThread.post(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							displayNotificationOnMainThread(title, text);
+						}
+						catch (Exception ex1) {
+							Log.wtf(TAG, ex1);
+						}
+					}
+				});
+			}
+		}
+		catch (Exception ex2) {
+			Log.wtf(TAG, ex2);
+		}
+	}
 
-		// Adds the Intent that starts the Activity to the top of the stack
-		stackBuilder.addNextIntent(resultIntent);
-		PendingIntent resultPendingIntent =
-				stackBuilder.getPendingIntent(
-						0,
-						PendingIntent.FLAG_UPDATE_CURRENT
-				);
+	public void displayNotificationOnMainThread(String title, String text) {
+		try {
+			text = DateTime.now().toString("HH:m")+" "+text;
+			Log.i(TAG, title+": "+text);
+
+			Intent resultIntent = new Intent(this, MainActivity.class);
+
+			// The stack builder object will contain an artificial back stack for the started Activity.
+			// This ensures that navigating backward from the Activity leads out of your application to the Home screen.
+
+			TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+			// Adds the back stack for the Intent (but not the Intent itself)
+			stackBuilder.addParentStack(MainActivity.class);
+
+			// Adds the Intent that starts the Activity to the top of the stack
+			stackBuilder.addNextIntent(resultIntent);
+			PendingIntent resultPendingIntent =
+					stackBuilder.getPendingIntent(
+							0,
+							PendingIntent.FLAG_UPDATE_CURRENT
+					);
 
 
-		NotificationCompat.Builder mBuilder =
-				new NotificationCompat.Builder(this)
-						.setSmallIcon(R.drawable.ic_launcher)
-						.setContentTitle(title)
-						.setContentText(text);
-		mBuilder.setContentIntent(resultPendingIntent);
+			NotificationCompat.Builder mBuilder =
+					new NotificationCompat.Builder(this)
+							.setSmallIcon(R.drawable.ic_launcher)
+							.setContentTitle(title)
+							.setContentText(text);
+			mBuilder.setContentIntent(resultPendingIntent);
 
-		NotificationManager mNotificationManager =
-				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			NotificationManager mNotificationManager =
+					(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-		// id = 0 allows you to update the notification later on.
-		mNotificationManager.notify(0, mBuilder.build());
+			// id = 0 allows you to update the notification later on.
+			mNotificationManager.notify(0, mBuilder.build());
+		}
+		catch (Exception ex) {
+			Log.wtf(TAG, ex);
+		}
 	}
 
 //	public void downloadAllTest() {
