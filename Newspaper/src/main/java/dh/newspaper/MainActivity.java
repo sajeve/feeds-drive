@@ -69,7 +69,7 @@ public class MainActivity extends Activity {
 			setUpAsNavigationDrawer();
 		}
 
-		overridePendingTransition(R.anim.right_in, R.anim.left_out);
+		overridePendingTransition(R.anim.left_in, R.anim.right_out);
 
 		/*else {
 			View v = findViewById(R.id.fragment_feeds);

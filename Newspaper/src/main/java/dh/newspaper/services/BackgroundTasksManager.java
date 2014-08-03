@@ -233,7 +233,9 @@ public class BackgroundTasksManager implements Closeable {
 					mSelectArticleWorkflow = new SelectArticleWorkflow(mContext, article, Constants.ARTICLE_TTL, onlineMode, new SelectArticleWorkflow.SelectArticleCallback() {
 						@Override
 						public void onFinishedCheckCache(SelectArticleWorkflow sender, Article article) {
-							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl()));
+							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl());
+							Log.d(TAG, "Post "+event);
+							EventBus.getDefault().post(event);
 						}
 						@Override
 						public void onFinishedDownloadContent(SelectArticleWorkflow sender, Article article) {
@@ -241,11 +243,15 @@ public class BackgroundTasksManager implements Closeable {
 						}
 						@Override
 						public void onFinishedUpdateCache(SelectArticleWorkflow sender, Article article, boolean isInsertNew) {
-							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl()));
+							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl());
+							Log.d(TAG, "Post "+event);
+							EventBus.getDefault().post(event);
 						}
 						@Override
 						public void done(SelectArticleWorkflow sender, Article article, boolean isCancelled) {
-							EventBus.getDefault().post(new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_DONE_LOADING, sender.getArticleUrl()));
+							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_DONE_LOADING, sender.getArticleUrl());
+							Log.d(TAG, "Post "+event);
+							EventBus.getDefault().post(event);
 						}
 					});
 					mSelectArticleWorkflow.setFocus(true);

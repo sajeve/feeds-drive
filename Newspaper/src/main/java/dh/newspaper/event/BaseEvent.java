@@ -34,7 +34,8 @@ public class BaseEvent<T> extends RawEvent {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("[Event sender=" + this.getSender());
+		String s = this.getClass().getSimpleName();
+		StringBuilder sb = new StringBuilder("["+s+" sender=" + this.getSender());
 		if (!Strings.isNullOrEmpty(getSubject())) {
 			sb.append(" subject='"+this.getSubject()+"'");
 		}

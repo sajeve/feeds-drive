@@ -42,9 +42,9 @@
             android:name=".view.SubscriptionActivity"
             android:label="@string/search_subscription"
             android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+	        <meta-data
+			        android:name="android.support.PARENT_ACTIVITY"
+			        android:value="dh.newspaper.MainActivity" />
         </activity>
         <activity
             android:name=".view.ManageSubscriptionActivity"

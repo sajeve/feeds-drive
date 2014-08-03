@@ -156,36 +156,35 @@ public class ArticleFragment extends Fragment {
 
 	Stopwatch swRae = Stopwatch.createStarted();
 	public void onEventMainThread(RefreshArticleEvent event) {
-		if (!isAdded() || mWebView ==null) {
+		if (!isAdded() || mWebView==null) {
 			return;
 		}
 		try {
-			if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
-				//this event is fired by a sender which is no more concerning by this fragment -> do nothing
-				return;
-			}
-
 			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_START_LOADING)) {
-				if (Constants.DEBUG) {
-					swRae = Stopwatch.createStarted();
-					Log.d(TAG, "ArticleFragment START " + event.getSender().getArticleUrl());
-				}
+				swRae = Stopwatch.createStarted();
+				Log.d(TAG, "Received "+event);
 
 				mSwipeRefreshLayout.setRefreshing(true);
 				setGui(event.getSender());
 
 				return;
-			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_REFRESH)) {
-				if (Constants.DEBUG) {
-					Log.d(TAG, "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
-					swRae.reset().start();
-				}
+			}
+
+			if (mArticle != null && !StrUtils.equalsString(mArticle.getArticleUrl(), event.getSender().getArticleUrl())) {
+				Log.d(TAG, "ignore "+event+" because currentArticleUrl="+mArticle.getArticleUrl());
+				//this event is fired by a sender which is no more concerning by this fragment -> do nothing
+				return;
+			}
+
+			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_REFRESH)) {
+				Log.d(TAG, "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
+				swRae.reset().start();
 
 				setGui(event.getSender());
 				return;
-			} else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_DONE_LOADING)) {
-				if (Constants.DEBUG)
-					Log.d(TAG, "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
+			}
+			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_DONE_LOADING)) {
+				Log.d(TAG, "ArticleFragment DONE (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
 
 				mSwipeRefreshLayout.setRefreshing(false);
 				return;

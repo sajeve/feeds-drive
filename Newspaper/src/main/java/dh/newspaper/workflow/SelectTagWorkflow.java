@@ -219,14 +219,10 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 			return false;
 		}
 
-
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
 			if (mSelectArticleQueryBuilder == null) {
-				return false;
-			}
-			if (mArticles==null || mArticles.size()==0) {
 				return false;
 			}
 
@@ -246,7 +242,7 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 
 			log("loadPage("+offset+")");
 
-			if (offset == 0) {
+			if (offset==0 && mArticles.size()>0) {
 				//update the article-zero
 				mArticleZero = mArticles.get(0);
 			}
@@ -521,12 +517,16 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	 */
 	@Override
 	public Article getArticle(int position) {
-		if (position == 0) {
-			return mArticleZero;
-		}
-		if (mArticles == null) {
+		if (mArticles == null || mArticles.size()==0) {
 			return null;
 		}
+		if (position == 0) {
+			if (mArticleZero==null) {
+				mArticleZero = mArticles.get(0);
+			}
+			return mArticleZero;
+		}
+
 		if (isInMemoryCache(position)) {
 			return mArticles.get(position-mOffset);
 		}

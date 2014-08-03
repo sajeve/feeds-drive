@@ -138,7 +138,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 						.whereOr(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()),
 								SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()+"/"))
 						.unique();
-				log("Find Parent subscription", mArticle);
+				log("Find Parent subscription", mParentSubscription);
 
 				if (isCancelled()) {
 					return;
