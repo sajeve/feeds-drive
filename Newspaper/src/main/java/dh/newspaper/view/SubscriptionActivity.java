@@ -208,8 +208,12 @@ public class SubscriptionActivity extends Activity {
 
 	public void onEventMainThread(SubscribeClickedEvent event) {
 		try {
-			SubscriptionDialog subDlg = SubscriptionDialog.newInstance(event.getFeedsSource());
-			subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
+			if (StrUtils.equalsString(SubscribeClickedEvent.SUBJECT_CLICK, event.getSubject())) {
+				SubscriptionDialog subDlg = SubscriptionDialog.newInstance(event.getFeedsSource());
+				subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
+			} else if (StrUtils.equalsString(SubscribeClickedEvent.SUBJECT_REFRESH, event.getSubject())) {
+				resultList.deferNotifyDataSetChanged();
+			}
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
 			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);

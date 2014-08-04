@@ -6,6 +6,7 @@ import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +27,7 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.CreateNewTagEvent;
 import dh.newspaper.event.SaveSubscriptionEvent;
+import dh.newspaper.event.SubscribeClickedEvent;
 import dh.newspaper.model.AddNewItem;
 import dh.newspaper.model.CheckableString;
 import dh.newspaper.model.json.SearchFeedsResult;
@@ -152,7 +154,8 @@ public class SubscriptionDialog extends DialogFragment {
 
 	private ArrayList<CheckableString> getTagsListData(SearchFeedsResult.ResponseData.Entry state) {
 		//the feed sources is already subscribed with some tags
-		HashSet<String> selectedTags = state==null || state.getSubscription()==null ? null :
+		HashSet<String> selectedTags = state==null || state.getSubscription()==null || TextUtils.isEmpty(state.getSubscription().getTags())
+				? null :
 				Sets.newHashSet(
 						Splitter.on('|')
 								.omitEmptyStrings()
@@ -225,6 +228,7 @@ public class SubscriptionDialog extends DialogFragment {
 				savingProgressDialog.setMessage(event.getProgressMessage());
 				savingProgressDialog.dismiss();
 				dismiss();
+				EventBus.getDefault().post(new SubscribeClickedEvent(SubscribeClickedEvent.SUBJECT_REFRESH, feedsSource));
 			}
 			else if (StrUtils.equalsString(Constants.SUBJECT_SAVE_SUBSCRIPTION_ERROR, event.getSubject())) {
 				savingProgressDialog.dismiss();

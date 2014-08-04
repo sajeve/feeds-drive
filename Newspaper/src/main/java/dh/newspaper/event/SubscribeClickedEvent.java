@@ -11,11 +11,13 @@ import java.io.Serializable;
  * Created by hiep on 4/06/2014.
  */
 public class SubscribeClickedEvent extends RawEvent implements Serializable {
+	public static final String SUBJECT_CLICK = "Subscribe";
+	public static final String SUBJECT_REFRESH = "Refresh";
 
 	SearchFeedsResult.ResponseData.Entry feedsSource;
 
-	public SubscribeClickedEvent(SearchFeedsResult.ResponseData.Entry feedsSource) {
-		super("Subscribe", feedsSource.getUrl());
+	public SubscribeClickedEvent(String subject, SearchFeedsResult.ResponseData.Entry feedsSource) {
+		super(subject, feedsSource.getUrl());
 		this.feedsSource = feedsSource;
 	}
 

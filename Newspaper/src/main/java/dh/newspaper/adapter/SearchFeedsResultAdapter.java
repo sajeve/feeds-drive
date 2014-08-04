@@ -82,7 +82,7 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 							Object[] dataHolder = (Object[]) v.getTag();
 							if (dataHolder!=null) {
 								SearchFeedsResult.ResponseData.Entry entry = (SearchFeedsResult.ResponseData.Entry)dataHolder[0];
-								EventBus.getDefault().post(new SubscribeClickedEvent(entry));
+								EventBus.getDefault().post(new SubscribeClickedEvent(SubscribeClickedEvent.SUBJECT_CLICK, entry));
 							}
 						}
 						catch (Exception ex) {

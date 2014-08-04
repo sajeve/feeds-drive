@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -266,6 +267,9 @@ public class ArticleFragment extends Fragment {
 
 	private String getTagsInfo(Subscription subscription) {
 		if (subscription == null) {
+			return null;
+		}
+		if (TextUtils.isEmpty(subscription.getTags())) {
 			return null;
 		}
 		return Joiner.on(", ").join(Splitter.on('|').omitEmptyStrings()
