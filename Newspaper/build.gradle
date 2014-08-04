@@ -60,8 +60,10 @@ dependencies {
 	compile project(':Crouton')
 	compile project(':JusText')
 	compile(name:'android.joda-2.3.3-SNAPSHOT', ext:'aar')
+	compile(name:'pojava-3.0.1', ext:'jar')
+	compile(name:'datetime-3.0.1', ext:'jar')
 	compile 'com.android.support:support-v4:20.+'
-
+	compile 'com.joestelmach:natty:0.+'
 	compile 'org.jsoup:jsoup:1.7.3'
 	compile 'com.google.guava:guava:15.0'
 	compile 'com.squareup.dagger:dagger:1.2.1'

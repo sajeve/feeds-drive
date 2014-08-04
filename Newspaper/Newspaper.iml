@@ -64,19 +64,29 @@
     <orderEntry type="library" exported="" name="greendao-1.3.7" level="project" />
     <orderEntry type="library" exported="" name="jackson-core-2.3.4" level="project" />
     <orderEntry type="library" exported="" name="guava-15.0" level="project" />
-    <orderEntry type="library" exported="" name="javawriter-2.3.0" level="project" />
+    <orderEntry type="library" exported="" name="antlr-2.7.7" level="project" />
     <orderEntry type="library" exported="" name="dagger-1.2.1" level="project" />
-    <orderEntry type="library" exported="" name="jackson-annotations-2.3.0" level="project" />
-    <orderEntry type="library" exported="" name="jsoup-1.7.3" level="project" />
+    <orderEntry type="library" exported="" name="commons-lang-2.6" level="project" />
     <orderEntry type="library" exported="" name="support-v4-20.0.0" level="project" />
     <orderEntry type="library" exported="" name="dagger-compiler-1.2.1" level="project" />
     <orderEntry type="library" exported="" name="slf4j-android-logger-1.0.4" level="project" />
-    <orderEntry type="library" exported="" name="slf4j-api-1.7.7" level="project" />
     <orderEntry type="library" exported="" name="eventbus-2.2.1" level="project" />
-    <orderEntry type="library" exported="" name="javax.inject-1" level="project" />
-    <orderEntry type="library" exported="" name="jackson-databind-2.3.4" level="project" />
+    <orderEntry type="library" exported="" name="stringtemplate-3.2" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-20.0.0" level="project" />
+    <orderEntry type="library" exported="" name="jackson-databind-2.3.4" level="project" />
+    <orderEntry type="library" exported="" name="pojava-3.0.1" level="project" />
     <orderEntry type="library" exported="" name="android.joda-2.3.3-SNAPSHOT" level="project" />
+    <orderEntry type="library" exported="" name="natty-0.8" level="project" />
+    <orderEntry type="library" exported="" name="ical4j-1.0.2" level="project" />
+    <orderEntry type="library" exported="" name="javawriter-2.3.0" level="project" />
+    <orderEntry type="library" exported="" name="backport-util-concurrent-3.1" level="project" />
+    <orderEntry type="library" exported="" name="datetime-3.0.1" level="project" />
+    <orderEntry type="library" exported="" name="commons-codec-1.5" level="project" />
+    <orderEntry type="library" exported="" name="jackson-annotations-2.3.0" level="project" />
+    <orderEntry type="library" exported="" name="jsoup-1.7.3" level="project" />
+    <orderEntry type="library" exported="" name="antlr-runtime-3.2" level="project" />
+    <orderEntry type="library" exported="" name="slf4j-api-1.7.7" level="project" />
+    <orderEntry type="library" exported="" name="javax.inject-1" level="project" />
     <orderEntry type="library" exported="" name="okhttp-1.5.4" level="project" />
     <orderEntry type="module" module-name="Crouton" exported="" />
     <orderEntry type="module" module-name="JusText" exported="" />

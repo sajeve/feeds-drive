@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.IllegalFormatException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -229,6 +230,9 @@ public class SelectArticleWorkflow extends PrifoTask {
 		}
 
 		DateTime publishedDateTime = DateUtils.parseDateTime(mFeedItem.getPublishedDate());
+		if (Constants.DEBUG && publishedDateTime==null) {
+			throw new IllegalStateException("Failed parse "+mFeedItem.getPublishedDate());
+		}
 
 		mArticle = new Article(null, //id
 				mFeedItem.getUri(),
@@ -242,7 +246,7 @@ public class SelectArticleWorkflow extends PrifoTask {
 				mArticleLanguage,
 				0L, //openedCount
 				mFeedItem.getPublishedDate(),
-				publishedDateTime==null ? null : publishedDateTime.toDate(),
+				publishedDateTime==null ? DateTime.now().toDate() : publishedDateTime.toDate(),
 				null,//date archive
 				null,//last open
 				DateTime.now().toDate(), //last updated
@@ -303,9 +307,6 @@ public class SelectArticleWorkflow extends PrifoTask {
 			}
 		}
 
-//		if (mPathToContent!=null) {
-//			mArticle.setXpath(mPathToContent.getXpath());
-//		}
 		if (Strings.isNullOrEmpty(mArticleLanguage)) {
 			mArticleLanguage = mFeedItem.getLanguage();
 		}

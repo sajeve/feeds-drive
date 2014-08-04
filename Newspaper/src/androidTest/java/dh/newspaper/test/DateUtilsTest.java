@@ -3,6 +3,7 @@ package dh.newspaper.test;
 import android.content.res.Resources;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+import com.joestelmach.natty.DateGroup;
 import dh.newspaper.MainActivity;
 import dh.newspaper.tools.DateUtils;
 import org.joda.time.DateTime;
@@ -129,6 +130,13 @@ public class DateUtilsTest extends ActivityInstrumentationTestCase2<MainActivity
 
 	public void testParseDateTimeFinal() {
 		{
+			DateTime d = DateUtils.parseDateTime("08/3/2014 4:37:00 AM");
+			System.out.print(d.getZone().getID());
+			assertEquals(2014, d.getYear());
+			assertEquals(8, d.getMonthOfYear());
+			assertEquals(4, d.getHourOfDay());
+		}
+		{
 			DateTime d = DateUtils.parseDateTime("Mon, 26 May 2014 00:08:43 +0700");
 			System.out.print(d.getZone().getID());
 			assertEquals(2014, d.getYear());
@@ -154,4 +162,64 @@ public class DateUtilsTest extends ActivityInstrumentationTestCase2<MainActivity
 		assertEquals("12:16", s);
 	}
 
+	public void testIncompleteParserArray() {
+		final DateTimeParser[] jodaDateTimeParsers = {
+				ISODateTimeFormat.dateTimeParser().getParser(), //2014-05-25T05:39:45Z same as "YYYY-MM-dd'T'HH:mm:ss'Z'"
+				DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss Z").getParser(), //Mon, 26 May 2014 00:08:43 +0700
+				DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzz").getParser(), //Sun, 25 May 2014 17:15:22 UTC
+				DateTimeFormat.forPattern("M/d/y K:m:ss a").getParser(), // 8/3/2014 4:37:00 AM
+				DateTimeFormat.forPattern("M-d-y K:m:ss a").getParser() // 8/3/2014 4:37:00 AM
+		};
+
+		assertNull(DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzzz").getParser());
+		DateTimeFormatter jodaDateTimeFormatter = new DateTimeFormatterBuilder().append( null, jodaDateTimeParsers).toFormatter();
+	}
+
+	public void testNattyParser() {
+		DateTime d = DateUtils.parseNattyDate("8/3/2014 4:5:10 AM");
+		assertEquals(2014, d.getYear());
+		assertEquals(8, d.getMonthOfYear());
+		assertEquals(4, d.getHourOfDay());
+	}
+
+	public void testPoJavaParser() {
+		{
+			DateTime d = new DateTime(new org.pojava.datetime.DateTime("08/3/2014 4:37:00 AM").toDate());
+			System.out.print(d.getZone().getID());
+			assertEquals(2014, d.getYear());
+			assertEquals(8, d.getMonthOfYear());
+			assertEquals(4, d.getHourOfDay());
+		}
+		{
+			DateTime d = new DateTime(new org.pojava.datetime.DateTime("Mon, 26 May 2014 00:08:43 +0700").toDate());
+			System.out.print(d);
+			assertEquals(2014, d.getYear());
+			assertEquals(5, d.getMonthOfYear());
+			assertEquals(8, d.getMinuteOfHour());
+		}
+		{
+			DateTime d = new DateTime(new org.pojava.datetime.DateTime("2014-05-26T05:08:45Z").toDate());
+			assertEquals(2014, d.getYear());
+			assertEquals(26, d.getDayOfMonth());
+			assertEquals(5, d.getMonthOfYear());
+			assertEquals(8, d.getMinuteOfHour());
+		}
+		{
+			DateTime d = new DateTime(new org.pojava.datetime.DateTime("Sun, 25 May 2014 14:08:29 GMT").toDate());
+			assertEquals(2014, d.getYear());
+			assertEquals(25, d.getDayOfMonth());
+			assertEquals(5, d.getMonthOfYear());
+			assertEquals(8, d.getMinuteOfHour());
+		}
+		{
+			DateTime d = new DateTime(new org.pojava.datetime.DateTime("Sun, 25 May 2014 14:08:29 EDT").toDate());
+			assertEquals(2014, d.getYear());
+			assertEquals(25, d.getDayOfMonth());
+			assertEquals(5, d.getMonthOfYear());
+			assertEquals(8, d.getMinuteOfHour());
+		}
+
+
+
+	}
 }
