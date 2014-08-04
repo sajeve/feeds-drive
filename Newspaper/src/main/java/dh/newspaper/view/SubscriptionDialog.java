@@ -173,13 +173,14 @@ public class SubscriptionDialog extends DialogFragment {
 			try {
 				Set<String> selectedTags = tagsListAdapter.getSelectedTags();
 				if (selectedTags==null || selectedTags.size()==0) {
-					Crouton.makeText(getActivity(), R.string.select_at_least_one_category, Style.ALERT, (ViewGroup)getView()).show();
-					/*Toast.makeText(SubscriptionDialog.this.getActivity(),
-							R.string.select_at_least_one_category, Toast.LENGTH_SHORT).show();*/
-					return;
+					boolean isSubscribed = feedsSource.getSubscription()!=null;
+					if (!isSubscribed) {
+						Crouton.makeText(getActivity(), R.string.select_at_least_one_category, Style.ALERT, (ViewGroup) getView()).show();
+						return;
+					}
 				}
 
-				savingProgressDialog.show(); //TODO translate
+				savingProgressDialog.show();
 				backgroundTasksManager.saveSubscription(feedsSource, selectedTags);
 			} catch (Exception ex) {
 				Log.w(TAG, ex);

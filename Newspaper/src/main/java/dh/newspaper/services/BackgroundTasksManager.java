@@ -290,12 +290,6 @@ public class BackgroundTasksManager implements Closeable {
 			}
 			return; //nothing to do
 		}
-		if (tags==null || tags.size()==0) {
-			if (Constants.DEBUG) {
-				throw new InvalidParameterException("No Tags selected");
-			}
-			return; //nothing to do
-		}
 		activeSaveSubscriptionWorkflow = new SaveSubscriptionWorkflow(mContext, feedsSource, tags);
 		mMainLoader.executeUnique(activeSaveSubscriptionWorkflow);
 	}

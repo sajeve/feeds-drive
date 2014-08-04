@@ -83,12 +83,12 @@ public class FeedsDownloaderService extends Service {
 
 					for (String tag : mRefData.getTags()) {
 						SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(getApplicationContext(), tag,
-								Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL_SERVICE, false, Constants.ARTICLES_PER_PAGE,
+								Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL_SERVICE, true, Constants.ARTICLES_PER_PAGE,
 								mArticlesLoader, null);
 
 						mSelectTagLoader.execute(selectTagWorkflow);
 					}
-					
+
 					mSelectTagLoader.setQueueEmptyCallback(feedsDownloadFinished);
 					mArticlesLoader.setQueueEmptyCallback(articleDownloadFinished);
 				}

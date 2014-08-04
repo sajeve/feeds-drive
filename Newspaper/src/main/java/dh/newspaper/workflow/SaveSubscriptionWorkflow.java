@@ -1,6 +1,7 @@
 package dh.newspaper.workflow;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 import com.google.common.base.Joiner;
 import de.greenrobot.event.EventBus;
@@ -96,15 +97,24 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 			if (feedsSource.getValidity()== SearchFeedsResult.FeedsSourceValidity.OK) {
 				sendProgressMessage("Saving subscription..."); //TODO: translate
 
-				StringBuilder tagsValue = new StringBuilder("|");
-				for (String t : tags) {
-					tagsValue.append(t.toUpperCase()).append("|");
+				String tagsValue = null;
+				if (tags!=null && !tags.isEmpty()){
+					StringBuilder tagsValueBuilder = new StringBuilder("|");
+					for (String t : tags) {
+						tagsValueBuilder.append(t.toUpperCase()).append("|");
+					}
+					tagsValue = tagsValueBuilder.toString();
 				}
 
 				Subscription existedSubscription = feedsSource.getSubscription();
-
 				if (existedSubscription!=null) {
-					existedSubscription.setTags(tagsValue.toString());
+					if (TextUtils.isEmpty(tagsValue)) {
+						existedSubscription.setTags(tagsValue);
+						existedSubscription.setEnable(true);
+					}
+					else {
+						existedSubscription.setEnable(false);
+					}
 					existedSubscription.setLastUpdate(DateTime.now().toDate());
 					daoSession.getSubscriptionDao().update(existedSubscription);
 				}
@@ -117,7 +127,10 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 						language = feedsSource.getFeeds().getLanguage();
 						pubDate = feedsSource.getFeeds().getPubDate();
 					}
-					daoSession.insert(new Subscription(null, feedsSourceUrl, tagsValue.toString(),
+					if (TextUtils.isEmpty(tagsValue)) {
+						throw new IllegalStateException("tags value cannot empty here");
+					}
+					daoSession.insert(new Subscription(null, feedsSourceUrl, tagsValue,
 							description, language, true, null, pubDate, DateTime.now().toDate()));
 				}
 
@@ -130,7 +143,7 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 				sendError("Feeds source not valid"); //TODO: translate
 			}
 		}catch (Exception ex) {
-			sendError("Failed saving subscription: " + ex.toString()); //TODO: translate
+			sendError("Failed saving subscription: " + ex); //TODO: translate
 			Log.w(TAG, ex);
 		}
 	}
