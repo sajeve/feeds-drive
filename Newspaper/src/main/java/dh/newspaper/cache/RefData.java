@@ -2,6 +2,7 @@ package dh.newspaper.cache;
 
 import android.content.Context;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
@@ -61,19 +62,19 @@ public class RefData {
 	 */
 	public synchronized TreeSet<String> loadTags() {
 		checkAccessDiskOnMainThread();
-
 		Stopwatch sw = Stopwatch.createStarted();
 		loadSubscriptions();
 		mTags = new TreeSet<String>();
+
 		for (Subscription sub : getSubscriptions()) {
-			Iterable<String> subTags = Splitter.on('|').omitEmptyStrings().split(sub.getTags());
-			for (String tag : subTags) {
-				mTags.add(tag);
+			if (!TextUtils.isEmpty(sub.getTags())) {
+				Iterable<String> subTags = Splitter.on('|').omitEmptyStrings().split(sub.getTags());
+				for (String tag : subTags) {
+					mTags.add(tag);
+				}
 			}
 		}
-
 		Log.i(TAG, "Found " + mTags.size() + " tags from " + getSubscriptions().size() + " active subscriptions ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
-
 		return mTags;
 	}
 

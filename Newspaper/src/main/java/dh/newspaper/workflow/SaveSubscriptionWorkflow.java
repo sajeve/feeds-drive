@@ -109,11 +109,11 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 				Subscription existedSubscription = feedsSource.getSubscription();
 				if (existedSubscription!=null) {
 					if (TextUtils.isEmpty(tagsValue)) {
-						existedSubscription.setTags(tagsValue);
-						existedSubscription.setEnable(true);
+						existedSubscription.setEnable(false);
 					}
 					else {
-						existedSubscription.setEnable(false);
+						existedSubscription.setTags(tagsValue);
+						existedSubscription.setEnable(true);
 					}
 					existedSubscription.setLastUpdate(DateTime.now().toDate());
 					daoSession.getSubscriptionDao().update(existedSubscription);
