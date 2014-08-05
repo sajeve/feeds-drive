@@ -8,15 +8,15 @@ public class SchemaBuilder {
 	public static void main(String[] args) throws Exception {
 		System.out.println("Start generate..");
 
-		Schema schema = new Schema(100, "dh.newspaper.model.generated");
+		Schema schema = new Schema(101, "dh.newspaper.model.generated");
 		schema.enableKeepSectionsByDefault();
 
-		addPathToContent(schema);
+		//addPathToContent(schema);
 		addArticle(schema);
 		addSubscription(schema);
 
 		System.out.println("Current path = "+ new File(".").getAbsolutePath());
-		new DaoGenerator().generateAll(schema, "../Newspaper/src/main/java");
+		new DaoGenerator().generateAll(schema, "Newspaper/src/main/java");
 
 		System.out.println("Terminated OK");
 	}
@@ -52,6 +52,7 @@ public class SchemaBuilder {
 //		ToMany toMany = article.addToMany(articleCategory, articleId);
 	}
 
+/*
 	private static void addPathToContent(Schema schema) {
 		Entity entity = schema.addEntity("PathToContent");
 		entity.addIdProperty().autoincrement();
@@ -64,6 +65,7 @@ public class SchemaBuilder {
 
 		entity.implementsSerializable();
 	}
+*/
 
 	private static void addSubscription(Schema schema) {
 		Entity entity = schema.addEntity("Subscription");

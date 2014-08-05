@@ -228,7 +228,7 @@ public class SubscriptionDialog extends DialogFragment {
 				savingProgressDialog.setMessage(event.getProgressMessage());
 				savingProgressDialog.dismiss();
 				dismiss();
-				EventBus.getDefault().post(new SubscribeClickedEvent(SubscribeClickedEvent.SUBJECT_REFRESH, feedsSource));
+				//EventBus.getDefault().post(new SubscribeClickedEvent(SubscribeClickedEvent.SUBJECT_REFRESH, feedsSource));
 			}
 			else if (StrUtils.equalsString(Constants.SUBJECT_SAVE_SUBSCRIPTION_ERROR, event.getSubject())) {
 				savingProgressDialog.dismiss();

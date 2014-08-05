@@ -9,11 +9,9 @@ import de.greenrobot.dao.AbstractDaoSession;
 import de.greenrobot.dao.identityscope.IdentityScopeType;
 import de.greenrobot.dao.internal.DaoConfig;
 
-import dh.newspaper.model.generated.PathToContent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.generated.Subscription;
 
-import dh.newspaper.model.generated.PathToContentDao;
 import dh.newspaper.model.generated.ArticleDao;
 import dh.newspaper.model.generated.SubscriptionDao;
 
@@ -26,11 +24,9 @@ import dh.newspaper.model.generated.SubscriptionDao;
  */
 public class DaoSession extends AbstractDaoSession {
 
-    private final DaoConfig pathToContentDaoConfig;
     private final DaoConfig articleDaoConfig;
     private final DaoConfig subscriptionDaoConfig;
 
-    private final PathToContentDao pathToContentDao;
     private final ArticleDao articleDao;
     private final SubscriptionDao subscriptionDao;
 
@@ -38,32 +34,22 @@ public class DaoSession extends AbstractDaoSession {
             daoConfigMap) {
         super(db);
 
-        pathToContentDaoConfig = daoConfigMap.get(PathToContentDao.class).clone();
-        pathToContentDaoConfig.initIdentityScope(type);
-
         articleDaoConfig = daoConfigMap.get(ArticleDao.class).clone();
         articleDaoConfig.initIdentityScope(type);
 
         subscriptionDaoConfig = daoConfigMap.get(SubscriptionDao.class).clone();
         subscriptionDaoConfig.initIdentityScope(type);
 
-        pathToContentDao = new PathToContentDao(pathToContentDaoConfig, this);
         articleDao = new ArticleDao(articleDaoConfig, this);
         subscriptionDao = new SubscriptionDao(subscriptionDaoConfig, this);
 
-        registerDao(PathToContent.class, pathToContentDao);
         registerDao(Article.class, articleDao);
         registerDao(Subscription.class, subscriptionDao);
     }
     
     public void clear() {
-        pathToContentDaoConfig.getIdentityScope().clear();
         articleDaoConfig.getIdentityScope().clear();
         subscriptionDaoConfig.getIdentityScope().clear();
-    }
-
-    public PathToContentDao getPathToContentDao() {
-        return pathToContentDao;
     }
 
     public ArticleDao getArticleDao() {

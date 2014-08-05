@@ -51,22 +51,6 @@ public class MyApplication extends InjectingApplication {
 		if (Constants.ENABLE_ALARM) {
 			setupAlarm(getApplicationContext());
 		}
-
-/*
-		mDb = mDbHelper.getWritableDatabase();
-
-		mDaoMaster = new DaoMaster(mDb);
-		mDaoSession = mDaoMaster.newSession();
-		Log.i(TAG, "Database Path = " + mDb.getPath());
-
-		try {
-			Article article = new Article(null, "articleUrl1", "parentUrl1", "imageUrl1", "title1", "author1", "excerpt1", "content1", "fa1256", "en", 0L, null, null, null, null, new Date());
-			mDaoSession.getArticleDao().insert(article);
-		} catch (Exception ex) {
-			Log.w(TAG, ex.toString());
-		}
-*/
-		//EventBus.getDefault().register(mAppBundle, 100);
 	}
 
 	@Override

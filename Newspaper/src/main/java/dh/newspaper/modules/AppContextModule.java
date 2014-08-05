@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.preference.PreferenceManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.readystatesoftware.sqliteasset.SQLiteAssetHelper;
 import dagger.Module;
 import dagger.Provides;
 import dh.newspaper.MyApplication;
@@ -58,7 +59,7 @@ public class AppContextModule {
 	public SQLiteDatabase provideDatabase() {
 		if (mDatabase == null) {
 			//SQLiteOpenHelper mDbHelper = new DaoMaster.DevOpenHelper((Context)this, Constants.DATABASE_NAME, null); //debug only (because drops all tables)
-			mDbHelper = new DatabaseHelper(mAppContext); //upgrade with the database in assets
+			mDbHelper = new DatabaseHelper(mAppContext); //install with the database in assets
 			mDatabase = mDbHelper.getReadableDatabase();
 		}
 		return mDatabase;

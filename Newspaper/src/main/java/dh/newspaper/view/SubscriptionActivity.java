@@ -26,6 +26,8 @@ import dh.newspaper.MyApplication;
 import dh.newspaper.R;
 import dh.newspaper.adapter.SearchFeedsResultAdapter;
 import dh.newspaper.base.Injector;
+import dh.newspaper.cache.RefData;
+import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.event.SearchFeedsEvent;
 import dh.newspaper.event.SubscribeClickedEvent;
 import dh.newspaper.model.generated.Subscription;
@@ -47,8 +49,9 @@ public class SubscriptionActivity extends Activity {
 	private SearchFeedsResultAdapter searchFeedsResultAdapter;
 
 	@Inject BackgroundTasksManager mBackgroundTasksManager;
+	@Inject RefData refData;
 
-    @Override
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_subscription);
@@ -208,11 +211,21 @@ public class SubscriptionActivity extends Activity {
 
 	public void onEventMainThread(SubscribeClickedEvent event) {
 		try {
-			if (StrUtils.equalsString(SubscribeClickedEvent.SUBJECT_CLICK, event.getSubject())) {
-				SubscriptionDialog subDlg = SubscriptionDialog.newInstance(event.getFeedsSource());
-				subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
-			} else if (StrUtils.equalsString(SubscribeClickedEvent.SUBJECT_REFRESH, event.getSubject())) {
-				resultList.deferNotifyDataSetChanged();
+			SubscriptionDialog subDlg = SubscriptionDialog.newInstance(event.getFeedsSource());
+			subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
+		} catch (Exception ex) {
+			Log.w(TAG, ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
+		}
+	}
+
+	public void onEventMainThread(SaveSubscriptionEvent event) {
+		try {
+			if (StrUtils.equalsString(Constants.SUBJECT_SAVE_SUBSCRIPTION_DONE, event.getSubject())) {
+				if (searchFeedsResultAdapter != null) {
+					refData.matchExistSubscriptions(searchFeedsResultAdapter.getData());
+					searchFeedsResultAdapter.notifyDataSetChanged();
+				}
 			}
 		} catch (Exception ex) {
 			Log.w(TAG, ex);

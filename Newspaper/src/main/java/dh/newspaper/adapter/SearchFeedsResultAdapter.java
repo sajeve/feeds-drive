@@ -82,7 +82,7 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 							Object[] dataHolder = (Object[]) v.getTag();
 							if (dataHolder!=null) {
 								SearchFeedsResult.ResponseData.Entry entry = (SearchFeedsResult.ResponseData.Entry)dataHolder[0];
-								EventBus.getDefault().post(new SubscribeClickedEvent(SubscribeClickedEvent.SUBJECT_CLICK, entry));
+								EventBus.getDefault().post(new SubscribeClickedEvent(entry));
 							}
 						}
 						catch (Exception ex) {
@@ -111,7 +111,7 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 				Object[] dataHolder = (Object[])subscribe.getTag();
 				Subscription currentHoldingSubscription = dataHolder==null ? null : (Subscription)dataHolder[1];
 
-				//display other icon (checked) if the URL had been already subscribed
+				//set corresponding icon if the item state is changed
 				if ((currentHoldingSubscription==null) != (itemData.getSubscription()==null)) {
 					int res = itemData.getSubscription()==null ? R.drawable.add_259b24ff : R.drawable.checked_circle_72d572ff;
 					subscribe.setImageDrawable(mContext.getResources().getDrawable(res));

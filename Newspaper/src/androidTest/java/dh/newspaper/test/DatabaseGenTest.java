@@ -8,6 +8,7 @@ import de.greenrobot.dao.query.QueryBuilder;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
+import dh.newspaper.cache.RefData;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.FeedParserException;
 import dh.newspaper.parser.SubscriptionFactory;
@@ -25,6 +26,8 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 	}
 
 	DaoMaster mDaoMaster;
+
+	RefData refData;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -52,26 +55,25 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 		mDaoMaster.createAllTables(mDaoMaster.getDatabase(), false);
 		DaoSession daoSession = mDaoMaster.newSession();
 
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+vnexpress.net/.+", "div.short_intro, div.relative_new, div.fck_detail", "vn", 0, true, now));
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+nytimes.com/.+", "div.article-body", "en-US", 0, true, now));
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+huffingtonpost.com/.+", "div.article>p", "en-US", 0, true, now));
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+cnn.com/.+", "div.articleContent", "en-US", 0, true, now));
-		daoSession.getPathToContentDao().insert(new PathToContent(null,".+vnexpress.net/interactive/.+", "div.block_main_menu", "vn", 1, true, now));
+//		daoSession.getPathToContentDao().insert(new PathToContent(null,".+vnexpress.net/.+", "div.short_intro, div.relative_new, div.fck_detail", "vn", 0, true, now));
+//		daoSession.getPathToContentDao().insert(new PathToContent(null,".+nytimes.com/.+", "div.article-body", "en-US", 0, true, now));
+//		daoSession.getPathToContentDao().insert(new PathToContent(null,".+huffingtonpost.com/.+", "div.article>p", "en-US", 0, true, now));
+//		daoSession.getPathToContentDao().insert(new PathToContent(null,".+cnn.com/.+", "div.articleContent", "en-US", 0, true, now));
+//		daoSession.getPathToContentDao().insert(new PathToContent(null,".+vnexpress.net/interactive/.+", "div.block_main_menu", "vn", 1, true, now));
 
 		SubscriptionFactory subFactory = ((MyApplication)this.getActivity().getApplication()).getObjectGraph().get(SubscriptionFactory.class);
 
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://vnexpress.net/rss/tin-moi-nhat.rss", new String[] {"Thời sự"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://vnexpress.net/rss/doi-song.rss", new String[] {"Đời sống"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://vnexpress.net/rss/the-gioi.rss", new String[] {"Thế giới"}, "vn"));
-
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/dh.newspaper.services/xml/rss/nyt/HomePage.xml", new String[] {"Home US"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/dh.newspaper.services/xml/rss/nyt/InternationalHome.xml", new String[] {"Home World"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.nytimes.com/dh.newspaper.services/xml/rss/nyt/World.xml", new String[] {"World"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://feeds.nytimes.com/nyt/rss/Business", new String[] {"Business"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://feeds.nytimes.com/nyt/rss/Technology", new String[] {"Technology"}, "vn"));
-
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.huffingtonpost.com/tag/asian-americans/feed", new String[] {"Asian Americans"}, "vn"));
-		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://rss.cnn.com/rss/edition.rss", new String[]{"Top Stories"}, "vn"));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://vnexpress.net/rss/tin-moi-nhat.rss", new String[] {"Thời sự"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://vnexpress.net/rss/doi-song.rss", new String[] {"Đời sống"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://vnexpress.net/rss/the-gioi.rss", new String[] {"Thế giới"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://rss.nytimes.com/services/xml/rss/nyt/InternationalHome.xml", new String[] {"Thế giới"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://rss.nytimes.com/services/xml/rss/nyt/Europe.xml", new String[] {"World"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://feeds.nytimes.com/nyt/rss/Business", new String[] {"Business"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.huffingtonpost.com/feeds/verticals/business/index.xml", new String[] {"Business"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://feeds.nytimes.com/nyt/rss/Technology", new String[] {"Technology"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.huffingtonpost.com/feeds/verticals/technology/index.xml", new String[] {"Technology"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://www.huffingtonpost.com/tag/asian-americans/feed", new String[] {"Asian Americans"}));
+		daoSession.getSubscriptionDao().insert(subFactory.createSubscription("http://rss.cnn.com/rss/edition.rss", new String[]{"Top Stories"}));
 	}
 
 	public void testQueryDatabase() {

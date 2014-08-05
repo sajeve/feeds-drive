@@ -112,9 +112,9 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 						existedSubscription.setEnable(false);
 					}
 					else {
-						existedSubscription.setTags(tagsValue);
 						existedSubscription.setEnable(true);
 					}
+					existedSubscription.setTags(tagsValue);
 					existedSubscription.setLastUpdate(DateTime.now().toDate());
 					daoSession.getSubscriptionDao().update(existedSubscription);
 				}
@@ -135,7 +135,7 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 				}
 
 				sendProgressMessage("update cache..."); //TODO: translate
-				refData.loadSubscriptions();
+				refData.loadTags();
 
 				sendDone();
 			}

@@ -59,7 +59,7 @@
 //	}
 //
 //	public void testGetSubscriptions() throws IOException, FeedParserException {
-//		List<Subscription> subscriptions = mModelHelper.getSubscriptions("World");
+//		List<Subscription> subscriptions = mModelHelper.getActiveSubscriptions("World");
 //		assertTrue(subscriptions.size() > 0);
 //	}
 //}

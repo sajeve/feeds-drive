@@ -13,9 +13,12 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import dh.newspaper.Constants;
 import dh.newspaper.model.generated.*;
+import dh.newspaper.model.json.SearchFeedsResult;
+import dh.tool.common.StrUtils;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +37,7 @@ public class RefData {
 	//private boolean mTagsStale = false;
 	private Context mContext;
 	private List<Subscription> activeSubscriptions;
+	private List<Subscription> subscriptions;
 
 	@Inject
 	public RefData(DaoSession daoSession, Context context) {
@@ -58,6 +62,7 @@ public class RefData {
 //	}
 
 	/**
+	 * Must be called each time add/remove/update a subscription
 	 * Get all possible tags from active subscription (alphabetic order)
 	 */
 	public synchronized TreeSet<String> loadTags() {
@@ -66,7 +71,7 @@ public class RefData {
 		loadSubscriptions();
 		mTags = new TreeSet<String>();
 
-		for (Subscription sub : getSubscriptions()) {
+		for (Subscription sub : getActiveSubscriptions()) {
 			if (!TextUtils.isEmpty(sub.getTags())) {
 				Iterable<String> subTags = Splitter.on('|').omitEmptyStrings().split(sub.getTags());
 				for (String tag : subTags) {
@@ -74,27 +79,61 @@ public class RefData {
 				}
 			}
 		}
-		Log.i(TAG, "Found " + mTags.size() + " tags from " + getSubscriptions().size() + " active subscriptions ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+		Log.i(TAG, "Found " + mTags.size() + " tags from " + getActiveSubscriptions().size() + " active subscriptions ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 		return mTags;
 	}
 
 	/**
-	 * Must be called each time add/remove/update a subscription
+	 * Must be called each time add/remove/update a subscription except you already call the {@link #loadTags()} which
+	 * will call this one
 	 * @return
 	 */
 	public synchronized void loadSubscriptions() {
 		checkAccessDiskOnMainThread();
+
+		subscriptions = mDaoSession.getSubscriptionDao().loadAll();
+		activeSubscriptions = new ArrayList<Subscription>();
+		for (Subscription sub : subscriptions) {
+			if (sub.getEnable()) {
+				activeSubscriptions.add(sub);
+			}
+		}
+		/*
 		activeSubscriptions = mDaoSession.getSubscriptionDao().queryBuilder()
 				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE))
 				.list();
+		*/
 	}
 
-	public List<Subscription> getSubscriptions() {
-		/*if (activeSubscriptions == null) {
-			loadSubscriptions();
-		}*/
+	public List<Subscription> getActiveSubscriptions() {
 		return activeSubscriptions;
 	}
+	public List<Subscription> getSubscriptions() {
+		return subscriptions;
+	}
+	public Subscription findSubscription(String url) {
+		url = StrUtils.removeTrailingSlash(url);
+		for(Subscription sub : getSubscriptions()) {
+			if (StrUtils.equalsIgnoreCases(StrUtils.removeTrailingSlash(sub.getFeedsUrl()), url)) {
+				return sub;
+			}
+		}
+		return null;
+	}
+	/**
+	 * find all item which are already subscribed in a search result, set the subscription properties of the item
+	 * to the corresponding subscription object in the database
+	 * @param searchResult
+	 */
+	public void matchExistSubscriptions(SearchFeedsResult searchResult) {
+		if (searchResult==null || searchResult.getResponseData()==null || searchResult.getResponseData().getEntries()==null) {
+			return;
+		}
+		for (SearchFeedsResult.ResponseData.Entry entry : searchResult.getResponseData().getEntries()) {
+			entry.setSubscription(findSubscription(entry.getUrl()));
+		}
+	}
+
 
 	/*public boolean isTagsListReadyInMemory() {
 		return mTags!=null && !mTagsStale;

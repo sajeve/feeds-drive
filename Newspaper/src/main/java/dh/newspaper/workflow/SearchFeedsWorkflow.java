@@ -17,7 +17,6 @@ import dh.newspaper.tools.NetworkUtils;
 import dh.tool.common.PerfWatcher;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.OncePrifoTask;
-import dh.tool.thread.prifo.PrifoTask;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -33,7 +32,6 @@ import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Compute feed sources from an input query
@@ -260,7 +258,7 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 		}
 
 		//check if the result is already subscribed
-		entry.setSubscription(findSubscription(feedsLink));
+		entry.setSubscription(refData.findSubscription(feedsLink));
 
 		searchResult.getResponseData().getEntries().add(entry);
 	}
@@ -279,13 +277,11 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 		if (isCancelled()) { return true; }
 		SearchFeedsResult searchResult = objectMapper.readValue(rawData, SearchFeedsResult.class);
 
-		//check if the result is already subscribed
+
 		if (isCancelled()) { return true; }
-		if (searchResult!=null && searchResult.getResponseData()!=null && searchResult.getResponseData().getEntries()!=null) {
-			for (SearchFeedsResult.ResponseData.Entry entry : searchResult.getResponseData().getEntries()) {
-				entry.setSubscription(findSubscription(entry.getUrl()));
-			}
-		}
+
+		//check if the result is already subscribed then set the subscription properties
+		refData.matchExistSubscriptions(searchResult);
 
 		if (isCancelled()) { return true; }
 		sendFinalResult(searchResult);
@@ -299,16 +295,6 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 	private void sendPartialResult(SearchFeedsResult searchResult) {
 		searchResultEvent = new SearchFeedsEvent(this, Constants.SUBJECT_SEARCH_FEEDS_REFRESH, query, searchResult);
 		EventBus.getDefault().post(searchResultEvent);
-	}
-
-	private Subscription findSubscription(String url) {
-		url = StrUtils.removeTrailingSlash(url);
-		for(Subscription sub : refData.getSubscriptions()) {
-			if (StrUtils.equalsIgnoreCases(StrUtils.removeTrailingSlash(sub.getFeedsUrl()), url)) {
-				return sub;
-			}
-		}
-		return null;
 	}
 
 	public String getQuery() {

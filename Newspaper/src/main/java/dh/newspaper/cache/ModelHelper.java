@@ -242,7 +242,7 @@
 //	 * Find subscriptions by tag: Select * from Subscription where tag like "%|tag|%"
 //	 * @param tag
 //	 */
-//	public List<Subscription> getSubscriptions(String tag) {
+//	public List<Subscription> getActiveSubscriptions(String tag) {
 //		mFindSubscriptionByTagQuery.setParameter(1, "%"+getTechnicalTag(tag)+"%");
 //		Stopwatch sw = logFirstStep("getFeedsUrl("+tag+")");
 //		List<Subscription> subscriptions = mFindSubscriptionByTagQuery.list();
@@ -261,7 +261,7 @@
 ////
 ////		//get all article from cache
 ////
-////		List<Subscription> subscriptions = getSubscriptions(tag);
+////		List<Subscription> subscriptions = getActiveSubscriptions(tag);
 ////		if (subscriptions.isEmpty()) {
 ////			return null;
 ////		}

@@ -2,11 +2,13 @@ package dh.newspaper.view;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListView;
+import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
@@ -228,8 +231,20 @@ public class FeedsFragment extends Fragment {
 				if (Constants.DEBUG)
 					Log.d(TAG, "FeedsFragment DONE (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag());
 
+
+				String notices = Joiner.on('\n').join(event.getSender().getNotices()).trim();
 				mGridViewAdapter.notifyDataSetChanged();
 				mSwipeRefreshLayout.setRefreshing(false);
+
+				if (!TextUtils.isEmpty(notices)) {
+					new AlertDialog.Builder(getActivity())
+						.setTitle("Warning")
+						.setMessage(notices)
+						.setPositiveButton("OK", null)
+						.create()
+						.show();
+				}
+
 				return;
 			}
 		} catch (Exception ex) {
