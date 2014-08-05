@@ -19,6 +19,7 @@ import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
 import dh.tool.thread.ICancellation;
 import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.OncePrifoTask;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoTask;
 import org.joda.time.DateTime;
@@ -41,7 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * Created by hiep on 3/06/2014.
  */
-public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
+public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollection {
 	private static final String TAG = SelectTagWorkflow.class.getName();
 
 	@Inject DaoSession mDaoSession;
@@ -55,8 +56,6 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	private final PrifoExecutor mArticlesLoader;
 	private final SelectTagCallback mCallback;
 	private final Context mContext;
-
-	private final ReentrantLock lock = new ReentrantLock();
 	/**
 	 * Special treatment for articleZero should be always in memory cache. Because the listView call for it all the time
 	 */
@@ -85,9 +84,6 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 
 	private final boolean mOnlineMode;
 
-	private volatile boolean used = false;
-	private volatile boolean mRunning = false;
-
 	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, boolean onlineMode, int pageSize, PrifoExecutor articlesLoader, SelectTagCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 
@@ -104,70 +100,45 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 	/**
 	 * Start the workflow. This method can only be executed once. Otherwise, create other Workflow
 	 */
-	public void run() {
-		if (isCancelled()) {
-			logSimple(toString() + " is cancelled");
-			return;
-		}
-
-		final ReentrantLock lock = this.lock;
-		lock.lock();
+	@Override
+	public void perform() {
+		logSimple("Start workflow");
+		Stopwatch genericStopWatch = Stopwatch.createStarted();
+		mStopwatch = Stopwatch.createStarted();
 		try {
-			if (used) {
-				logWarn(toString() + " is used");
-				if (Constants.DEBUG) {
-					throw new IllegalStateException(toString() + " is used");
-				}
-				return;
+			loadFirstPageArticlesFromCache();
+			if (mCallback != null && !isCancelled()) {
+				resetStopwatch();
+				mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
+				log("Callback onFinishedLoadFromCache()");
 			}
-			used = true;
-			mRunning = true;
 
-			logSimple("Start workflow");
-			Stopwatch genericStopWatch = Stopwatch.createStarted();
-			mStopwatch = Stopwatch.createStarted();
-			try {
-				loadFirstPageArticlesFromCache();
+			if (mOnlineMode) {
+				downloadFeeds();
 				if (mCallback != null && !isCancelled()) {
 					resetStopwatch();
-					mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
-					log("Callback onFinishedLoadFromCache()");
+					mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
+					log("Callback onFinishedDownloadFeeds()");
 				}
 
-				if (mOnlineMode) {
-					downloadFeeds();
-					if (mCallback != null && !isCancelled()) {
-						resetStopwatch();
-						mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
-						log("Callback onFinishedDownloadFeeds()");
-					}
-
-					downloadArticles();
-					if (mCallback != null && !isCancelled()) {
-						resetStopwatch();
-						mCallback.onFinishedDownloadArticles(this);
-						log("Callback onFinishedDownloadArticles()");
-					}
-				}
-				else {
-					logSimple("Offline mode, only use cached articles");
-				}
-			}
-			finally {
-				if (mCallback!=null) {
+				downloadArticles();
+				if (mCallback != null && !isCancelled()) {
 					resetStopwatch();
-					mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
-					log("Callback done()");
+					mCallback.onFinishedDownloadArticles(this);
+					log("Callback onFinishedDownloadArticles()");
 				}
-				mRunning = false;
-				logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 			}
-		}
-		catch (Exception ex) {
-			Log.w(TAG, ex);
+			else {
+				logSimple("Offline mode, only use cached articles");
+			}
 		}
 		finally {
-			lock.unlock();
+			if (mCallback!=null) {
+				resetStopwatch();
+				mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
+				log("Callback done()");
+			}
+			logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
 		}
 	}
 
@@ -565,10 +536,6 @@ public class SelectTagWorkflow extends PrifoTask implements IArticleCollection {
 
 	public String getTag() {
 		return mTag;
-	}
-
-	public boolean isRunning() {
-		return mRunning;
 	}
 
 	//<editor-fold desc="Simple Log Utils for Profiler">

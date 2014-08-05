@@ -13,7 +13,10 @@ public abstract class OncePrifoTask extends PrifoTask {
 	private static final Logger log = LoggerFactory.getLogger(OncePrifoTask.class);
 	private volatile boolean used = false;
 	private volatile boolean running = true;
-	private final ReentrantLock lock = new ReentrantLock();
+	/**
+	 * Other blocking method should use this lock
+	 */
+	protected final ReentrantLock lock = new ReentrantLock();
 
 	@Override
 	public void run() {
