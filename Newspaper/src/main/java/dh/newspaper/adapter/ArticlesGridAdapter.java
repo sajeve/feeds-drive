@@ -188,7 +188,7 @@ public class ArticlesGridAdapter extends BaseAdapter {
 		notifyDataSetChanged();
 	}
 
-	@Override
+/*	@Override
 	public void notifyDataSetChanged() {
 		super.notifyDataSetChanged();
 
@@ -196,7 +196,7 @@ public class ArticlesGridAdapter extends BaseAdapter {
 			Log.d(TAG, String.format("notifyDataSetChanged '%s' N=%d",
 				((SelectTagWorkflow)mData).getTag(),
 				mData.getTotalSize()));
-	}
+	}*/
 
 /*	private SelectTagWorkflow.OnInMemoryCacheChangeCallback cacheChangedListener = new IArticleCollection.OnInMemoryCacheChangeCallback() {
 		@Override

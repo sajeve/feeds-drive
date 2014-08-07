@@ -8,17 +8,13 @@ import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.TextView;
-import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import dh.newspaper.Constants;
@@ -29,8 +25,7 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.event.SearchFeedsEvent;
-import dh.newspaper.event.SubscribeClickedEvent;
-import dh.newspaper.model.generated.Subscription;
+import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.workflow.SearchFeedsWorkflow;
 import dh.tool.common.StrUtils;
@@ -58,13 +53,13 @@ public class SubscriptionActivity extends Activity {
 		((Injector)getApplication()).inject(this);
 
 		getActionBar().setTitle(R.string.search_subscription);
-		//edtQuery = (EditText)findViewById(R.id.query_editor);
+		searchView = (SearchView)findViewById(R.id.query_editor);
 		swipeRefresh = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
 		resultList = (ListView)findViewById(R.id.search_result);
 		txtNotice = (TextView) findViewById(R.id.txt_notice);
 		panelNotice = findViewById(R.id.panel_notice);
 
-		searchFeedsResultAdapter = new SearchFeedsResultAdapter(this);
+		searchFeedsResultAdapter = new SearchFeedsResultAdapter(this, subscribe_OnClick);
 		resultList.setAdapter(searchFeedsResultAdapter);
 
 //		edtQuery.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -87,6 +82,34 @@ public class SubscriptionActivity extends Activity {
 //				return false;
 //			}
 //		});
+		SearchManager manager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+		searchView.setSearchableInfo(manager.getSearchableInfo(getComponentName()));
+		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+			@Override
+			public boolean onQueryTextSubmit(String query) {
+				try {
+					mBackgroundTasksManager.searchFeedsSources(query);
+
+					//hide keyboard
+					if (resultList!=null) {
+						InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+						txtNotice.getWindowToken();
+						imm.hideSoftInputFromWindow(resultList.getWindowToken(), 0);
+					}
+
+					return true;
+				} catch (Exception ex) {
+					Log.w(TAG, ex);
+					MyApplication.showErrorDialog(SubscriptionActivity.this.getFragmentManager(), "Search", ex);
+				}
+				return false;
+			}
+
+			@Override
+			public boolean onQueryTextChange(String newText) {
+				return false;
+			}
+		});
 		swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 			@Override
 			public void onRefresh() {
@@ -115,47 +138,49 @@ public class SubscriptionActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.search_subscription, menu);
-		SearchManager manager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 
-		MenuItem searchViewItem = menu.findItem(R.id.action_search);
-		searchView = (SearchView) searchViewItem.getActionView();
 
-		searchView.setIconifiedByDefault(false);
-		ActionBar.LayoutParams params = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.MATCH_PARENT);
-		searchView.setLayoutParams(params);
-
-		searchViewItem.expandActionView();
+//		MenuItem searchViewItem = menu.findItem(R.id.action_search);
+//		searchView = (SearchView) searchViewItem.getActionView();
+//
+//		searchView.setIconifiedByDefault(false);
+//		ActionBar.LayoutParams params = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.MATCH_PARENT);
+//		searchView.setLayoutParams(params);
+//
+//		searchViewItem.expandActionView();
 		/*searchView.setMaxWidth(4000);
 		searchView.setFocusable(true);
 		searchView.requestFocusFromTouch();*/
 
-		searchView.setSearchableInfo(manager.getSearchableInfo(getComponentName()));
-		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-			@Override
-			public boolean onQueryTextSubmit(String query) {
-				try {
-					mBackgroundTasksManager.searchFeedsSources(query);
 
-					//hide keyboard
-					if (resultList!=null) {
-						InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-						txtNotice.getWindowToken();
-						imm.hideSoftInputFromWindow(resultList.getWindowToken(), 0);
-					}
-
-					return true;
-				} catch (Exception ex) {
-					Log.w(TAG, ex);
-					MyApplication.showErrorDialog(SubscriptionActivity.this.getFragmentManager(), "Search", ex);
-				}
-				return false;
-			}
-
-			@Override
-			public boolean onQueryTextChange(String newText) {
-				return false;
-			}
-		});
+//		SearchManager manager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+//		searchView.setSearchableInfo(manager.getSearchableInfo(getComponentName()));
+//		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+//			@Override
+//			public boolean onQueryTextSubmit(String query) {
+//				try {
+//					mBackgroundTasksManager.searchFeedsSources(query);
+//
+//					//hide keyboard
+//					if (resultList!=null) {
+//						InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+//						txtNotice.getWindowToken();
+//						imm.hideSoftInputFromWindow(resultList.getWindowToken(), 0);
+//					}
+//
+//					return true;
+//				} catch (Exception ex) {
+//					Log.w(TAG, ex);
+//					MyApplication.showErrorDialog(SubscriptionActivity.this.getFragmentManager(), "Search", ex);
+//				}
+//				return false;
+//			}
+//
+//			@Override
+//			public boolean onQueryTextChange(String newText) {
+//				return false;
+//			}
+//		});
 
 		/*searchViewItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
 			@Override
@@ -170,7 +195,7 @@ public class SubscriptionActivity extends Activity {
 		});
 */
 		//restore value
-		restoreSearchView();
+		//restoreSearchView();
 
 		return super.onCreateOptionsMenu(menu);
 	}
@@ -209,15 +234,17 @@ public class SubscriptionActivity extends Activity {
 		}
 	}
 
-	public void onEventMainThread(SubscribeClickedEvent event) {
-		try {
-			SubscriptionDialog subDlg = SubscriptionDialog.newInstance(event.getFeedsSource());
-			subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
-		} catch (Exception ex) {
-			Log.w(TAG, ex);
-			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
-		}
-	}
+
+//	public void onEventMainThread(SubscribeClickedEvent event) {
+//		try {
+//			SubscriptionDialog subDlg = SubscriptionDialog.newInstance(event.getFeedsSource());
+//			subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
+//		} catch (Exception ex) {
+//			Log.w(TAG, ex);
+//			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
+//		}
+//	}
+
 
 	public void onEventMainThread(SaveSubscriptionEvent event) {
 		try {
@@ -232,6 +259,28 @@ public class SubscriptionActivity extends Activity {
 			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
 		}
 	}
+
+	/**
+	 * Event click on subscribe
+	 */
+	private View.OnClickListener subscribe_OnClick = new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			try {
+				Object[] dataHolder = (Object[]) v.getTag();
+				if (dataHolder==null) {
+					return;
+				}
+				SearchFeedsResult.ResponseData.Entry feedsSource = (SearchFeedsResult.ResponseData.Entry)dataHolder[0];
+				SubscriptionDialog subDlg = SubscriptionDialog.newInstance(feedsSource);
+				subDlg.show(getFragmentManager(), SubscriptionDialog.class.getName());
+			}
+			catch (Exception ex) {
+				Log.w(TAG, ex);
+				MyApplication.showErrorDialog(SubscriptionActivity.this.getFragmentManager(), "Failed add subscription", ex);
+			}
+		}
+	};
 
 	private void setGui(SearchFeedsWorkflow currentTask) {
 		if (currentTask == null) {return;}

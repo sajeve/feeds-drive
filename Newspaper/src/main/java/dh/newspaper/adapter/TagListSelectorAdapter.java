@@ -1,24 +1,21 @@
 package dh.newspaper.adapter;
 
 import android.content.Context;
-import android.os.Handler;
-import android.text.Html;
-import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
-import de.greenrobot.event.EventBus;
+import android.widget.BaseAdapter;
+import android.widget.CheckedTextView;
+import android.widget.ListView;
+import android.widget.Toast;
 import dh.newspaper.R;
-import dh.newspaper.cache.RefData;
-import dh.newspaper.event.SubscribeClickedEvent;
 import dh.newspaper.model.AddNewItem;
 import dh.newspaper.model.CheckableString;
-import dh.newspaper.model.json.SearchFeedsResult;
 
-import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * The tag list, with last element is "Add new.."

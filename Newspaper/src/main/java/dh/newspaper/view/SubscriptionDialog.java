@@ -13,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 import de.greenrobot.event.EventBus;
@@ -27,7 +26,6 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.CreateNewTagEvent;
 import dh.newspaper.event.SaveSubscriptionEvent;
-import dh.newspaper.event.SubscribeClickedEvent;
 import dh.newspaper.model.AddNewItem;
 import dh.newspaper.model.CheckableString;
 import dh.newspaper.model.json.SearchFeedsResult;
@@ -36,7 +34,9 @@ import dh.newspaper.workflow.SaveSubscriptionWorkflow;
 import dh.tool.common.StrUtils;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *

@@ -1,21 +1,18 @@
 package dh.newspaper.adapter;
 
 import android.content.Context;
-import android.os.Handler;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
-import de.greenrobot.event.EventBus;
+import android.widget.BaseAdapter;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import dh.newspaper.R;
-import dh.newspaper.event.SubscribeClickedEvent;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
-
-import java.util.Objects;
 
 /**
 * Created by hiep on 8/05/2014.
@@ -26,11 +23,13 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 	private final Context mContext;
 	private final LayoutInflater mInflater;
 	private SearchFeedsResult mData;
+	private final View.OnClickListener onClickSubscribe;
 	//private Handler mMainThreadHandler;
 
-	public SearchFeedsResultAdapter(Context context) {
+	public SearchFeedsResultAdapter(Context context, View.OnClickListener onClickSubscribe) {
 		mContext = context;
 		mInflater = LayoutInflater.from(context);
+		this.onClickSubscribe = onClickSubscribe;
 		//mMainThreadHandler = new Handler();
 	}
 
@@ -75,21 +74,7 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 				v.setTag(new View[]{title, description, source, subscribe});
 
 				title.setMovementMethod(LinkMovementMethod.getInstance());
-				subscribe.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						try {
-							Object[] dataHolder = (Object[]) v.getTag();
-							if (dataHolder!=null) {
-								SearchFeedsResult.ResponseData.Entry entry = (SearchFeedsResult.ResponseData.Entry)dataHolder[0];
-								EventBus.getDefault().post(new SubscribeClickedEvent(entry));
-							}
-						}
-						catch (Exception ex) {
-							Log.w(TAG, ex);
-						}
-					}
-				});
+				subscribe.setOnClickListener(onClickSubscribe);
 			} else {
 				v = convertView;
 				View[] viewsHolder = (View[]) v.getTag();
