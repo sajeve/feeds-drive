@@ -89,14 +89,7 @@ public class SubscriptionActivity extends Activity {
 			public boolean onQueryTextSubmit(String query) {
 				try {
 					mBackgroundTasksManager.searchFeedsSources(query);
-
-					//hide keyboard
-					if (resultList!=null) {
-						InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-						txtNotice.getWindowToken();
-						imm.hideSoftInputFromWindow(resultList.getWindowToken(), 0);
-					}
-
+					hideKeyboard();
 					return true;
 				} catch (Exception ex) {
 					Log.w(TAG, ex);
@@ -203,7 +196,15 @@ public class SubscriptionActivity extends Activity {
 	private void restoreSearchView() {
 		if (lastTask!=null && searchView!=null) {
 			searchView.setQuery(lastTask.getQuery(), false);
+			if (!TextUtils.isEmpty(lastTask.getQuery())) {
+				hideKeyboard();
+			}
 		}
+	}
+
+	private void hideKeyboard() {
+		InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+		imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
 	}
 
 	private SearchFeedsWorkflow lastTask;
@@ -214,20 +215,27 @@ public class SubscriptionActivity extends Activity {
 				lastTask = (SearchFeedsWorkflow)event.getSender();
 				swipeRefresh.setRefreshing(true);
 			}
-			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_REFRESH)) {
+			else {
 				if (lastTask !=null && !StrUtils.equalsString(lastTask.getMissionId(), event.getFlowId())) {
 					//this event is fired by a sender which is no more concerning by this activity -> do nothing
 					return;
 				}
 				setGui(lastTask);
 			}
-			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_DONE_LOADING)) {
-				if (lastTask !=null && !StrUtils.equalsString(lastTask.getMissionId(), event.getFlowId())) {
-					//this event is fired by a sender which is no more concerning by this activity -> do nothing
-					return;
-				}
-				setGui(lastTask);
-			}
+//			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_REFRESH)) {
+//				if (lastTask !=null && !StrUtils.equalsString(lastTask.getMissionId(), event.getFlowId())) {
+//					//this event is fired by a sender which is no more concerning by this activity -> do nothing
+//					return;
+//				}
+//				setGui(lastTask);
+//			}
+//			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_DONE_LOADING)) {
+//				if (lastTask !=null && !StrUtils.equalsString(lastTask.getMissionId(), event.getFlowId())) {
+//					//this event is fired by a sender which is no more concerning by this activity -> do nothing
+//					return;
+//				}
+//				setGui(lastTask);
+//			}
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
 			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
@@ -286,7 +294,6 @@ public class SubscriptionActivity extends Activity {
 		if (currentTask == null) {return;}
 
 		swipeRefresh.setRefreshing(currentTask.isRunning());
-		restoreSearchView();
 		SearchFeedsEvent event = currentTask.getSearchResultEvent();
 		if (event==null) { return; }
 
@@ -308,6 +315,7 @@ public class SubscriptionActivity extends Activity {
 		super.onRestoreInstanceState(savedInstanceState);
 		lastTask = mBackgroundTasksManager.getActiveSearchFeedsWorkflow();
 		setGui(lastTask);
+		restoreSearchView();
 	}
 
 	@Override

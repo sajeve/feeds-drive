@@ -4,15 +4,17 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.media.Image;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ListView;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.*;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 import de.greenrobot.event.EventBus;
@@ -26,7 +28,6 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.CreateNewTagEvent;
 import dh.newspaper.event.SaveSubscriptionEvent;
-import dh.newspaper.model.AddNewItem;
 import dh.newspaper.model.CheckableString;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.services.BackgroundTasksManager;
@@ -51,6 +52,8 @@ public class SubscriptionDialog extends DialogFragment {
 	private Button okButton;
 	private Button cancelButton;
 	private TagListSelectorAdapter tagsListAdapter;
+	private ImageButton addTagButton;
+	private EditText tagNameEditor;
 	private ProgressDialog savingProgressDialog;
 
 	@Inject RefData refData;
@@ -94,9 +97,11 @@ public class SubscriptionDialog extends DialogFragment {
 		tagList = (ListView)v.findViewById(R.id.tag_list);
 		okButton = (Button)v.findViewById(R.id.ok_button);
 		cancelButton = (Button)v.findViewById(R.id.cancel_button);
+		tagNameEditor = (EditText)v.findViewById(R.id.tag_name_edit);
+		addTagButton = (ImageButton)v.findViewById(R.id.add_tag_button);
 
 		{//update list view
-			tagsListAdapter = new TagListSelectorAdapter(this.getActivity());
+			tagsListAdapter = new TagListSelectorAdapter(this.getActivity(), onItemClicked);
 			tagList.setAdapter(tagsListAdapter);
 		}
 		{//update progress bar
@@ -106,7 +111,7 @@ public class SubscriptionDialog extends DialogFragment {
 		}
 		okButton.setOnClickListener(onOkClicked);
 		cancelButton.setOnClickListener(onCancelClicked);
-
+		addTagButton.setOnClickListener(onAddTagClicked);
 		return v;
     }
 
@@ -166,7 +171,6 @@ public class SubscriptionDialog extends DialogFragment {
 		for (String tagName : refData.getTags()) {
 			checkableTags.add(new CheckableString(tagName, selectedTags != null && selectedTags.contains(tagName)));
 		}
-		checkableTags.add(new AddNewItem());
 		return checkableTags;
 	}
 
@@ -201,6 +205,49 @@ public class SubscriptionDialog extends DialogFragment {
 			} catch (Exception ex) {
 				Log.w(TAG, ex);
 				MyApplication.showErrorDialog(getFragmentManager(), "Cancel Clicked", ex);
+			}
+		}
+	};
+
+	private View.OnClickListener onAddTagClicked = new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			try {
+				String newTagName = tagNameEditor.getText().toString().toUpperCase();
+
+				//if the tag name is used, so just select it
+				for (CheckableString c : tagsListAdapter.getData()) {
+					if (StrUtils.equalsString(c.getText(), newTagName)) {
+						Crouton.makeText(getActivity(), R.string.category_already_exist_so_check_it, Style.ALERT, (ViewGroup) getView()).show();
+						c.setChecked(true);
+						tagsListAdapter.notifyDataSetChanged();
+						return;
+					}
+				}
+
+				//otherwise add it to the list, and check it
+				tagsListAdapter.getData().add(new CheckableString(newTagName, true));
+				tagsListAdapter.notifyDataSetChanged();
+
+			} catch (Exception ex) {
+				Log.w(TAG, ex);
+				MyApplication.showErrorDialog(getFragmentManager(), "Cancel Clicked", ex);
+			}
+		}
+	};
+
+	private View.OnClickListener onItemClicked = new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			try {
+				CheckableString itemData = (CheckableString)v.getTag();
+				//reverse the selection
+				itemData.setChecked(!itemData.isChecked());
+				//update the view
+				((CheckedTextView)v).setChecked(itemData.isChecked());
+			} catch (Exception ex) {
+				Log.w(TAG, ex);
+				MyApplication.showErrorDialog(getFragmentManager(), "onItemClicked", ex);
 			}
 		}
 	};
@@ -304,4 +351,12 @@ public class SubscriptionDialog extends DialogFragment {
 		}
 		//mArticle = mAppBundle.getCurrentArticle();
 	}
+
+	/*private void hideKeyboard() {
+		if (this.getActivity() != null) {
+			tagNameEditor.clearFocus();
+			InputMethodManager imm = (InputMethodManager) this.getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+			imm.hideSoftInputFromWindow(tagList.getWindowToken(), 0);
+		}
+	}*/
 }

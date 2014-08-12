@@ -7,8 +7,13 @@ import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import de.greenrobot.event.EventBus;
+import de.keyboardsurfer.android.widget.crouton.Crouton;
+import de.keyboardsurfer.android.widget.crouton.Style;
 import dh.newspaper.base.Injector;
+import dh.newspaper.event.RawEvent;
 import dh.newspaper.model.generated.Article;
+import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.services.MainMenuHandler;
 import dh.newspaper.view.ArticleFragment;
 import dh.newspaper.view.FeedsFragment;
@@ -22,6 +27,7 @@ public class DetailActivity extends Activity {
 	private boolean mSinglePane;
 
 	@Inject SharedPreferences mSharedPreferences;
+	@Inject BackgroundTasksManager mBackgroundTasksManager;
 
 	@Inject MainMenuHandler mMainMenuHandler;
 
@@ -137,7 +143,29 @@ public class DetailActivity extends Activity {
 			overridePendingTransition(R.anim.left_in, R.anim.right_out);
 			return true;
 		}
+
+		if (id == R.id.show_original) {
+			if (mBackgroundTasksManager.getActiveSelectArticleWorkflow() == null) {
+				Crouton.makeText(this, "No article selected", Style.ALERT).show(); //TODO translate
+				return true;
+			}
+
+			Article currentArticle = mBackgroundTasksManager.getActiveSelectArticleWorkflow().getArticle();
+
+			if (Constants.DEBUG) {
+				if (currentArticle == null) {
+					throw new IllegalStateException("Workflow null article");
+				}
+			}
+
+			EventBus.getDefault().post(new RawEvent(Constants.SUBJECT_ARTICLE_DISPLAY_FULL_WEBPAGE));
+		}
+
 		return super.onOptionsItemSelected(item);
 	}
-
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		Crouton.cancelAllCroutons();
+	}
 }

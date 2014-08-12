@@ -5,9 +5,8 @@
 		android:layout_height="match_parent">
 
 	<!--android:foreground = "?android:selectableItemBackground"-->
-	<LinearLayout
+	<RelativeLayout
 			android:id="@+id/list_item"
-			android:orientation="vertical"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:background="?android:attr/activatedBackgroundIndicator"
@@ -27,36 +26,36 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:text="2 hours ago"
+				android:layout_below="@+id/article_title"
 				style="@style/Feed.Date"/>
 
-		<LinearLayout
+
+
+		<ImageView
+				android:id="@+id/article_image"
+				android:layout_width="@dimen/thumbnail_big"
+				android:layout_height="@dimen/thumbnail_big"
+				android:clickable="false"
+				android:layout_below="@+id/article_date"
+				android:src="@drawable/card_background_gray"
+				/>
+
+		<TextView
+				android:layout_marginLeft="4dp"
+				android:id="@+id/article_excerpt"
 				android:layout_width="fill_parent"
-				android:layout_height="fill_parent">
-
-			<ImageView
-					android:id="@+id/article_image"
-					android:layout_width="125dp"
-					android:layout_height="125dp"
-					android:clickable="false"
-					android:src="@drawable/card_background_gray"
-					/>
-
-			<TextView
-					android:layout_marginLeft="4dp"
-					android:id="@+id/article_excerpt"
-					android:layout_width="fill_parent"
-					android:layout_height="fill_parent"
-					style="@style/Feed.Content"
-					android:text="Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
-					/>
-
-		</LinearLayout>
+				android:layout_height="@dimen/thumbnail_big"
+				android:layout_below="@id/article_date"
+				android:layout_toRightOf="@+id/article_image"
+				style="@style/Feed.Content"
+				android:text="Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
+				/>
 
 		<View
-				style="@style/Divider"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent"/>
-	</LinearLayout>
+				style="@style/DividerH"
+				android:layout_below="@+id/article_image"
+				/>
+	</RelativeLayout>
 	<ProgressBar
 			android:id="@+id/progress_bar"
 			android:layout_width="64dp"

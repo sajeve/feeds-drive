@@ -42,6 +42,7 @@ public class Constants {
 	public static final String SUBJECT_FEEDS_DONE_LOADING = "Feeds.DoneLoading";
 	public static final String SUBJECT_ARTICLE_START_LOADING = "Article.StartLoading";
 	public static final String SUBJECT_ARTICLE_REFRESH = "Article.Refresh";
+	public static final String SUBJECT_ARTICLE_DISPLAY_FULL_WEBPAGE = "Article.DisplayFullWebpage";
 	public static final String SUBJECT_ARTICLE_DONE_LOADING = "Article.DoneLoading";
 	public static final String SUBJECT_SAVE_SUBSCRIPTION_PROGRESS_MESSAGE = "SaveSubscrption.SendProgressMessage";
 	public static final String SUBJECT_SAVE_SUBSCRIPTION_DONE = "SaveSubscrption.Done";

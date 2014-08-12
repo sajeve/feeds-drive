@@ -23,12 +23,16 @@
 		Divider to use in layout:
 		<View style="@style/Divider"/>
 	-->
-	<style name="Divider">
+	<style name="DividerH">
 		<item name="android:layout_width">match_parent</item>
 		<item name="android:layout_height">1dp</item>
 		<item name="android:background">?android:attr/listDivider</item>
 	</style>
-
+	<style name="DividerV">
+		<item name="android:layout_width">1dp</item>
+		<item name="android:layout_height">match_parent</item>
+		<item name="android:background">?android:attr/listDivider</item>
+	</style>
 
 	<!--feed style-->
 
@@ -45,7 +49,7 @@
 	</style>
 
 	<style name="Feed.TitleSmall" parent="Feed">
-		<item name="android:textSize">12sp</item>
+		<item name="android:textSize">14sp</item>
 		<item name="android:textStyle">bold</item>
 	</style>
 
@@ -79,7 +83,7 @@
 		<item name="android:textColor">@color/gray_text</item>
 	</style>
 
-	<style name="Article.Info.Gray" parent="Article">
+	<style name="Article.Info.Gray" parent="Article.Info">
 		<item name="android:textColor">@color/gray_secondary</item>
 	</style>
 

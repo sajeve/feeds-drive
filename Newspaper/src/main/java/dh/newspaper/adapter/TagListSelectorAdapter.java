@@ -8,9 +8,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
-import android.widget.Toast;
 import dh.newspaper.R;
-import dh.newspaper.model.AddNewItem;
 import dh.newspaper.model.CheckableString;
 
 import java.util.ArrayList;
@@ -28,10 +26,12 @@ public class TagListSelectorAdapter extends BaseAdapter {
 	private final LayoutInflater inflater;
 	//private Handler mainThreadHandler;
 	private ArrayList<CheckableString> data;
+	private final View.OnClickListener itemOnClick;
 
-	public TagListSelectorAdapter(Context context) {
+	public TagListSelectorAdapter(Context context, View.OnClickListener itemOnClick) {
 		this.context = context;
 		inflater = LayoutInflater.from(context);
+		this.itemOnClick = itemOnClick;
 		//mainThreadHandler = new Handler();
 	}
 
@@ -56,20 +56,17 @@ public class TagListSelectorAdapter extends BaseAdapter {
 			/* create (or get) view */
 			View v;
 			CheckableString itemData = (CheckableString)getItem(position);
-			boolean isSpecialItem = itemData instanceof AddNewItem;
 			if (convertView == null) {
-				v = createViewItem(parent, isSpecialItem);
-			} else {
-				/*if item and convert view mismatch, recreate the view, otherwise, use convert view*/
-				v = isSpecialItem == isSpecialView(convertView) ? convertView : createViewItem(parent, isSpecialItem);
+				v = inflater.inflate(R.layout.item_tag_checkable, parent, false);
+				v.setOnClickListener(this.itemOnClick);
+			}
+			else {
+				v = convertView;
 			}
 
 			/* bind value to view */
-			if (!isSpecialItem) {
-				((CheckedTextView)v).setText(itemData.getText());
-				//((CheckedTextView)v).setChecked(itemData.isChecked());
-				((ListView)parent).setItemChecked(position, itemData.isChecked());
-			}
+			((CheckedTextView)v).setText(itemData.getText());
+			((ListView)parent).setItemChecked(position, itemData.isChecked());
 			v.setTag(itemData);
 
 			return v;
@@ -85,33 +82,6 @@ public class TagListSelectorAdapter extends BaseAdapter {
 	private boolean isSpecialView(View v) {
 		//the last item is a normal TextView, not a CheckedTextView
 		return !(v instanceof CheckedTextView);
-	}
-
-	private View createViewItem(ViewGroup parent, boolean isSpecialItem) {
-		View v = isSpecialItem ?
-				inflater.inflate(R.layout.item_tag_new, parent, false)
-				: inflater.inflate(R.layout.item_tag_checkable, parent, false);
-
-		//if user click on item: reverse the selection and update the view
-		v.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				CheckableString itemData = (CheckableString)v.getTag();
-				boolean isSpecialItem = itemData instanceof AddNewItem;
-				if (isSpecialItem) {
-					//TODO send event to add category
-					Toast.makeText(context, "Add category", Toast.LENGTH_SHORT).show();
-					//EventBus.getDefault().post( );
-				}
-				else {
-					//reverse the selection
-					itemData.setChecked(!itemData.isChecked());
-					//update the view
-					((CheckedTextView)v).setChecked(itemData.isChecked());
-				}
-			}
-		});
-		return v;
 	}
 
 	public ArrayList<CheckableString> getData() {

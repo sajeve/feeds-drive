@@ -6,8 +6,9 @@
 		android:orientation="horizontal"
 		android:padding="8dp"> <!--android:background="@drawable/layer_card_background"-->
 		<LinearLayout
-				android:layout_width="10dp"
+				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
+				android:layout_gravity="fill_horizontal"
 				android:orientation="vertical"
 				android:layout_weight="0.8">
 			<TextView
@@ -36,12 +37,15 @@
 					android:text="http://vnexpressnews.net/feed/"
 					/>
 		</LinearLayout>
+
+		<View style="@style/DividerV" />
+
 		<ImageButton
 				android:id="@+id/subscribe"
 				style="?android:attr/borderlessButtonStyle"
-				android:layout_width="10dp"
+				android:layout_width="wrap_content"
 				android:layout_height="match_parent"
-				android:layout_weight="0.2"
+				android:layout_gravity="right|center"
 				android:src="@drawable/add_259b24ff"
 				/>
 

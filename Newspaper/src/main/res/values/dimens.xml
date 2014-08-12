@@ -11,6 +11,9 @@
     <dimen name="navigation_drawer_width">240dp</dimen>
 
 
+	<dimen name="thumbnail_big">125dp</dimen>
+	<dimen name="thumbnail_small">50dp</dimen>
+
 
 	<!-- Card -->
 	<dimen name="card_base_empty_height">96dp</dimen>

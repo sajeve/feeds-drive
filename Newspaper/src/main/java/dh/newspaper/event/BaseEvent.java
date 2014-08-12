@@ -3,6 +3,7 @@ package dh.newspaper.event;
 import com.google.common.base.Strings;
 
 import java.io.Serializable;
+import java.security.InvalidParameterException;
 
 /**
  * A context aware version of RawEvent, hold reference to the sender.
@@ -15,7 +16,7 @@ public class BaseEvent<T> extends RawEvent {
 	public BaseEvent(T sender, String subject, String flowId) {
 		super(subject, flowId);
 		if (sender == null) {
-			throw new IllegalStateException("Null event sender");
+			throw new InvalidParameterException("Null event sender");
 		}
 		this.sender = sender;
 	}

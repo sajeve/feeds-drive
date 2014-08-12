@@ -60,6 +60,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 	private final Duration mArticleTimeToLive;
 	private final boolean mOnlineMode;
+	//private final boolean mDownloadOriginal;
 	private final SelectArticleCallback mCallback;
 
 	private Article mArticle;
@@ -88,16 +89,16 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 	/**
 	 * Create workflow from a {@link dh.newspaper.model.FeedItem}
 	 */
-	public SelectArticleWorkflow(Context context, FeedItem feedItem, Duration articleTimeToLive, boolean downloadFullContent, SelectArticleCallback callback) {
-		this(context, articleTimeToLive, downloadFullContent, callback);
+	public SelectArticleWorkflow(Context context, FeedItem feedItem, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
+		this(context, articleTimeToLive, online, callback);
 		mFeedItem = feedItem;
 	}
 
 	/**
 	 * Create workflow from an existing {@link dh.newspaper.model.generated.Article}
 	 */
-	public SelectArticleWorkflow(Context context, Article article, Duration articleTimeToLive, boolean downloadFullContent, SelectArticleCallback callback) {
-		this(context, articleTimeToLive, downloadFullContent, callback);
+	public SelectArticleWorkflow(Context context, Article article, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
+		this(context, articleTimeToLive, online, callback);
 		mArticle = article;
 		mFeedItem = new FeedItem(article.getParentUrl(), article.getTitle(), article.getPublishedDateString(), article.getExcerpt(), article.getArticleUrl(), article.getLanguage(), article.getAuthor());
 	}
@@ -446,7 +447,15 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		}
 
 		resetStopwatch();
+
+		/*if (mDownloadOriginal) {
+			mDoc = Jsoup.parse(inputStream, encoding, mFeedItem.getUri());
+		}
+		else {
+			mDoc = mContentParser.extractContent(inputStream, encoding, mFeedItem.getUri(), mParseNotice, this);
+		}*/
 		mDoc = mContentParser.extractContent(inputStream, encoding, mFeedItem.getUri(), mParseNotice, this);
+
 		if (isCancelled()) return;
 
 		mArticleContentDownloaded = mDoc.outerHtml();

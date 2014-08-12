@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.TextView;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -24,6 +25,7 @@ import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.R;
 import dh.newspaper.base.Injector;
+import dh.newspaper.event.RawEvent;
 import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.generated.Subscription;
@@ -78,7 +80,7 @@ public class ArticleFragment extends Fragment {
 		mPanelNotice = mSwipeRefreshLayout.findViewById(R.id.panel_notice);
 
 		mTxtDataSource.setMovementMethod(LinkMovementMethod.getInstance());
-
+		mWebView.setWebViewClient(new WebViewClient());
 		mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 			@Override
 			public void onRefresh() {
@@ -189,6 +191,20 @@ public class ArticleFragment extends Fragment {
 
 				mSwipeRefreshLayout.setRefreshing(false);
 				return;
+			}
+		} catch (Exception ex) {
+			Log.w(TAG, ex);
+			MyApplication.showErrorDialog(this.getFragmentManager(), event.getSubject(), ex);
+		}
+	}
+
+	public void onEventMainThread(RawEvent event) {
+		if (!isAdded() || mWebView==null || mArticle==null) {
+			return;
+		}
+		try {
+			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_DISPLAY_FULL_WEBPAGE)) {
+				mWebView.loadUrl(mArticle.getArticleUrl());
 			}
 		} catch (Exception ex) {
 			Log.w(TAG, ex);

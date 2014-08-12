@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		>
+
+	<RelativeLayout
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_gravity="fill_horizontal"
+			android:layout_weight="0.8"
+			>
+		<CheckBox
+				android:id="@+id/checkbox"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				/>
+		<TextView
+				android:id="@+id/url"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:singleLine="true"
+				style="@style/Article"
+				android:textColorLink="@color/gray_text"
+				android:text="http://dantri.com.vn/rss/wwwww"
+				android:autoLink="web"
+				android:layout_toRightOf="@+id/checkbox"
+				android:layout_alignBaseline="@id/checkbox"
+				/>
+		<TextView
+				android:id="@+id/categories"
+				style="@style/Article.Info.Gray"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:singleLine="true"
+				android:text="Chuyen la, Thoi su"
+				android:layout_below="@id/url"
+				android:layout_toRightOf="@id/checkbox"
+				android:layout_marginTop="8dp"
+				/>
+
+
+	</RelativeLayout>
+
+	<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="right"
+			android:src="@drawable/add_259b24ff"
+			style="?android:attr/borderlessButtonStyle"
+			/>
+
+</LinearLayout>
