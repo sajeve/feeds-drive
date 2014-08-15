@@ -128,153 +128,153 @@ public class ContentParser {
 		return doc;
 	}
 
-	/**
-	 * Get the simplify format of the article from a Webpage:
-	 * <ul>
-	 * <li>Connect to address with mobile userAgent</li>
-	 * <li>Use the mainContentQuery to extractContent article body</li>
-	 * <li>Clean the html content</li>
-	 * </ul>
-	 *
-	 * @see {@link #extractContent(Document, String, java.lang.StringBuilder)}
-	 * @see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>
-	 *
-	 * @param addressUrl
-	 * @param mainContentQuery (see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>)
-	 * @return simplify content (keep only basic tag)
-	 * @throws IOException
-	 */
-	public Elements extractContent(String addressUrl, String mainContentQuery, StringBuilder notice) throws IOException {
-		Connection connection = Jsoup.connect(addressUrl).userAgent(NetworkUtils.MOBILE_USER_AGENT);
-		Document doc = connection.get();
+//	/**
+//	 * Get the simplify format of the article from a Webpage:
+//	 * <ul>
+//	 * <li>Connect to address with mobile userAgent</li>
+//	 * <li>Use the mainContentQuery to extractContent article body</li>
+//	 * <li>Clean the html content</li>
+//	 * </ul>
+//	 *
+//	 * @see {@link #extractContent(Document, String, java.lang.StringBuilder)}
+//	 * @see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>
+//	 *
+//	 * @param addressUrl
+//	 * @param mainContentQuery (see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>)
+//	 * @return simplify content (keep only basic tag)
+//	 * @throws IOException
+//	 */
+//	public Elements extractContent(String addressUrl, String mainContentQuery, StringBuilder notice) throws IOException {
+//		Connection connection = Jsoup.connect(addressUrl).userAgent(NetworkUtils.MOBILE_USER_AGENT);
+//		Document doc = connection.get();
+//
+//		doc.outputSettings().escapeMode(EscapeMode.xhtml);
+//		return extractContent(doc, mainContentQuery, notice);
+//	}
+//
+//	/**
+//	 * Get the simplify format of the article from a InputStream:
+//	 * See {@link #extractContent(String, String, java.lang.StringBuilder)}
+//	 * @param charSet Encoding - default UTF-8 (if null)
+//	 */
+//	public Elements extractContent(InputStream input, String charSet, String mainContentQuery, String baseURI, StringBuilder notice) throws IOException {
+//		if (Strings.isNullOrEmpty(charSet)) {
+//			charSet = Constants.DEFAULT_ENCODING;
+//		}
+//		Document doc = Jsoup.parse(input, charSet, baseURI);
+//		doc.outputSettings().escapeMode(EscapeMode.xhtml);
+//		return extractContent(doc, mainContentQuery, notice);
+//	}
 
-		doc.outputSettings().escapeMode(EscapeMode.xhtml);
-		return extractContent(doc, mainContentQuery, notice);
-	}
+//	/**
+//	 * Get the simplify format of the article from a jsoup Document:
+//	 * <ul>
+//	 * <li>Use the mainContentQuery to extractContent article body</li>
+//	 * if  mainContentQuery == null: take the body part
+//	 * <li>Clean the html content</li>
+//	 * </ul>
+//	 *
+//	 * The mainContentQuery is a combination of <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">JsoupSelector</a> separated by
+//	 * <code>{or}</code>, this method will try to use each JsoupSelector so that the returning content is not null
+//	 *
+//	 * @param mainContentQuery combination of (see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>)
+//	 *                         separated by <code>{or}</code>
+//	 * @return simplify content (keep only basic tag)
+//	 *
+//	 * @see {@link #extractContent(String, String, java.lang.StringBuilder)}
+//	 * @see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>
+//	 */
+//	public Elements extractContent(Document doc, String mainContentQuery, StringBuilder notice) throws MalformedURLException {
+//		doc.outputSettings().escapeMode(EscapeMode.xhtml);
+//
+//		Element body = doc.body();
+//		if (Strings.isNullOrEmpty(mainContentQuery)) {
+//			return new Elements(cleanHtml(body));
+//		}
+//		List<String> xpaths = Splitter.on("{or}").omitEmptyStrings().trimResults().splitToList(mainContentQuery);
+//
+//		for (String xpath : xpaths) {
+//			Elements elems = body.select(xpath);
+//			for(Element e : elems) {
+//				cleanHtml(e);
+//			}
+//			if (elems!=null && elems.size()>0 && !Strings.isNullOrEmpty(elems.html())) {
+//				return elems;
+//			}
+//		}
+//
+//		notice.append("Empty content xpath '"+xpaths+"' not match '"+doc.baseUri()+"'. Display full body.");
+//		return new Elements(cleanHtml(body));
+//	}
 
-	/**
-	 * Get the simplify format of the article from a InputStream:
-	 * See {@link #extractContent(String, String, java.lang.StringBuilder)}
-	 * @param charSet Encoding - default UTF-8 (if null)
-	 */
-	public Elements extractContent(InputStream input, String charSet, String mainContentQuery, String baseURI, StringBuilder notice) throws IOException {
-		if (Strings.isNullOrEmpty(charSet)) {
-			charSet = Constants.DEFAULT_ENCODING;
-		}
-		Document doc = Jsoup.parse(input, charSet, baseURI);
-		doc.outputSettings().escapeMode(EscapeMode.xhtml);
-		return extractContent(doc, mainContentQuery, notice);
-	}
+//	private void absolutePath(Element content) throws MalformedURLException {
+//		Elements imgElems = content.select("img");
+//		for (Element imgelem : imgElems) {
+//			String absolutePath = imgelem.attr("abs:src");
+//			if (!Strings.isNullOrEmpty(absolutePath)) {
+//				imgelem.attr("src", absolutePath);
+//			}
+//		}
+//
+//		Elements linksElems = content.select("a");
+//		for (Element linkelem : linksElems) {
+//			String absolutePath = linkelem.attr("abs:href");
+//			if (!Strings.isNullOrEmpty(absolutePath)) {
+//				linkelem.attr("href", absolutePath);
+//			}
+//		}
+//	}
 
-	/**
-	 * Get the simplify format of the article from a jsoup Document:
-	 * <ul>
-	 * <li>Use the mainContentQuery to extractContent article body</li>
-	 * if  mainContentQuery == null: take the body part
-	 * <li>Clean the html content</li>
-	 * </ul>
-	 *
-	 * The mainContentQuery is a combination of <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">JsoupSelector</a> separated by
-	 * <code>{or}</code>, this method will try to use each JsoupSelector so that the returning content is not null
-	 *
-	 * @param mainContentQuery combination of (see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>)
-	 *                         separated by <code>{or}</code>
-	 * @return simplify content (keep only basic tag)
-	 *
-	 * @see {@link #extractContent(String, String, java.lang.StringBuilder)}
-	 * @see <a href="http://jsoup.org/cookbook/extracting-data/selector-syntax">Jsoup Selector</a>
-	 */
-	public Elements extractContent(Document doc, String mainContentQuery, StringBuilder notice) throws MalformedURLException {
-		doc.outputSettings().escapeMode(EscapeMode.xhtml);
+//	/**
+//	 * Remove
+//	 * - script, style, link (to css, javascript)
+//	 * - convert image path to absolute
+//	 * @see {@link #cleanUselessContent(Node)}
+//	 */
+//	private Element cleanHtml(Element mainContent) throws MalformedURLException {
+//		mainContent.select("script, style, link").remove(); //remove all script tags + contents
+//		mainContent.select("span").unwrap(); //remove all span tags
+//		cleanUselessContent(mainContent);
+//		absolutePath(mainContent);
+//		return mainContent;
+//	}
 
-		Element body = doc.body();
-		if (Strings.isNullOrEmpty(mainContentQuery)) {
-			return new Elements(cleanHtml(body));
-		}
-		List<String> xpaths = Splitter.on("{or}").omitEmptyStrings().trimResults().splitToList(mainContentQuery);
-
-		for (String xpath : xpaths) {
-			Elements elems = body.select(xpath);
-			for(Element e : elems) {
-				cleanHtml(e);
-			}
-			if (elems!=null && elems.size()>0 && !Strings.isNullOrEmpty(elems.html())) {
-				return elems;
-			}
-		}
-
-		notice.append("Empty content xpath '"+xpaths+"' not match '"+doc.baseUri()+"'. Display full body.");
-		return new Elements(cleanHtml(body));
-	}
-
-	private void absolutePath(Element content) throws MalformedURLException {
-		Elements imgElems = content.select("img");
-		for (Element imgelem : imgElems) {
-			String absolutePath = imgelem.attr("abs:src");
-			if (!Strings.isNullOrEmpty(absolutePath)) {
-				imgelem.attr("src", absolutePath);
-			}
-		}
-
-		Elements linksElems = content.select("a");
-		for (Element linkelem : linksElems) {
-			String absolutePath = linkelem.attr("abs:href");
-			if (!Strings.isNullOrEmpty(absolutePath)) {
-				linkelem.attr("href", absolutePath);
-			}
-		}
-	}
-
-	/**
-	 * Remove
-	 * - script, style, link (to css, javascript)
-	 * - convert image path to absolute
-	 * @see {@link #cleanUselessContent(Node)}
-	 */
-	private Element cleanHtml(Element mainContent) throws MalformedURLException {
-		mainContent.select("script, style, link").remove(); //remove all script tags + contents
-		mainContent.select("span").unwrap(); //remove all span tags
-		cleanUselessContent(mainContent);
-		absolutePath(mainContent);
-		return mainContent;
-	}
-
-	/**
-	 * Remove all
-	 * - comments
-	 * - class properties
-	 * @param node
-	 */
-	private void cleanUselessContent(Node node) {
-
-		for (int i = 0; i < node.childNodes().size();) {
-            Node child = node.childNode(i);
-            if (child instanceof Comment || child instanceof FormElement)
-                child.remove();
-            else {
-            	cleanUselessContent(child);
-            	i++;
-            }
-
-            Attributes atts = child.attributes();
-            for (Attribute a : atts) {
-            	if (a.getKey().equalsIgnoreCase("class"))
-                child.removeAttr(a.getKey());
-            }
-        }
-    }
-
-	public static void removeComments(Node node) {
-		for (int i = 0; i < node.childNodes().size();) {
-			Node child = node.childNode(i);
-			if (child.nodeName().equals("#comment"))
-				child.remove();
-			else {
-				removeComments(child);
-				i++;
-			}
-		}
-	}
+//	/**
+//	 * Remove all
+//	 * - comments
+//	 * - class properties
+//	 * @param node
+//	 */
+//	private void cleanUselessContent(Node node) {
+//
+//		for (int i = 0; i < node.childNodes().size();) {
+//            Node child = node.childNode(i);
+//            if (child instanceof Comment || child instanceof FormElement)
+//                child.remove();
+//            else {
+//            	cleanUselessContent(child);
+//            	i++;
+//            }
+//
+//            Attributes atts = child.attributes();
+//            for (Attribute a : atts) {
+//            	if (a.getKey().equalsIgnoreCase("class"))
+//                child.removeAttr(a.getKey());
+//            }
+//        }
+//    }
+//
+//	public static void removeComments(Node node) {
+//		for (int i = 0; i < node.childNodes().size();) {
+//			Node child = node.childNode(i);
+//			if (child.nodeName().equals("#comment"))
+//				child.remove();
+//			else {
+//				removeComments(child);
+//				i++;
+//			}
+//		}
+//	}
 
 	//<editor-fold desc="Feed Parse">
 

@@ -46,11 +46,9 @@ public class MainActivity extends Activity {
 
 	private DrawerLayout mDrawerLayout;
 
-	@Inject
-	SharedPreferences mSharedPreferences;
+	@Inject SharedPreferences mSharedPreferences;
 
-	@Inject
-	MainMenuHandler mMainMenuHandler;
+	@Inject MainMenuHandler mMainMenuHandler;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -166,7 +164,7 @@ public class MainActivity extends Activity {
 //			return true;
 //		}
 
-		if (mMainMenuHandler.onOptionsItemSelected(item)) {
+		if (mMainMenuHandler.onOptionsItemSelected(this, item)) {
 			return true;
 		}
 		switch (item.getItemId()) {

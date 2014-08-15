@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:title="@string/background_service">
+		<CheckBoxPreference
+				android:key="pref_serviceEnabled"
+				android:title="@string/enable_service"
+				android:summary="@string/enable_service_summ"
+				android:defaultValue="true" />
+		<ListPreference
+				android:key="pref_intervals"
+				android:dependency="pref_serviceEnabled"
+				android:title="@string/download_interval"
+				android:dialogTitle="@string/download_interval"
+				android:entries="@array/intervals"
+				android:entryValues="@array/interval_values"
+				android:defaultValue="7200000" />
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/downloader">
+		<ListPreference
+				android:key="pref_networkCondition"
+				android:title="@string/network_condition"
+				android:summary="@string/network_condition_summ"
+				android:dialogTitle="@string/network_condition"
+				android:entries="@array/network_conditions"
+				android:entryValues="@array/network_condition_values"
+				android:defaultValue="wifi" />
+		<ListPreference
+				android:key="pref_downloadingThread"
+				android:title="@string/download_thread"
+				android:summary="@string/download_thread_summ"
+				android:dialogTitle="@string/download_thread"
+				android:entries="@array/downloading_threads"
+				android:entryValues="@array/downloading_threads"
+				android:defaultValue="2" />
+	</PreferenceCategory>
+</PreferenceScreen>

@@ -4,9 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.readystatesoftware.sqliteasset.SQLiteAssetHelper;
 import dagger.Module;
 import dagger.Provides;
 import dh.newspaper.MyApplication;
@@ -15,6 +15,7 @@ import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.services.BackgroundTasksManager;
+import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.TagsFragment;
 
@@ -110,5 +111,15 @@ public class AppContextModule {
 	@Provides @Singleton
 	public ObjectMapper provideObjectMapper() {
 		return new ObjectMapper();
+	}
+
+	@Provides @Singleton
+	public ConnectivityManager provideConnectivityManager() {
+		return (ConnectivityManager)mAppContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+	}
+
+	@Provides
+	public Context provideContext() {
+		return mAppContext;
 	}
 }

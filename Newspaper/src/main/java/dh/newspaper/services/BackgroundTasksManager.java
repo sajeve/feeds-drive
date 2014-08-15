@@ -29,6 +29,7 @@ import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -48,19 +49,13 @@ public class BackgroundTasksManager implements Closeable {
 	private Context mContext;
 
 	private ExecutorService mTagsListLoader;
-	private PrifoExecutor mArticlesLoader = PrifoExecutorFactory.newPrifoExecutor(1, Constants.THREAD_ARTICLES_LOADER);
-	//private ExecutorService mArticlesLoader = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
-	//private PriorityExecutor mArticlesLoader = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
+	private PrifoExecutor mArticlesLoader;
 
 	private SelectTagWorkflow mSelectTagWorkflow;
 	private ExecutorService mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(1, Integer.MAX_VALUE);
-	//private ExecutorService mSelectTagLoader = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
-	//private ExecutorService mSelectTagLoader = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LifoBlockingDeque<Runnable>());
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
 	private PrifoExecutor mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor(8, Integer.MAX_VALUE);
-	//private ExecutorService mainPrifoExecutor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new BumpBlockingQueue());
-	//private ExecutorService mainPrifoExecutor = PriorityExecutor.newCachedThreadPool(Constants.THREAD_POOL_SIZE);
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mSharedPreferences;
@@ -71,6 +66,7 @@ public class BackgroundTasksManager implements Closeable {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		mContext = context;
 		mMainThreadHandler = new Handler();
+		mArticlesLoader = PrifoExecutorFactory.newPrifoExecutor(1, Constants.THREAD_ARTICLES_LOADER);
 	}
 
 	private boolean isInitWorkflowRun = false;

@@ -30,7 +30,7 @@ public class Constants {
 	public static final int ARTICLES_PER_PAGE = DEBUG ? 100 : 200;
 
 	public static final int IMAGE_DISK_CACHE_SIZE = 100 * 1024 * 1024;
-	public static final int THREAD_ARTICLES_LOADER = 1;
+	public static final int THREAD_ARTICLES_LOADER = 2;
 
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
 	public static final String SUBJECT_TAGS_END_LOADING = "Tags.Refresh";

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string-array name="network_conditions">
+		<item>All network</item>
+		<item>Wifi only</item>
+	</string-array>
+
+	<string-array name="network_condition_values">
+		<item>all</item>
+		<item>wifi</item>
+	</string-array>
+
+	<string-array name="intervals">
+		<item>1h</item>
+		<item>2h</item>
+		<item>4h</item>
+		<item>8h (3 times/day)</item>
+		<item>12h (2 times/day)</item>
+	</string-array>
+
+	<string-array name="interval_values">
+		<item>3600000</item>
+		<item>7200000</item>
+		<item>14400000</item>
+		<item>28800000</item>
+		<item>43200000</item>
+	</string-array>
+
+	<string-array name="downloading_threads">
+		<item>1</item>
+		<item>2</item>
+		<item>4</item>
+	</string-array>
+
+
+</resources>

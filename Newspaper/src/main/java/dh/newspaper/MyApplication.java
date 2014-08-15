@@ -49,7 +49,7 @@ public class MyApplication extends InjectingApplication {
 		mBackgroundTasksManager.runInitialisationWorkflow();
 
 		if (Constants.ENABLE_ALARM) {
-			setupAlarm(getApplicationContext());
+			setupAlarm(getApplicationContext(), Constants.SERVICE_START_AT, Constants.SERVICE_INTERVAL);
 		}
 	}
 
@@ -85,7 +85,7 @@ public class MyApplication extends InjectingApplication {
 		return mRefData.getCacheDir();
 	}
 
-	private void setupAlarm(Context context) {
+	private void setupAlarm(Context context, long startAt, long interval) {
 		// let's grab new stuff at around 11:45 GMT, inexactly
 		/*Calendar updateTime = Calendar.getInstance();
 		updateTime.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -96,9 +96,17 @@ public class MyApplication extends InjectingApplication {
 		PendingIntent recurringDownload = PendingIntent.getBroadcast(context,
 				0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
 		AlarmManager alarms = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+
+		try {
+			alarms.cancel(recurringDownload);
+		}
+		catch (Exception ex) {
+			Log.w(TAG, ex);
+		}
+
 		alarms.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-				Constants.SERVICE_START_AT,
-				Constants.SERVICE_INTERVAL,
+				startAt,
+				interval,
 				recurringDownload);
 	}
 

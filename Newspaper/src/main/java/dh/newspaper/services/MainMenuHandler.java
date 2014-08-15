@@ -1,10 +1,14 @@
 package dh.newspaper.services;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.MenuItem;
 import dh.newspaper.Constants;
 import dh.newspaper.R;
+import dh.newspaper.view.SettingsActivity;
 
 import javax.inject.Inject;
 
@@ -20,7 +24,7 @@ public class MainMenuHandler {
 		mSharedPreferences = sharedPreferences;
 	}
 
-	public boolean onOptionsItemSelected(MenuItem item) {
+	public boolean onOptionsItemSelected(Activity owner, MenuItem item) {
 		// Handle action bar item clicks here. The action bar will
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
@@ -32,6 +36,7 @@ public class MainMenuHandler {
 				mSharedPreferences.edit().putBoolean(Constants.PREF_OFFLINE, newState).apply();
 				return true;
 			case R.id.action_settings:
+				owner.startActivity(new Intent(owner, SettingsActivity.class));
 				return true;
 		}
 		return false;

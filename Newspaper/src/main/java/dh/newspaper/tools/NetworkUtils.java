@@ -1,5 +1,8 @@
 package dh.newspaper.tools;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.http.AndroidHttpClient;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
@@ -18,6 +21,7 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.EntityUtils;
 
+import javax.inject.Inject;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
@@ -33,7 +37,6 @@ public class NetworkUtils {
 	public static final String MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; U; Android 4.0.3; ko-kr; LG-L160L Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
 	public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36";
 	private static final int SOCKET_OPERATION_TIMEOUT = 60 * 1000;
-
 	private static final OkHttpClient okHttpClient = new OkHttpClient();
 
 	/**
@@ -105,8 +108,6 @@ public class NetworkUtils {
 	}
 
 	public static String quickDownloadXml(String address, String userAgent, ICancellation cancelListener) throws IOException {
-		Stopwatch sw = Stopwatch.createStarted();
-
 		HttpURLConnection httpConnection = okHttpClient.open(new URL(address));
 		httpConnection.addRequestProperty("User-Agent", userAgent);
 		int responseCode = httpConnection.getResponseCode();
@@ -191,7 +192,6 @@ public class NetworkUtils {
 		}
 	}
 
-
 //	/**
 //	 * Get network stream (mobile user-agent) use HttpURLConnection
 //	 * @param address
@@ -234,7 +234,19 @@ public class NetworkUtils {
 		return content;
 	}
 
+	public boolean isNetworkAvailable(ConnectivityManager cm) {
+		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+		boolean isConnected = activeNetwork != null &&
+				activeNetwork.isConnectedOrConnecting();
+		return isConnected;
+	}
 
+	public static boolean isWifiAvailable(ConnectivityManager cm) {
+		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+		boolean isConnected = activeNetwork != null && activeNetwork.getType()==ConnectivityManager.TYPE_WIFI &&
+				activeNetwork.isConnectedOrConnecting();
+		return isConnected;
+	}
 }
 
 //	/**

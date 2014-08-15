@@ -116,13 +116,13 @@ public class FeedsDownloaderService extends Service {
 	private final IQueueEmptyCallback feedsDownloadFinished = new IQueueEmptyCallback() {
 		@Override
 		public void onQueueEmpty() {
-			displayNotification("Download tags finished", "All feeds pages downloaded");
+			displayNotification("Download tags", "Tags queue is empty");
 		}
 	};
 	private final IQueueEmptyCallback articleDownloadFinished = new IQueueEmptyCallback() {
 		@Override
 		public void onQueueEmpty() {
-			displayNotification("Download articles finished", "All articles downloaded");
+			displayNotification("Download articles", "Articles queue is empty");
 		}
 	};
 
