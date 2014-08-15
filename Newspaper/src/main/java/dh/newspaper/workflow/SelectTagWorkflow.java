@@ -17,6 +17,7 @@ import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
+import dh.newspaper.tools.TagUtils;
 import dh.tool.thread.ICancellation;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.OncePrifoTask;
@@ -453,11 +454,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		checkAccessDiskOnMainThread();
 		return mDaoSession.getSubscriptionDao().queryBuilder()
 				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
-						SubscriptionDao.Properties.Tags.like("%"+getTechnicalTag(tag)+"%")).list();
-	}
-
-	private String getTechnicalTag(String tag) {
-		return "|"+StrUtils.normalizeUpper(tag)+"|";
+						SubscriptionDao.Properties.Tags.like("%"+ TagUtils.getTechnicalTag(tag)+"%")).list();
 	}
 
 	@Override

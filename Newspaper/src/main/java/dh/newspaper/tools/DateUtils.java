@@ -28,6 +28,7 @@ public class DateUtils {
 			ISODateTimeFormat.dateTimeParser().getParser(), //2014-05-25T05:39:45Z same as "YYYY-MM-dd'T'HH:mm:ss'Z'"
 			DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss Z").getParser(), //Mon, 26 May 2014 00:08:43 +0700
 			DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss zzz").getParser(), //Sun, 25 May 2014 17:15:22 UTC
+			DateTimeFormat.forPattern("EEE, dd MMM YYYY HH:mm:ss").getParser() //Fri, 15 Aug 2014 21:44:00
 			//Sun, 25 May 2014 17:15:22 African
 //			DateTimeFormat.forPattern("M/d/y K:m:ss a").getParser(), // 8/3/2014 4:37:00 AM
 //			DateTimeFormat.forPattern("M-d-y K:m:ss a").getParser() // 8-3-2014 4:37:00 AM

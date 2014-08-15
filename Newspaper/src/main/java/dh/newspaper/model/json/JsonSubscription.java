@@ -30,7 +30,7 @@
 //		return feedsUrl;
 //	}
 //
-//	public List<String> getTags() {
+//	public List<String> getActiveTags() {
 //		return tags;
 //	}
 //

@@ -11,23 +11,23 @@
 
 	<item
 			android:id="@+id/action_subscribe"
-			app:showAsAction="ifRoom"
+			android:showAsAction="ifRoom"
 			android:icon="@drawable/ic_action_new"
 			android:title="@string/subscribe"/>
 	<item
 			android:id="@+id/action_manage_subscription"
-			app:showAsAction="ifRoom"
-			android:icon="@drawable/rss_0000008a"
+			android:showAsAction="ifRoom"
+			android:icon="@drawable/rss_ffffff8a"
 			android:title="@string/manage_subscriptions"/>
 	<item
 			android:id="@+id/action_offline"
-			app:showAsAction="never"
+			android:showAsAction="never"
 			android:icon="@drawable/ic_action_airplane_mode_on"
 			android:checkable="true"
 			android:title="@string/offline"/>
 	<item
 			android:id="@+id/action_settings"
-			app:showAsAction="never"
+			android:showAsAction="never"
 			android:icon="@drawable/ic_action_settings"
 			android:title="@string/action_settings"/>
 

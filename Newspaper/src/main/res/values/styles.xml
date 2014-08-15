@@ -82,14 +82,35 @@
 		<item name="android:textSize">12sp</item>
 		<item name="android:textColor">@color/gray_text</item>
 	</style>
-
 	<style name="Article.Info.Gray" parent="Article.Info">
 		<item name="android:textColor">@color/gray_secondary</item>
 	</style>
-
+	<style name="Article.Info.GrayHint" parent="Article.Info">
+		<item name="android:textColor">@color/gray_hint</item>
+	</style>
 	<style name="LabelTop">
 		<item name="android:paddingTop">16dp</item>
 	</style>
+<!--
+	<style name="Article.GrayItalic" parent="Article">
+		<item name="android:textColor">@color/gray_secondary</item>
+		<item name="android:textStyle">italic</item>
+	</style>
+-->
+<!--
+	<style name="Article.GrayItalic.Stroke" parent="Article.GrayItalic">
+		<item name="android:background">@drawable/strike_through</item>
+	</style>
+-->
+	<style name="ArticleLink" parent="Article">
+		<item name="android:textColorLink">@color/gray_text</item>
+	</style>
+	<style name="ArticleLink.GrayHint.Italic" parent="ArticleLink">
+		<item name="android:textColor">@color/gray_hint</item>
+		<item name="android:textColorLink">@color/gray_hint</item>
+		<item name="android:textStyle">italic</item>
+	</style>
+
 
 <!--	<style name="ButtonBar">
 		<item name="android:paddingTop">5dip</item>

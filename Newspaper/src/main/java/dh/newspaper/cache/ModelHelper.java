@@ -218,7 +218,7 @@
 //	/**
 //	 * Get all possible tags from active subscription (alphabetic order)
 //	 */
-//	public TreeSet<String> getTags() {
+//	public TreeSet<String> getActiveTags() {
 //		Stopwatch sw = logFirstStep("GetTags()");
 //
 //		List<Subscription> subscriptions = mDaoSession.getSubscriptionDao().queryBuilder()
@@ -228,7 +228,7 @@
 //
 //		TreeSet<String> activeTags = new TreeSet<String>();
 //		for (Subscription sub : subscriptions) {
-//			Iterable<String> subTags = Splitter.on('|').omitEmptyStrings().split(sub.getTags());
+//			Iterable<String> subTags = Splitter.on('|').omitEmptyStrings().split(sub.getActiveTags());
 //			for (String tag : subTags) {
 //				activeTags.add(tag);
 //			}

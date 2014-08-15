@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.Subscription;
+import dh.newspaper.tools.TagUtils;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.ICancellation;
 import org.joda.time.DateTime;
@@ -36,7 +37,7 @@ public class SubscriptionFactory {
 		}
 
 		//DateTime.now().toString(ISODateTimeFormat.dateTime())
-		return new Subscription(null,feedsUrl, getTechnicalTags(tags), feeds.getDescription(), feedsLang, enable, encoding, feeds.getPubDate(), DateTime.now().toDate());
+		return new Subscription(null,feedsUrl, TagUtils.getTechnicalTags(tags), feeds.getDescription(), feedsLang, enable, encoding, feeds.getPubDate(), DateTime.now().toDate());
 	}
 	public Subscription createSubscription(String feedsUrl, String[] tags, boolean enable, String language) throws IOException, FeedParserException {
 		return  createSubscription(feedsUrl, tags, enable, language, Constants.DEFAULT_ENCODING);
@@ -54,14 +55,5 @@ public class SubscriptionFactory {
 		return  createSubscription(feedsUrl, null);
 	}
 
-	private String getTechnicalTags(String[] tags) {
-		if (tags==null || tags.length==0) {
-			return null;
-		}
-		StringBuilder sb = new StringBuilder("|");
-		for (String tag : tags) {
-			sb.append(StrUtils.normalizeUpper(tag)+"|");
-		}
-		return sb.toString();
-	}
+
 }

@@ -3,7 +3,6 @@ package dh.newspaper.workflow;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
-import com.google.common.base.Joiner;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
@@ -15,6 +14,7 @@ import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.NetworkUtils;
+import dh.newspaper.tools.TagUtils;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.OncePrifoTask;
 import org.joda.time.DateTime;
@@ -79,6 +79,11 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 				//check validity of the feed source
 				String input = NetworkUtils.quickDownloadXml(feedsSourceUrl, NetworkUtils.DESKTOP_USER_AGENT, this);
 
+				if (TextUtils.isEmpty(input)) {
+					sendError("Feeds source is not valid"); //TODO: translate
+					return;
+				}
+
 				sendProgressMessage("Checking feeds source validity: parsing.."); //TODO: translate
 				Document doc = Jsoup.parse(input, feedsSourceUrl, Parser.xmlParser());
 				Feeds feeds = contentParser.parseFeeds(doc, this);
@@ -96,14 +101,9 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 
 			if (feedsSource.getValidity()== SearchFeedsResult.FeedsSourceValidity.OK) {
 				sendProgressMessage("Saving subscription..."); //TODO: translate
-
 				String tagsValue = null;
 				if (tags!=null && !tags.isEmpty()){
-					StringBuilder tagsValueBuilder = new StringBuilder("|");
-					for (String t : tags) {
-						tagsValueBuilder.append(t.toUpperCase()).append("|");
-					}
-					tagsValue = tagsValueBuilder.toString();
+					tagsValue = TagUtils.getTechnicalTags(tags);
 				}
 
 				Subscription existedSubscription = feedsSource.getSubscription();
@@ -134,13 +134,13 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 							description, language, true, null, pubDate, DateTime.now().toDate()));
 				}
 
-				sendProgressMessage("update cache..."); //TODO: translate
-				refData.loadTags();
+				sendProgressMessage("updating cache..."); //TODO: translate
+				refData.loadSubscriptionAndTags();
 
 				sendDone();
 			}
 			else {
-				sendError("Feeds source not valid"); //TODO: translate
+				sendError("Feeds source is not valid"); //TODO: translate
 			}
 		}catch (Exception ex) {
 			sendError("Failed saving subscription: " + ex); //TODO: translate

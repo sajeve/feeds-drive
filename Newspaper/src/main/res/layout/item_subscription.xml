@@ -12,22 +12,42 @@
 			android:layout_gravity="fill_horizontal"
 			android:layout_weight="0.8"
 			>
-		<CheckBox
-				android:id="@+id/checkbox"
+		<dh.newspaper.view.utils.BgCheckbox
+				android:id="@+id/bgCheckbox"
+				android:layout_width="wrap_content"
+				android:layout_height="fill_parent"
+				android:padding="8dp"
+				style="?android:attr/borderlessButtonStyle"
+				/>
+
+		<!--<ViewSwitcher
+				android:id="@+id/bgCheckbox"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				/>
+				>
+			<CheckBox
+					android:id="@+id/checkbox"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:padding="16dp"
+					/>
+			<ProgressBar
+					android:id="@+id/progressBar"
+					android:layout_width="32dp"
+					android:layout_height="32dp"
+					android:padding="16dp"
+					/>
+		</ViewSwitcher>-->
+
 		<TextView
 				android:id="@+id/url"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:singleLine="true"
-				style="@style/Article"
-				android:textColorLink="@color/gray_text"
-				android:text="http://dantri.com.vn/rss/wwwww"
+				android:singleLine="false"
+				style="@style/ArticleLink"
+				android:text="http://dantri.com.vn/rss/wwwww/dantri.com.vn/rss/wwwww"
 				android:autoLink="web"
-				android:layout_toRightOf="@+id/checkbox"
-				android:layout_alignBaseline="@id/checkbox"
+				android:layout_toRightOf="@+id/bgCheckbox"
 				/>
 		<TextView
 				android:id="@+id/categories"
@@ -36,19 +56,20 @@
 				android:layout_height="wrap_content"
 				android:singleLine="true"
 				android:text="Chuyen la, Thoi su"
+				android:layout_toRightOf="@id/bgCheckbox"
 				android:layout_below="@id/url"
-				android:layout_toRightOf="@id/checkbox"
 				android:layout_marginTop="8dp"
 				/>
-
-
 	</RelativeLayout>
 
+	<View style="@style/DividerV"></View>
+
 	<ImageButton
+			android:id="@+id/edit_category"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+			android:layout_height="fill_parent"
 			android:layout_gravity="right"
-			android:src="@drawable/add_259b24ff"
+			android:src="@drawable/check_list_edit_259b24ff"
 			style="?android:attr/borderlessButtonStyle"
 			/>
 

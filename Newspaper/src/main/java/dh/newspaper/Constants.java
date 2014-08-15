@@ -33,7 +33,7 @@ public class Constants {
 	public static final int THREAD_ARTICLES_LOADER = 1;
 
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
-	public static final String SUBJECT_TAGS_REFRESH = "Tags.Refresh";
+	public static final String SUBJECT_TAGS_END_LOADING = "Tags.Refresh";
 	public static final String SUBJECT_SEARCH_FEEDS_START_LOADING = "SearchFeeds.StartLoading";
 	public static final String SUBJECT_SEARCH_FEEDS_REFRESH = "SearchFeeds.Refresh";
 	public static final String SUBJECT_SEARCH_FEEDS_DONE_LOADING = "SearchFeeds.DoneLoading";

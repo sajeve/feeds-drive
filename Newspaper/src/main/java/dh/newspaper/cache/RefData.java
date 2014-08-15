@@ -31,6 +31,7 @@ public class RefData {
 	private static final String TAG = RefData.class.getName();
 	private final DaoSession mDaoSession;
 	//private List<PathToContent> mPathToContents;
+	private TreeSet<String> mActiveTags;
 	private TreeSet<String> mTags;
 	private LruDiscCache mLruDiscCache;
 	//private boolean pathToContentsStale = false;
@@ -65,30 +66,37 @@ public class RefData {
 	 * Must be called each time add/remove/update a subscription
 	 * Get all possible tags from active subscription (alphabetic order)
 	 */
-	public synchronized TreeSet<String> loadTags() {
+	public synchronized void loadSubscriptionAndTags() {
 		checkAccessDiskOnMainThread();
 		Stopwatch sw = Stopwatch.createStarted();
 		loadSubscriptions();
+		loadTags();
+		Log.i(TAG, "Found " + mActiveTags.size() + " active tags from " + getActiveSubscriptions().size() + " active subscriptions ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+	}
+
+	private void loadTags() {
+		mActiveTags = new TreeSet<String>();
 		mTags = new TreeSet<String>();
 
-		for (Subscription sub : getActiveSubscriptions()) {
+		for (Subscription sub : getSubscriptions()) {
 			if (!TextUtils.isEmpty(sub.getTags())) {
 				Iterable<String> subTags = Splitter.on('|').omitEmptyStrings().split(sub.getTags());
 				for (String tag : subTags) {
 					mTags.add(tag);
+					if (sub.getEnable()) {
+						mActiveTags.add(tag);
+					}
 				}
 			}
 		}
-		Log.i(TAG, "Found " + mTags.size() + " tags from " + getActiveSubscriptions().size() + " active subscriptions ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms)");
-		return mTags;
 	}
 
 	/**
-	 * Must be called each time add/remove/update a subscription except you already call the {@link #loadTags()} which
+	 * Must be called each time add/remove/update a subscription except you already call the {@link #loadSubscriptionAndTags()} which
 	 * will call this one
 	 * @return
 	 */
-	public synchronized void loadSubscriptions() {
+	private void loadSubscriptions() {
 		checkAccessDiskOnMainThread();
 
 		subscriptions = mDaoSession.getSubscriptionDao().loadAll();
@@ -136,14 +144,21 @@ public class RefData {
 
 
 	/*public boolean isTagsListReadyInMemory() {
-		return mTags!=null && !mTagsStale;
+		return mActiveTags!=null && !mTagsStale;
 	}*/
+
+	public TreeSet<String> getActiveTags() {
+		/*if (activeSubscriptions == null) {
+			loadSubscriptionAndTags();
+		}*/
+		return mActiveTags;
+	}
 
 	public TreeSet<String> getTags() {
 		/*if (activeSubscriptions == null) {
-			loadTags();
+			loadSubscriptionAndTags();
 		}*/
-		return mTags;
+		return mActiveTags;
 	}
 
 	public String getCachePath() {

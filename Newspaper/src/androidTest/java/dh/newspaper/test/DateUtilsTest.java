@@ -129,6 +129,12 @@ public class DateUtilsTest extends ActivityInstrumentationTestCase2<MainActivity
 	}
 
 	public void testParseDateTimeFinal() {
+
+		{
+			DateTime d = DateUtils.parseDateTime("Fri, 15 Aug 2014 21:44:00");
+			assertEquals(2014, d.getYear());
+		}
+
 		{
 			DateTime d = DateUtils.parseDateTime("08-3-2014 4:37:00 AM");
 			System.out.print(d.getZone().getID());

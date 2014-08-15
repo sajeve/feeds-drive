@@ -67,11 +67,11 @@
 //			});
 //			assertEquals(6, subscriptions.size());
 //			assertEquals("http://www.huffingtonpost.com/feeds/verticals/chicago/news.xml", subscriptions.get(0).getFeedsUrl());
-//			assertEquals(1L, subscriptions.get(0).getTags().get(0).longValue());
-//			assertEquals(3L, subscriptions.get(0).getTags().get(1).longValue());
+//			assertEquals(1L, subscriptions.get(0).getActiveTags().get(0).longValue());
+//			assertEquals(3L, subscriptions.get(0).getActiveTags().get(1).longValue());
 //			assertEquals("en-US", subscriptions.get(0).getLanguage());
 //			assertTrue( subscriptions.get(0).isEnable());
-//			assertEquals(0L, subscriptions.get(4).getTags().get(0).longValue());
+//			assertEquals(0L, subscriptions.get(4).getActiveTags().get(0).longValue());
 //			assertFalse( subscriptions.get(5).isEnable());
 //		}
 //	}

@@ -1,0 +1,1 @@
+drop table Path_To_Content;

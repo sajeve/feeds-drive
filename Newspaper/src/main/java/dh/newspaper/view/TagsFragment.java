@@ -10,9 +10,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.*;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
@@ -28,7 +26,6 @@ import dh.tool.common.StrUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.TreeSet;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -126,8 +123,6 @@ public class TagsFragment extends Fragment {
 				mBackgroundTasksManager.loadTagsList();
 			}
 		});
-
-		refreshTagsList();
         return mSwipeRefreshLayout;
     }
 
@@ -144,9 +139,9 @@ public class TagsFragment extends Fragment {
     }
 
 	private void refreshTagsList() {
-		if (mRefData.getTags() != null) {
+		if (mRefData.getActiveTags() != null) {
 			mDrawerListViewAdapter.clear();
-			mDrawerListViewAdapter.addAll(mRefData.getTags());
+			mDrawerListViewAdapter.addAll(mRefData.getActiveTags());
 			mDrawerListViewAdapter.notifyDataSetChanged();
 		}
 	}
@@ -157,7 +152,7 @@ public class TagsFragment extends Fragment {
         outState.putString(STATE_SELECTED_POSITION, mCurrentTag);
     }
 
-    @Override
+	@Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // Forward the new configuration the drawer toggle component.
@@ -183,6 +178,8 @@ public class TagsFragment extends Fragment {
 	public void onResume() {
 		super.onResume();
 		EventBus.getDefault().register(this);
+		//refreshTagsList();
+		mBackgroundTasksManager.loadTagsList();
 	}
 
 	@Override
@@ -200,7 +197,7 @@ public class TagsFragment extends Fragment {
 				mSwipeRefreshLayout.setRefreshing(true);
 				return;
 			}
-			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_TAGS_REFRESH)) {
+			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_TAGS_END_LOADING)) {
 				refreshTagsList();
 				mSwipeRefreshLayout.setRefreshing(false);
 				return;

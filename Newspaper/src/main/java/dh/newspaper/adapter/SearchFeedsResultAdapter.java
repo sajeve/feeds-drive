@@ -98,7 +98,7 @@ public class SearchFeedsResultAdapter extends BaseAdapter {
 
 				//set corresponding icon if the item state is changed
 				if ((currentHoldingSubscription==null) != (itemData.getSubscription()==null)) {
-					int res = itemData.getSubscription()==null ? R.drawable.add_259b24ff : R.drawable.checked_circle_72d572ff;
+					int res = itemData.getSubscription()==null ? R.drawable.add_259b24ff : R.drawable.check_list_edit_42bd41ff;
 					subscribe.setImageDrawable(mContext.getResources().getDrawable(res));
 				}
 

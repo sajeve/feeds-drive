@@ -24,6 +24,8 @@
 				android:layout_height="wrap_content"
 				android:hint="@string/add_new_category"
 				android:layout_weight="0.8"
+				android:singleLine="true"
+				android:imeOptions="actionDone"
 				/>
 		<ImageButton
 				android:id="@+id/add_tag_button"

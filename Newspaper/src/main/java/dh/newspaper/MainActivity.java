@@ -19,6 +19,7 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.services.AlarmReceiver;
 import dh.newspaper.services.MainMenuHandler;
 import dh.newspaper.view.FeedsFragment;
+import dh.newspaper.view.ManageSubscriptionActivity;
 import dh.newspaper.view.SubscriptionActivity;
 
 import javax.inject.Inject;
@@ -172,9 +173,9 @@ public class MainActivity extends Activity {
 			case R.id.action_subscribe:
 				this.startActivity(new Intent(this, SubscriptionActivity.class));
 				return true;
-
 			case R.id.action_manage_subscription:
-
+				this.startActivity(new Intent(this, ManageSubscriptionActivity.class));
+				return true;
 		}
 
 		return super.onOptionsItemSelected(item);

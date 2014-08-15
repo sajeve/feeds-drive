@@ -4,16 +4,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.media.Image;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
@@ -29,8 +26,10 @@ import dh.newspaper.cache.RefData;
 import dh.newspaper.event.CreateNewTagEvent;
 import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.model.CheckableString;
+import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.services.BackgroundTasksManager;
+import dh.newspaper.tools.TagUtils;
 import dh.newspaper.workflow.SaveSubscriptionWorkflow;
 import dh.tool.common.StrUtils;
 
@@ -73,6 +72,15 @@ public class SubscriptionDialog extends DialogFragment {
         fragment.setArguments(args);
         return fragment;
     }
+
+	public static SubscriptionDialog newInstance(Subscription subscription) {
+		SearchFeedsResult.ResponseData.Entry feedsSource = new SearchFeedsResult.ResponseData.Entry();
+		feedsSource.setSubscription(subscription);
+		feedsSource.setUrl(subscription.getFeedsUrl());
+		feedsSource.setLink(subscription.getFeedsUrl());
+		return newInstance(feedsSource);
+	}
+
     public SubscriptionDialog() {
         // Required empty public constructor
     }
@@ -112,6 +120,13 @@ public class SubscriptionDialog extends DialogFragment {
 		okButton.setOnClickListener(onOkClicked);
 		cancelButton.setOnClickListener(onCancelClicked);
 		addTagButton.setOnClickListener(onAddTagClicked);
+		tagNameEditor.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				onAddTagClicked.onClick(v);
+				return true;
+			}
+		});
 		return v;
     }
 
@@ -213,7 +228,7 @@ public class SubscriptionDialog extends DialogFragment {
 		@Override
 		public void onClick(View v) {
 			try {
-				String newTagName = tagNameEditor.getText().toString().toUpperCase();
+				String newTagName = TagUtils.normalizeTag(tagNameEditor.getText().toString());
 
 				//if the tag name is used, so just select it
 				for (CheckableString c : tagsListAdapter.getData()) {
@@ -310,19 +325,24 @@ public class SubscriptionDialog extends DialogFragment {
 
 	public void showErrorDialog(final String title, final String message) {
 		AlertDialog aDialog = new AlertDialog.Builder(getActivity()).setMessage(message).setTitle(title)
-				.setNeutralButton("Close", new DialogInterface.OnClickListener() {
-					public void onClick(final DialogInterface dialog,
-										final int which) {
-						//Prevent to finish activity, if user clicks about.
-						if (!title.equalsIgnoreCase("About") && !title.equalsIgnoreCase("Directory Error") && !title.equalsIgnoreCase("View")) {
-							getActivity().finish();
-						}
-
-					}
-				})
-				//.setIcon(R.drawable.ic_dialog_alert)
+				.setPositiveButton(R.string.close, null)
 				.create();
 		aDialog.show();
+
+//		AlertDialog aDialog = new AlertDialog.Builder(getActivity()).setMessage(message).setTitle(title)
+//				.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+//					public void onClick(final DialogInterface dialog,
+//										final int which) {
+//						//Prevent to finish activity, if user clicks about.
+//						if (!title.equalsIgnoreCase("About") && !title.equalsIgnoreCase("Directory Error") && !title.equalsIgnoreCase("View")) {
+//							getActivity().finish();
+//						}
+//
+//					}
+//				})
+//				//.setIcon(R.drawable.ic_dialog_alert)
+//				.create();
+//		aDialog.show();
 	}
 
 	@Override

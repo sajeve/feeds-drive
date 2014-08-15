@@ -220,7 +220,12 @@ public class SubscriptionActivity extends Activity {
 					//this event is fired by a sender which is no more concerning by this activity -> do nothing
 					return;
 				}
+
 				setGui(lastTask);
+
+				if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_DONE_LOADING)) {
+					swipeRefresh.setRefreshing(false);
+				}
 			}
 //			else if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_SEARCH_FEEDS_REFRESH)) {
 //				if (lastTask !=null && !StrUtils.equalsString(lastTask.getMissionId(), event.getFlowId())) {

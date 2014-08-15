@@ -40,7 +40,8 @@ import java.security.NoSuchAlgorithmException;
 			SaveSubscriptionWorkflow.class,
 			ContentParser.class,
 			BackgroundTasksManager.class,
-			FeedsDownloaderService.class
+			FeedsDownloaderService.class,
+			ManageSubscriptionActivity.class
 	},
 	library = true
 )

@@ -24,7 +24,6 @@ import dh.newspaper.workflow.SelectTagWorkflow;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Created by hiep on 30/05/2014.
@@ -62,7 +61,7 @@ public class FeedsDownloaderService extends Service {
 			protected Boolean doInBackground(Object[] params) {
 				try {
 					mRefData.getLruDiscCache(); //setupLruDiscCache
-					mRefData.loadTags();
+					mRefData.loadSubscriptionAndTags();
 					return true;
 				}
 				catch (Exception ex) {
@@ -79,9 +78,9 @@ public class FeedsDownloaderService extends Service {
 						return;
 					}
 					mRefData.initImageLoader();
-					displayNotificationOnMainThread("Start download articles", "Start download all articles from " + mRefData.getTags().size() + " tags");
+					displayNotificationOnMainThread("Start download articles", "Start download all articles from " + mRefData.getActiveTags().size() + " tags");
 
-					for (String tag : mRefData.getTags()) {
+					for (String tag : mRefData.getActiveTags()) {
 						SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(getApplicationContext(), tag,
 								Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL_SERVICE, true, Constants.ARTICLES_PER_PAGE,
 								mArticlesLoader, null);
@@ -200,7 +199,7 @@ public class FeedsDownloaderService extends Service {
 //			protected Boolean doInBackground(Object[] params) {
 //				try {
 //					mRefData.getLruDiscCache(); //setupLruDiscCache
-//					mRefData.loadTags();
+//					mRefData.loadSubscriptionAndTags();
 //					return true;
 //				}
 //				catch (Exception ex) {
@@ -218,7 +217,7 @@ public class FeedsDownloaderService extends Service {
 //					}
 //					mRefData.initImageLoader();
 //
-//					Log.i(TAG, "Alarm Fired, nbOfTags = " + mRefData.getTags().size());
+//					Log.i(TAG, "Alarm Fired, nbOfTags = " + mRefData.getActiveTags().size());
 //				} catch (Exception ex) {
 //					Log.w(TAG, ex);
 //				}

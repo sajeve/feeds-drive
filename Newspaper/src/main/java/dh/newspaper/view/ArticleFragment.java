@@ -31,6 +31,7 @@ import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.tools.DateUtils;
+import dh.newspaper.tools.TagUtils;
 import dh.tool.common.StrUtils;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 
@@ -285,11 +286,8 @@ public class ArticleFragment extends Fragment {
 		if (subscription == null) {
 			return null;
 		}
-		if (TextUtils.isEmpty(subscription.getTags())) {
-			return null;
-		}
-		return Joiner.on(", ").join(Splitter.on('|').omitEmptyStrings()
-				.split(subscription.getTags().toLowerCase()));
+
+		return TagUtils.getPrintableLowerCasesTags(subscription.getTags());
 	}
 
 	private String getArticleSourceName(Article article) {

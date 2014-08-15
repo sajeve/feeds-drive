@@ -53,7 +53,7 @@
 //	}
 //
 //	public void testGetTags() {
-//		TreeSet<String> tags = mModelHelper.getTags();
+//		TreeSet<String> tags = mModelHelper.getActiveTags();
 //		System.out.println(tags);
 //		assertTrue(tags.size() > 0);
 //	}
