@@ -32,6 +32,7 @@ import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.tools.TagUtils;
 import dh.newspaper.workflow.SaveSubscriptionWorkflow;
 import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.OncePrifoTask;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ public class SubscriptionDialog extends DialogFragment {
 	private ListView tagList;
 	private Button okButton;
 	private Button cancelButton;
+	private Button deleteButton;
 	private TagListSelectorAdapter tagsListAdapter;
 	private ImageButton addTagButton;
 	private EditText tagNameEditor;
@@ -105,6 +107,7 @@ public class SubscriptionDialog extends DialogFragment {
 		tagList = (ListView)v.findViewById(R.id.tag_list);
 		okButton = (Button)v.findViewById(R.id.ok_button);
 		cancelButton = (Button)v.findViewById(R.id.cancel_button);
+		deleteButton = (Button)v.findViewById(R.id.delete_button);
 		tagNameEditor = (EditText)v.findViewById(R.id.tag_name_edit);
 		addTagButton = (ImageButton)v.findViewById(R.id.add_tag_button);
 
@@ -119,6 +122,7 @@ public class SubscriptionDialog extends DialogFragment {
 		}
 		okButton.setOnClickListener(onOkClicked);
 		cancelButton.setOnClickListener(onCancelClicked);
+		deleteButton.setOnClickListener(onDeleteClicked);
 		addTagButton.setOnClickListener(onAddTagClicked);
 		tagNameEditor.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 			@Override
@@ -127,6 +131,8 @@ public class SubscriptionDialog extends DialogFragment {
 				return true;
 			}
 		});
+
+		deleteButton.setVisibility(feedsSource.getSubscription()==null ? View.GONE : View.VISIBLE);
 		return v;
     }
 
@@ -168,7 +174,7 @@ public class SubscriptionDialog extends DialogFragment {
 		}
 
 	*//*	if (backgroundTasksManager.getActiveSelectTagWorkflow()!=null) {
-			setGui(backgroundTasksManager.getActiveSaveSubscriptionWorkflow().getSaveSubscriptionState());
+			setGui(backgroundTasksManager.getCurrentSaveDeleteSubscriptionTask().getSaveSubscriptionState());
 		}*//*
 	}*/
 
@@ -220,6 +226,19 @@ public class SubscriptionDialog extends DialogFragment {
 			} catch (Exception ex) {
 				Log.w(TAG, ex);
 				MyApplication.showErrorDialog(getFragmentManager(), "Cancel Clicked", ex);
+			}
+		}
+	};
+
+	private View.OnClickListener onDeleteClicked = new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			try {
+				savingProgressDialog.show();
+				backgroundTasksManager.deleteSubscription(feedsSource.getSubscription());
+			} catch (Exception ex) {
+				Log.w(TAG, ex);
+				MyApplication.showErrorDialog(getFragmentManager(), "Delete Clicked", ex);
 			}
 		}
 	};
@@ -294,7 +313,7 @@ public class SubscriptionDialog extends DialogFragment {
 			}
 			else if (StrUtils.equalsString(Constants.SUBJECT_SAVE_SUBSCRIPTION_ERROR, event.getSubject())) {
 				savingProgressDialog.dismiss();
-				showErrorDialog("Failed saving subscription", event.getProgressMessage()); //TODO: translate
+				showErrorDialog("Failed editing subscription", event.getProgressMessage()); //TODO: translate
 			}
 		} catch (Exception ex) {
 			Log.w(TAG, ex);
@@ -313,11 +332,21 @@ public class SubscriptionDialog extends DialogFragment {
 	}
 
 	private void restoreProgressState() {
-		SaveSubscriptionWorkflow savingWorkflow = backgroundTasksManager.getActiveSaveSubscriptionWorkflow();
-		if (savingWorkflow!=null && savingWorkflow.isRunning()) {
+		OncePrifoTask currentTask = backgroundTasksManager.getCurrentSaveDeleteSubscriptionTask();
+		if (currentTask!=null && currentTask.isRunning()) {
 			savingProgressDialog.show();
-			SaveSubscriptionEvent savingState = savingWorkflow.getSaveSubscriptionState();
-			if (savingState!=null) {
+
+			//Get saving state message
+			SaveSubscriptionEvent savingState = null;
+			if (currentTask instanceof SaveSubscriptionWorkflow) {
+				savingState = ((SaveSubscriptionWorkflow)currentTask).getSaveSubscriptionState();
+			}
+
+			//display saving state message
+			if (savingState==null) {
+				savingProgressDialog.setMessage("Processing..."); //TODO translate
+			}
+			else {
 				savingProgressDialog.setMessage(savingState.getProgressMessage());
 			}
 		}

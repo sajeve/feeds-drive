@@ -63,6 +63,17 @@
 				/>
 		<View style="@style/DividerV" />
 		<Button
+				android:id="@+id/delete_button"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="0.5"
+				android:text="@string/delete"
+				android:hint="@string/delete_subscription"
+				android:visibility="gone"
+				style="@style/ButtonBar"
+				/>
+		<View style="@style/DividerV" />
+		<Button
 				android:id="@+id/ok_button"
 				android:layout_width="0dp"
 				android:layout_height="wrap_content"

@@ -98,7 +98,7 @@ public class ManageSubscriptionActivity extends ListActivity {
 	public void onEventMainThread(SaveSubscriptionEvent event) {
 		try {
 			if (StrUtils.equalsString(Constants.SUBJECT_SAVE_SUBSCRIPTION_DONE, event.getSubject())) {
-				((SubscriptionListAdapter)getListAdapter()).notifyDataSetChanged();
+				((SubscriptionListAdapter)getListAdapter()).setData(refData.getSubscriptions());
 			}
 		} catch (Exception ex) {
 			Log.w(TAG, ex);

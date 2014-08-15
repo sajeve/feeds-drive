@@ -27,6 +27,8 @@
     <string name="category">Category</string>
     <string name="encoding">Encoding</string>
     <string name="language">Language</string>
+	<string name="delete">Delete</string>
+	<string name="delete_subscription">Delete the subscription</string>
 	<string name="create">Create</string>
     <string name="search_subscription">Search feeds</string>
     <string name="manage_subscription">Manage subscriptions</string>

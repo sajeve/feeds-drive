@@ -14,11 +14,15 @@ import dh.newspaper.cache.RefData;
 import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
+import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.model.generated.Article;
+import dh.newspaper.model.generated.DaoSession;
+import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.workflow.SaveSubscriptionWorkflow;
 import dh.newspaper.workflow.SearchFeedsWorkflow;
 import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.OncePrifoTask;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoExecutorFactory;
 import dh.newspaper.workflow.SelectArticleWorkflow;
@@ -282,7 +286,7 @@ public class BackgroundTasksManager implements Closeable {
 		mainPrifoExecutor.executeUnique(activeSearchFeedsWorkflow);
 	}
 
-	private SaveSubscriptionWorkflow activeSaveSubscriptionWorkflow;
+	private OncePrifoTask currentSaveDeleteSubscriptionTask;
 	public void saveSubscription(final SearchFeedsResult.ResponseData.Entry feedsSource, final Set<String> tags) {
 		if (feedsSource==null || !URLUtil.isValidUrl(feedsSource.getUrl())) {
 			if (Constants.DEBUG) {
@@ -290,8 +294,54 @@ public class BackgroundTasksManager implements Closeable {
 			}
 			return; //nothing to do
 		}
-		activeSaveSubscriptionWorkflow = new SaveSubscriptionWorkflow(mContext, feedsSource, tags);
-		mainPrifoExecutor.executeUnique(activeSaveSubscriptionWorkflow);
+		currentSaveDeleteSubscriptionTask = new SaveSubscriptionWorkflow(mContext, feedsSource, tags);
+		mainPrifoExecutor.executeUnique(currentSaveDeleteSubscriptionTask);
+	}
+
+	@Inject DaoSession daoSession;
+	public void deleteSubscription(final Subscription sub) {
+		currentSaveDeleteSubscriptionTask = new OncePrifoTask() {
+			@Override
+			public void perform() {
+				try {
+					sendProgressMessage("Deleting subscription.."); //TODO: translate
+					daoSession.getSubscriptionDao().delete(sub);
+					sendProgressMessage("Reloading cache.."); //TODO: translate
+					mRefData.loadSubscriptionAndTags();
+					sendDone();
+				}catch (Exception ex) {
+					sendError("Failed deleting subscription: " + ex); //TODO: translate
+					Log.w(TAG, ex);
+				}
+			}
+
+			@Override
+			public String getMissionId() {
+				return sub.getFeedsUrl();
+			}
+
+			private void sendProgressMessage(String message) {
+				SaveSubscriptionEvent saveSubscriptionState = new SaveSubscriptionEvent(
+						Constants.SUBJECT_SAVE_SUBSCRIPTION_PROGRESS_MESSAGE,
+						sub.getFeedsUrl(),
+						message);
+				EventBus.getDefault().post(saveSubscriptionState);
+			}
+			private void sendError(String message) {
+				SaveSubscriptionEvent saveSubscriptionState = new SaveSubscriptionEvent(
+						Constants.SUBJECT_SAVE_SUBSCRIPTION_ERROR,
+						sub.getFeedsUrl(),
+						message);
+				EventBus.getDefault().post(saveSubscriptionState);
+			}
+			private void sendDone() {
+				SaveSubscriptionEvent saveSubscriptionState = new SaveSubscriptionEvent(
+						Constants.SUBJECT_SAVE_SUBSCRIPTION_DONE,
+						sub.getFeedsUrl());
+				EventBus.getDefault().post(saveSubscriptionState);
+			}
+		};
+		mainPrifoExecutor.executeUnique(currentSaveDeleteSubscriptionTask);
 	}
 
 	public SelectTagWorkflow getActiveSelectTagWorkflow() {
@@ -303,8 +353,8 @@ public class BackgroundTasksManager implements Closeable {
 	public SearchFeedsWorkflow getActiveSearchFeedsWorkflow() {
 		return activeSearchFeedsWorkflow;
 	}
-	public SaveSubscriptionWorkflow getActiveSaveSubscriptionWorkflow() {
-		return activeSaveSubscriptionWorkflow;
+	public OncePrifoTask getCurrentSaveDeleteSubscriptionTask() {
+		return currentSaveDeleteSubscriptionTask;
 	}
 
 	@Override
