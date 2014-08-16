@@ -19,7 +19,6 @@ import dh.newspaper.tools.DateUtils;
 import dh.newspaper.tools.NetworkUtils;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.OncePrifoTask;
-import dh.tool.thread.prifo.PrifoTask;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.jsoup.Jsoup;
@@ -33,10 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.util.IllegalFormatException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Workflow:
@@ -145,7 +142,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 					insertNewToCache();
 				}
 				else {
-					checkArticleExpiration();
+					checkArticleExpirationThenUpdate();
 				}
 			}
 			else { //mArticle is not null, refresh it from database
@@ -162,7 +159,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 						log("Callback onFinishedCheckCache()");
 					}
 
-					checkArticleExpiration();
+					checkArticleExpirationThenUpdate();
 				} catch (Exception ex) {
 					Log.w(TAG, ex);
 					mParseNotice.append(" Error while refresh cached article: " + ex.toString());
@@ -189,15 +186,23 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		if (isCancelled()) {
 			return;
 		}
+		//region choose articleContent
 
+		/*
+		 * chose between
+		 * mArticleContentDownloaded,  mFeedItem.getDescription
+		 */
 		String articleContent;
-		if (StrUtils.tooShort(mArticleTextPlainDownloaded, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
-			articleContent = mFeedItem.getDescription();
-			mParseNotice.append(" Downloaded content is too short. Use feed description");
-		}
-		else {
+		if (mSuccessDownloadAndExtraction && !StrUtils.tooShort(mArticleTextPlainDownloaded, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 			articleContent = mArticleContentDownloaded;
 		}
+		else {
+			articleContent = mFeedItem.getDescription();
+			mDoc = mFeedItem.getDocument();
+			mParseNotice.append(" Downloaded content is too short. Use feed description");
+		}
+
+		//endregion
 
 		if (Strings.isNullOrEmpty(mArticleLanguage)) {
 			mArticleLanguage = mFeedItem.getLanguage();
@@ -241,7 +246,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		}
 	}
 
-	private void checkArticleExpiration() {
+	private void checkArticleExpirationThenUpdate() {
 		if (isCancelled()) {
 			return;
 		}
@@ -251,7 +256,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			updateArticleContent();
 		}
 		else {
-			logSimple("Article is not yet expiry ttl="+mArticleTimeToLive+ ". No need to re-download");
+			logSimple("Article is not yet expiry ttl="+mArticleTimeToLive+ ". No need to re-download.");
 		}
 	}
 
@@ -260,14 +265,15 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 		if (isCancelled()) return;
 
-		boolean contentIsChanged = true;
+		//region choose content
+
 		if (mSuccessDownloadAndExtraction) {
-			//choose content between mFeedItem.getDescription() and mArticleContentDownloaded
-			String articleContent;
-			if (StrUtils.tooShort(mArticleTextPlainDownloaded, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
-				mParseNotice.append(" Downloaded content is too short, use feed description.");
-				mArticle.setContent(mFeedItem.getDescription());
+			//choose content between mArticle and mArticleContentDownloaded
+			if (StrUtils.tooShort(mArticleContentDownloaded, mArticle.getContent(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
+				mParseNotice.append(" Downloaded content is too short (<"+Constants.ARTICLE_LENGTH_PERCENT_TOLERANT+"%), keep cache content unchanged.");
+				mDoc = null; //invalidate Document
 			} else {
+				logSimple("article content will be updated");
 				mArticle.setContent(mArticleContentDownloaded);
 			}
 		}
@@ -276,10 +282,11 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			if (StrUtils.tooShort(mArticle.getContent(), mFeedItem.getDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 				mParseNotice.append(" Cached content is too short, use feed description.");
 				mArticle.setContent(mFeedItem.getDescription());
-			} else {
-				contentIsChanged = false;
+				mDoc = null;
 			}
 		}
+
+		//endregion
 
 		if (Strings.isNullOrEmpty(mArticleLanguage)) {
 			mArticleLanguage = mFeedItem.getLanguage();
@@ -356,14 +363,16 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			/**
 			 * Mode offline: use image from cache instead
 			 */
-			for (Element e : elems) {
-				File imgFile = refData.getLruDiscCache().get(e.attr("abs:src"));
-				if (imgFile!=null) {
-					e.attr("src", imgFile.getAbsolutePath());
-					e.attr("style", "border:2px solid green;");
+			if (Constants.DEBUG) {
+				for (Element e : elems) {
+					File imgFile = refData.getLruDiscCache().get(e.attr("abs:src"));
+					if (imgFile != null) {
+						e.attr("src", imgFile.getAbsolutePath());
+						e.attr("style", "border:2px solid green;");
+					}
 				}
+				log("Change images border to recognise cached images");
 			}
-			log("Change images border to recognise cached images");
 		}
 	}
 
@@ -461,7 +470,6 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		mArticleContentDownloaded = mDoc.outerHtml();
 		Element docBody = mDoc.body();
 		mArticleTextPlainDownloaded = docBody == null ? null : docBody.text();
-
 
 		if (Strings.isNullOrEmpty(mArticleTextPlainDownloaded)) {
 			log("Extract content done", "Empty content: "+mParseNotice);

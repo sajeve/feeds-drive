@@ -56,7 +56,7 @@ public class Constants {
 	 * around 90% of the existing content in cache
 	 * Negative number = do not use this fixture
 	 */
-	public static final int ARTICLE_LENGTH_PERCENT_TOLERANT = -1; //90
+	public static final int ARTICLE_LENGTH_PERCENT_TOLERANT = 50; //90
 
 	public static final int ARTICLE_MIN_LENGTH = 200; //90
 

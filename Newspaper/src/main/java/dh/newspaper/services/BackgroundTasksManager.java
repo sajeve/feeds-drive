@@ -160,9 +160,7 @@ public class BackgroundTasksManager implements Closeable {
 						mSelectTagWorkflow.cancel();
 					}
 
-					final boolean onlineMode = !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT);
-
-					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, onlineMode, Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
+					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, isOnline(), Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
 						@Override
 						public void onFinishedLoadFromCache(SelectTagWorkflow sender, List<Article> articles, int count) {
 							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag()));
@@ -196,7 +194,6 @@ public class BackgroundTasksManager implements Closeable {
 		mMainThreadHandler.postDelayed(lastLoadTagCall, Constants.EVENT_DELAYED);
 	}
 
-
 	private Runnable lastLoadArticleCall;
 
 	/**
@@ -228,9 +225,7 @@ public class BackgroundTasksManager implements Closeable {
 						mSelectArticleWorkflow.cancel();
 					}*/
 
-					final boolean onlineMode = !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT);
-
-					mSelectArticleWorkflow = new SelectArticleWorkflow(mContext, article, Constants.ARTICLE_TTL, onlineMode, new SelectArticleWorkflow.SelectArticleCallback() {
+					mSelectArticleWorkflow = new SelectArticleWorkflow(mContext, article, Constants.ARTICLE_TTL, isOnline(), new SelectArticleWorkflow.SelectArticleCallback() {
 						@Override
 						public void onFinishedCheckCache(SelectArticleWorkflow sender, Article article) {
 							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl());
@@ -266,6 +261,11 @@ public class BackgroundTasksManager implements Closeable {
 		};
 
 		mMainThreadHandler.postDelayed(lastLoadArticleCall, Constants.EVENT_DELAYED);
+	}
+
+
+	private boolean isOnline() {
+		return !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT);
 	}
 
 	private SearchFeedsWorkflow activeSearchFeedsWorkflow;
