@@ -404,8 +404,8 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 	 */
 	private void downloadAndExtractArticleContent() {
 		if (!mOnlineMode) {
-			mArticleContentDownloaded = mArticle == null ? mFeedItem.getDescription() : mArticle.getContent();
 			logSimple("Mode offline: use Feed Description as content");
+			mSuccessDownloadAndExtraction = false;
 			return;
 		}
 
