@@ -49,8 +49,7 @@ public class ArticleFragment extends Fragment {
 	/*@Inject
 	AppBundle mAppBundle;*/
 
-	@Inject
-	BackgroundTasksManager mBackgroundTasksManager;
+	@Inject	BackgroundTasksManager mBackgroundTasksManager;
 
 	private SwipeRefreshLayout mSwipeRefreshLayout;
 	private WebView mWebView;

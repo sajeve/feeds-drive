@@ -29,7 +29,7 @@ public class Constants {
 	 */
 	public static final int ARTICLES_PER_PAGE = 100;
 
-	public static final int IMAGE_DISK_CACHE_SIZE = 100 * 1024 * 1024;
+	//public static final int IMAGE_DISK_CACHE_SIZE = 100 * 1024 * 1024;
 	//public static final int THREAD_ARTICLES_LOADER = 2;
 
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
@@ -74,4 +74,6 @@ public class Constants {
 	public static final String PREF_NETWORK_CONDITION_DEFAULT = "wifi";
 	public static final String PREF_DOWNLOADING_THREAD_KEY = "pref_downloadingThread";
 	public static final String PREF_DOWNLOADING_THREAD_DEFAULT = "2";
+	public static final String PREF_IMAGE_CACHE_SIZE_KEY = "pref_imageDiskCacheSize";
+	public static final String PREF_IMAGE_CACHE_SIZE_DEFAULT = "104857600"; //100 MB
 }

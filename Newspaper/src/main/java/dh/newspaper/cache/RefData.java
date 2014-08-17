@@ -13,13 +13,13 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import dh.newspaper.Constants;
-import dh.newspaper.model.generated.*;
+import dh.newspaper.model.generated.DaoSession;
+import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoExecutorFactory;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -187,7 +187,7 @@ public class RefData {
 		}
 	}
 
-	private synchronized void setupLruDiscCache(int maxSize) {
+	private synchronized void setupLruDiscCache(long maxSize) {
 		mLruDiscCache = new LruDiscCache(
 				new File(getCachePath()+"/"+Constants.CACHE_IMAGE_FOLDER),
 				DefaultConfigurationFactory.createFileNameGenerator(), maxSize);
@@ -195,7 +195,8 @@ public class RefData {
 
 	public LruDiscCache getLruDiscCache() {
 		if (mLruDiscCache == null) {
-			setupLruDiscCache(Constants.IMAGE_DISK_CACHE_SIZE);
+			checkAccessDiskOnMainThread();
+			setupLruDiscCache(getPreferenceImageCacheSize());
 		}
 		return mLruDiscCache;
 	}
@@ -215,7 +216,7 @@ public class RefData {
 				.build();
 		ImageLoaderConfiguration.Builder config = new ImageLoaderConfiguration.Builder(mContext)
 				.diskCache(getLruDiscCache())
-				.diskCacheSize(Constants.IMAGE_DISK_CACHE_SIZE)
+				.diskCacheSize(getPreferenceImageCacheSize())
 				.defaultDisplayImageOptions(displayImageOptions);
 
 		if (Constants.DEBUG) {
@@ -235,6 +236,10 @@ public class RefData {
 	public int getPreferenceNumberOfThread() {
 		return getPreferenceNumberOfThread(mSharedPreferences);
 	}
+	public long getPreferenceImageCacheSize() {
+		return getPreferenceImageCacheSize(mSharedPreferences);
+	}
+
 	public static boolean getPreferenceServiceEnabled(SharedPreferences sp) {
 		return sp.getBoolean(Constants.PREF_SERVICE_ENABLED_KEY, Constants.PREF_SERVICE_ENABLED_DEFAULT);
 	}
@@ -254,6 +259,15 @@ public class RefData {
 		catch (Exception ex) {
 			Log.w(TAG, ex);
 			return 2;
+		}
+	}
+	public static long getPreferenceImageCacheSize(SharedPreferences sp) {
+		try {
+			return Long.parseLong(sp.getString(Constants.PREF_IMAGE_CACHE_SIZE_KEY, Constants.PREF_IMAGE_CACHE_SIZE_DEFAULT));
+		}
+		catch (Exception ex) {
+			Log.w(TAG, ex);
+			return 104857600L;
 		}
 	}
 

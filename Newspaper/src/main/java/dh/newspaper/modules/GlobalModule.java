@@ -42,7 +42,7 @@ import java.security.NoSuchAlgorithmException;
 			BackgroundTasksManager.class,
 			FeedsDownloaderService.class,
 			ManageSubscriptionActivity.class,
-			SettingsActivity.class
+			SettingsFragment.class
 	},
 	library = true
 )

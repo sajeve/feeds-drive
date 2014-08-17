@@ -54,4 +54,8 @@
 	<string name="download_interval_summ">Frequent of the downloading background service</string>
 	<string name="download_thread">Downloading threads</string>
 	<string name="download_thread_summ">Number of threads used to download articles</string>
+	<string name="cache">Cache</string>
+	<string name="image_disk_cache_size">Images disk cache size</string>
+	<string name="image_disk_cache_size_summ">Max storage size for images caching</string>
+
 </resources>

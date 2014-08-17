@@ -56,7 +56,7 @@ public class BackgroundTasksManager implements Closeable {
 	private ExecutorService mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(1, Integer.MAX_VALUE);
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
-	private PrifoExecutor mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor(8, Integer.MAX_VALUE);
+	private PrifoExecutor mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor(4, Integer.MAX_VALUE);
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mSharedPreferences;

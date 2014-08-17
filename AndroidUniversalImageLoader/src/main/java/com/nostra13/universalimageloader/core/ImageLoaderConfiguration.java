@@ -408,7 +408,7 @@ public final class ImageLoaderConfiguration {
 			return this;
 		}
 
-		/** @deprecated Use {@link #diskCacheSize(int)} instead */
+		/** @deprecated Use {@link #diskCacheSize(long)} instead */
 		@Deprecated
 		public Builder discCacheSize(int maxCacheSize) {
 			return diskCacheSize(maxCacheSize);
@@ -422,7 +422,7 @@ public final class ImageLoaderConfiguration {
 		 * will be used as disk cache. You can use {@link #diskCache(DiskCache)} method for introduction your own
 		 * implementation of {@link DiskCache}
 		 */
-		public Builder diskCacheSize(int maxCacheSize) {
+		public Builder diskCacheSize(long maxCacheSize) {
 			if (maxCacheSize <= 0) throw new IllegalArgumentException("maxCacheSize must be a positive number");
 
 			if (diskCache != null) {
@@ -494,7 +494,7 @@ public final class ImageLoaderConfiguration {
 		 * <br />
 		 * <b>NOTE:</b> If you set custom disk cache then following configuration option will not be considered:
 		 * <ul>
-		 * <li>{@link #diskCacheSize(int)}</li>
+		 * <li>{@link #diskCacheSize(long)}</li>
 		 * <li>{@link #diskCacheFileCount(int)}</li>
 		 * <li>{@link #diskCacheFileNameGenerator(FileNameGenerator)}</li>
 		 * </ul>

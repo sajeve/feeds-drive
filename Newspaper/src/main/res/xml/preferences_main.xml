@@ -35,4 +35,14 @@
 				android:entryValues="@array/downloading_threads"
 				android:defaultValue="2" />
 	</PreferenceCategory>
+	<PreferenceCategory android:title="@string/cache">
+		<ListPreference
+				android:key="pref_imageDiskCacheSize"
+				android:title="@string/image_disk_cache_size"
+				android:summary="@string/image_disk_cache_size_summ"
+				android:dialogTitle="@string/image_disk_cache_size"
+				android:entries="@array/images_cache_size_label"
+				android:entryValues="@array/images_cache_size_value"
+				android:defaultValue="2" />
+	</PreferenceCategory>
 </PreferenceScreen>

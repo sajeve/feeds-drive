@@ -11,8 +11,8 @@
 	</string-array>
 
 	<string-array name="intervals">
-		<item>3s (for test)</item>
-		<item>6s (for test)</item>
+<!--		<item>3s (for test)</item>
+		<item>6s (for test)</item>-->
 		<item>1h</item>
 		<item>2h</item>
 		<item>4h</item>
@@ -21,8 +21,8 @@
 	</string-array>
 
 	<string-array name="interval_values">
-		<item>3000</item>
-		<item>6000</item>
+		<!--<item>3000</item>
+		<item>6000</item>-->
 		<item>3600000</item>
 		<item>7200000</item>
 		<item>14400000</item>
@@ -36,5 +36,18 @@
 		<item>4</item>
 	</string-array>
 
+	<string-array name="images_cache_size_label">
+		<item>50 MB</item>
+		<item>100 MB</item>
+		<item>200 MB</item>
+		<item>500 MB</item>
+	</string-array>
+
+	<string-array name="images_cache_size_value">
+		<item>52428800</item>
+		<item>104857600</item>
+		<item>209715200</item>
+		<item>524288000</item>
+	</string-array>
 
 </resources>

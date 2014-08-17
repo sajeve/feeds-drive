@@ -47,6 +47,8 @@ public class MyApplication extends InjectingApplication {
 		if (mRefData.getPreferenceServiceEnabled()) {
 			AlarmReceiver.setupAlarm(getApplicationContext(), Constants.SERVICE_START_AT, mRefData.getPreferenceServiceInterval());
 		}
+
+		Log.i(TAG, "Application started");
 	}
 
 	@Override
