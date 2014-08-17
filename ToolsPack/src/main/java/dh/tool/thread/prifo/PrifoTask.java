@@ -20,13 +20,13 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class PrifoTask implements IPrifosable, Comparable {
 	//private static final String TAG = PrifoTask.class.getName();
-	private static final Logger log = LoggerFactory.getLogger(PrifoTask.class);
+	//private static final Logger log = LoggerFactory.getLogger(PrifoTask.class);
 
 	private volatile int priority;
 	private volatile boolean focused;
 	private volatile boolean cancelled = false;
 
-	private PerfWatcher pw;
+	//private PerfWatcher pw;
 
 	@Override
 	public int getPriority() {
@@ -49,12 +49,18 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 
 	@Override
 	public void onEnterQueue(PrifoQueue queue) {
-		pw = new PerfWatcher(log, getMissionId());
-		pw.t("Enter-Queue (size = "+queue.size()+")");
+		//TODO try/catch
+		/*pw = new PerfWatcher(log, getMissionId());
+		pw.t("Enter-Queue (size = "+queue.size()+")");*/
 	}
 	@Override
 	public void onDequeue(PrifoQueue queue) {
-		pw.t("De-Queue (size = "+queue.size()+")");
+		/*try {
+			pw.t("De-Queue (size = "+queue.size()+")");
+		}
+		catch (NullPointerException ex) {
+			ex.printStackTrace();
+		}*/
 	}
 
 	@Override

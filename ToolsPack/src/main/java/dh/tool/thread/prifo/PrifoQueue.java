@@ -112,7 +112,12 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 			}
 		}
 		queue.add(e);
-		e.onEnterQueue(this);
+		try {
+			e.onEnterQueue(this);
+		}
+		catch (Exception ex) {
+			log.warn("onEnterQueue ", ex);
+		}
 		return true;
 	}
 
@@ -141,7 +146,12 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 	public E poll() {
 		E e = queue.pollFirst();
 		if (e!=null) {
-			e.onDequeue(this);
+			try {
+				e.onDequeue(this);
+			}
+			catch (Exception ex) {
+				log.warn("onDequeue ", ex);
+			}
 		}
 		if (queueEmptyCallback!=null && queue.isEmpty()) {
 			try {
