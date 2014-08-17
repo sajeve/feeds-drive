@@ -124,13 +124,25 @@ public class SubscriptionDialog extends DialogFragment {
 		cancelButton.setOnClickListener(onCancelClicked);
 		deleteButton.setOnClickListener(onDeleteClicked);
 		addTagButton.setOnClickListener(onAddTagClicked);
-		tagNameEditor.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+		//TODO
+		/*tagNameEditor.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (event == null) {
+					if (actionId != 6) {
+						return false;
+					}
+				}
+				else {
+					if (event.getAction() != KeyEvent.ACTION_DOWN) {
+						return false;
+					}
+				}
+
 				onAddTagClicked.onClick(v);
 				return true;
 			}
-		});
+		});*/
 
 		deleteButton.setVisibility(feedsSource.getSubscription()==null ? View.GONE : View.VISIBLE);
 		return v;
@@ -249,10 +261,15 @@ public class SubscriptionDialog extends DialogFragment {
 			try {
 				String newTagName = TagUtils.normalizeTag(tagNameEditor.getText().toString());
 
+				if (TextUtils.isEmpty(newTagName)) {
+					Crouton.makeText(getActivity(), R.string.category_name_must_not_empty, Style.ALERT, (ViewGroup) getView()).show();
+					return;
+				}
+
 				//if the tag name is used, so just select it
 				for (CheckableString c : tagsListAdapter.getData()) {
 					if (StrUtils.equalsString(c.getText(), newTagName)) {
-						Crouton.makeText(getActivity(), R.string.category_already_exist_so_check_it, Style.ALERT, (ViewGroup) getView()).show();
+						Crouton.makeText(getActivity(), R.string.category_already_exist_so_check_it, Style.INFO, (ViewGroup) getView()).show();
 						c.setChecked(true);
 						tagsListAdapter.notifyDataSetChanged();
 						return;

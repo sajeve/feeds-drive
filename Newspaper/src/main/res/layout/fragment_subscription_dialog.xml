@@ -13,9 +13,9 @@
 			android:layout_height="wrap_content"
 			android:orientation="horizontal"
 			android:gravity="bottom"
-			android:paddingLeft="24dp"
-			android:paddingRight="24dp"
-			android:paddingTop="24dp"
+			android:paddingLeft="@dimen/big_padding"
+			android:paddingRight="@dimen/big_padding"
+			android:paddingTop="@dimen/big_padding"
 			android:paddingBottom="4dp"
 			>
 		<EditText
@@ -25,6 +25,7 @@
 				android:hint="@string/add_new_category"
 				android:layout_weight="0.8"
 				android:singleLine="true"
+				android:imeActionId="1234"
 				android:imeOptions="actionDone"
 				/>
 		<ImageButton
@@ -42,7 +43,7 @@
 			android:layout_height="wrap_content"
 			android:choiceMode="multipleChoice"
 			android:layout_weight="1"
-			android:paddingBottom="24dp"
+			android:paddingBottom="@dimen/big_padding"
 			/>
 
 	<View style="@style/DividerH" />

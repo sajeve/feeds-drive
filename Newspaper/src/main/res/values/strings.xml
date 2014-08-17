@@ -37,6 +37,7 @@
     <string name="add_new_category">Add new Category...</string>
     <string name="select_at_least_one_category">Please select at least one category</string>
 	<string name="category_already_exist_so_check_it">Category already exist, so it is checked</string>
+	<string name="category_name_must_not_empty">Category name must not empty</string>
     <string name="manage_subscriptions">All subscriptions</string>
     <string name="title_activity_manage_subscription">ManageSubscriptionActivity</string>
 	<string name="title_settings">Settings</string>
