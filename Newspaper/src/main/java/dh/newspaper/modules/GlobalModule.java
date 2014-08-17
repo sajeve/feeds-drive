@@ -41,7 +41,8 @@ import java.security.NoSuchAlgorithmException;
 			ContentParser.class,
 			BackgroundTasksManager.class,
 			FeedsDownloaderService.class,
-			ManageSubscriptionActivity.class
+			ManageSubscriptionActivity.class,
+			SettingsActivity.class
 	},
 	library = true
 )

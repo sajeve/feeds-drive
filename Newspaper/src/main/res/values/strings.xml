@@ -51,6 +51,7 @@
 	<string name="network_condition">Network condition</string>
 	<string name="network_condition_summ">Download happens under the connectivity condition</string>
 	<string name="download_interval">Downloading interval</string>
+	<string name="download_interval_summ">Frequent of the downloading background service</string>
 	<string name="download_thread">Downloading threads</string>
 	<string name="download_thread_summ">Number of threads used to download articles</string>
 </resources>

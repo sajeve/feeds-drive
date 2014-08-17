@@ -27,10 +27,10 @@ public class Constants {
 	/**
 	 * number of actual articles in memory cache, it is the windows size of the list view
 	 */
-	public static final int ARTICLES_PER_PAGE = DEBUG ? 100 : 200;
+	public static final int ARTICLES_PER_PAGE = 100;
 
 	public static final int IMAGE_DISK_CACHE_SIZE = 100 * 1024 * 1024;
-	public static final int THREAD_ARTICLES_LOADER = 2;
+	//public static final int THREAD_ARTICLES_LOADER = 2;
 
 	public static final String SUBJECT_TAGS_START_LOADING = "Tags.StartLoading";
 	public static final String SUBJECT_TAGS_END_LOADING = "Tags.Refresh";
@@ -42,11 +42,11 @@ public class Constants {
 	public static final String SUBJECT_FEEDS_DONE_LOADING = "Feeds.DoneLoading";
 	public static final String SUBJECT_ARTICLE_START_LOADING = "Article.StartLoading";
 	public static final String SUBJECT_ARTICLE_REFRESH = "Article.Refresh";
-	public static final String SUBJECT_ARTICLE_DISPLAY_FULL_WEBPAGE = "Article.DisplayFullWebpage";
+	public static final String SUBJECT_ARTICLE_DISPLAY_FULL_WEBPAGE = "Article.DisplayFullWebPage";
 	public static final String SUBJECT_ARTICLE_DONE_LOADING = "Article.DoneLoading";
-	public static final String SUBJECT_SAVE_SUBSCRIPTION_PROGRESS_MESSAGE = "SaveSubscrption.SendProgressMessage";
-	public static final String SUBJECT_SAVE_SUBSCRIPTION_DONE = "SaveSubscrption.Done";
-	public static final String SUBJECT_SAVE_SUBSCRIPTION_ERROR = "SaveSubscrption.SendError";
+	public static final String SUBJECT_SAVE_SUBSCRIPTION_PROGRESS_MESSAGE = "SaveSubscription.SendProgressMessage";
+	public static final String SUBJECT_SAVE_SUBSCRIPTION_DONE = "SaveSubscription.Done";
+	public static final String SUBJECT_SAVE_SUBSCRIPTION_ERROR = "SaveSubscription.SendError";
 
 	public static final int EVENT_DELAYED = 200;
 	public static final String ACTIONBAR_TITLE = "ActionBar.Title";
@@ -60,16 +60,18 @@ public class Constants {
 
 	public static final int ARTICLE_MIN_LENGTH = 200; //90
 
-
-	public static final boolean ENABLE_ALARM = true;
-	public static final long SERVICE_INTERVAL = DEBUG ? 5*60*1000 : 2*AlarmManager.INTERVAL_HOUR; //AlarmManager.INTERVAL_DAY
+	//public static final boolean ENABLE_ALARM = true;
+	//public static final long SERVICE_INTERVAL = DEBUG ? 5*60*1000 : 2*AlarmManager.INTERVAL_HOUR; //AlarmManager.INTERVAL_DAY
 	public static final long SERVICE_START_AT = 5000; //updateTime.getTimeInMillis(),
 
-	/**
-	 * In Background service, we won't download article which last updated is since 1 hour
-	 */
-	public static final Duration ARTICLE_TTL_SERVICE = DEBUG ? new Duration(SERVICE_INTERVAL) : new Duration(3600000); //1h
-
-	public static final String PREF_OFFLINE = "Offline";
+	public static final String PREF_OFFLINE_KEY = "Offline";
 	public static final boolean PREF_OFFLINE_DEFAULT = false;
+	public static final String PREF_SERVICE_ENABLED_KEY = "pref_serviceEnabled";
+	public static final boolean PREF_SERVICE_ENABLED_DEFAULT = true;
+	public static final String PREF_INTERVALS_KEY = "pref_intervals";
+	public static final String PREF_INTERVALS_DEFAULT = "7200000";
+	public static final String PREF_NETWORK_CONDITION_KEY = "pref_networkCondition";
+	public static final String PREF_NETWORK_CONDITION_DEFAULT = "wifi";
+	public static final String PREF_DOWNLOADING_THREAD_KEY = "pref_downloadingThread";
+	public static final String PREF_DOWNLOADING_THREAD_DEFAULT = "2";
 }

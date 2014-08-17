@@ -6,22 +6,27 @@ import android.app.Service;
 import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.R;
 import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
+import dh.newspaper.tools.NetworkUtils;
 import dh.tool.thread.prifo.IQueueEmptyCallback;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoExecutorFactory;
 import dh.newspaper.workflow.SelectTagWorkflow;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
 import javax.inject.Inject;
 
@@ -31,16 +36,51 @@ import javax.inject.Inject;
 public class FeedsDownloaderService extends Service {
 	private static final String TAG = FeedsDownloaderService.class.getName();
 
+	@Inject RefData mRefData;
+	@Inject SharedPreferences mPreferences;
+	@Inject ConnectivityManager mConnectivityManager;
+	private PrifoExecutor mArticlesLoader;
+	private PrifoExecutor mSelectTagLoader;
+	private Duration articlesTTL;
+
 	@Override
 	public void onCreate() {
 		((Injector)getApplication()).getObjectGraph().inject(this);
+		Log.i(TAG, "onCreate Service");
+
+		mArticlesLoader = mRefData.createArticleLoader();
+		mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(1, 2);
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		//testService(startId);
 		Log.i(TAG, "onStartCommand " + (intent==null ? "" : intent.getAction()) + " startId=" + startId);
 
-		//Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+		//check service enabled
+		if (!mRefData.getPreferenceServiceEnabled()) {
+			Log.i(TAG, "Service is disabled");
+			if (Constants.DEBUG) {
+				displayNotification("Articles receiving is not happen", "Service is disabled");
+			}
+			return Service.START_FLAG_REDELIVERY;
+		}
+
+		//check connectivity
+		if (!NetworkUtils.networkConditionMatched(mConnectivityManager, mPreferences)) {
+			Log.i(TAG, "Network not available");
+			if (Constants.DEBUG) {
+				displayNotification("Articles receiving is not happen", "Network is not available");
+			}
+			return Service.START_FLAG_REDELIVERY;
+		}
+
+		//compute article TTL base on the service interval
+		articlesTTL = new Duration(mRefData.getPreferenceServiceInterval());
+
+		mRefData.updateArticleLoaderPoolSize(mArticlesLoader);
+
+		//main action
 		downloadAll();
 
 		return Service.START_FLAG_REDELIVERY;
@@ -51,9 +91,10 @@ public class FeedsDownloaderService extends Service {
 		return null;
 	}
 
-	@Inject RefData mRefData;
-	private PrifoExecutor mArticlesLoader = PrifoExecutorFactory.newPrifoExecutor(1, Constants.THREAD_ARTICLES_LOADER);
-	private PrifoExecutor mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(1, 2);
+	/*private void testService(int startId) {
+		Log.i("ALARM", "Service is called: "+startId);
+		Toast.makeText(this, "Service is called: "+startId, Toast.LENGTH_SHORT).show();
+	}*/
 
 	public void downloadAll() {
 		new AsyncTask<Object, Object, Boolean>() {
@@ -66,6 +107,7 @@ public class FeedsDownloaderService extends Service {
 				}
 				catch (Exception ex) {
 					Log.w(TAG, ex);
+					displayNotification("Failed download articles", ex.toString());
 					return false;
 				}
 			}
@@ -82,7 +124,7 @@ public class FeedsDownloaderService extends Service {
 
 					for (String tag : mRefData.getActiveTags()) {
 						SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(getApplicationContext(), tag,
-								Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL_SERVICE, true, Constants.ARTICLES_PER_PAGE,
+								Constants.SUBSCRIPTION_TTL, articlesTTL, true, Constants.ARTICLES_PER_PAGE,
 								mArticlesLoader, null);
 
 						mSelectTagLoader.execute(selectTagWorkflow);
@@ -96,8 +138,6 @@ public class FeedsDownloaderService extends Service {
 				}
 			}
 		}.execute();
-
-
 
 //		Executors.newSingleThreadExecutor(PriorityThreadFactory.MIN).execute(new Runnable() {
 //			@Override

@@ -1,6 +1,7 @@
 package dh.newspaper.cache;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
@@ -15,6 +16,8 @@ import dh.newspaper.Constants;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.model.json.SearchFeedsResult;
 import dh.tool.common.StrUtils;
+import dh.tool.thread.prifo.PrifoExecutor;
+import dh.tool.thread.prifo.PrifoExecutorFactory;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -39,11 +42,12 @@ public class RefData {
 	private Context mContext;
 	private List<Subscription> activeSubscriptions;
 	private List<Subscription> subscriptions;
+	private SharedPreferences mSharedPreferences;
 
-	@Inject
-	public RefData(DaoSession daoSession, Context context) {
+	public RefData(Context context, DaoSession daoSession, SharedPreferences sharedPreferences) {
 		mDaoSession = daoSession;
 		mContext = context;
+		mSharedPreferences = sharedPreferences;
 	}
 
 //	/**
@@ -142,7 +146,6 @@ public class RefData {
 		}
 	}
 
-
 	/*public boolean isTagsListReadyInMemory() {
 		return mActiveTags!=null && !mTagsStale;
 	}*/
@@ -219,5 +222,58 @@ public class RefData {
 			config.writeDebugLogs();
 		}
 		ImageLoader.getInstance().init(config.build());
+	}
+
+	//region preferences convenient getters
+
+	public boolean getPreferenceServiceEnabled() {
+		return getPreferenceServiceEnabled(mSharedPreferences);
+	}
+	public long getPreferenceServiceInterval() {
+		return getPreferenceServiceInterval(mSharedPreferences);
+	}
+	public int getPreferenceNumberOfThread() {
+		return getPreferenceNumberOfThread(mSharedPreferences);
+	}
+	public static boolean getPreferenceServiceEnabled(SharedPreferences sp) {
+		return sp.getBoolean(Constants.PREF_SERVICE_ENABLED_KEY, Constants.PREF_SERVICE_ENABLED_DEFAULT);
+	}
+	public static long getPreferenceServiceInterval(SharedPreferences sp) {
+		try {
+			return Long.parseLong(sp.getString(Constants.PREF_INTERVALS_KEY, Constants.PREF_INTERVALS_DEFAULT));
+		}
+		catch (Exception ex) {
+			Log.w(TAG, ex);
+			return 7200000L;
+		}
+	}
+	public int getPreferenceNumberOfThread(SharedPreferences sp) {
+		try {
+			return Integer.parseInt(sp.getString(Constants.PREF_DOWNLOADING_THREAD_KEY, Constants.PREF_DOWNLOADING_THREAD_DEFAULT));
+		}
+		catch (Exception ex) {
+			Log.w(TAG, ex);
+			return 2;
+		}
+	}
+
+	//endregion
+
+	/**
+	 * create executor with pool size base on preferences
+	 */
+	public PrifoExecutor createArticleLoader() {
+		int threadsPoolSize = getPreferenceNumberOfThread();
+		return PrifoExecutorFactory.newPrifoExecutor(threadsPoolSize, threadsPoolSize * 2);
+	}
+
+	/**
+	 * setup pool size base on preferences
+	 * @param articlesLoader
+	 */
+	public void updateArticleLoaderPoolSize(PrifoExecutor articlesLoader) {
+		int threadsPoolSize = getPreferenceNumberOfThread();
+		articlesLoader.setCorePoolSize(threadsPoolSize);
+		articlesLoader.setMaximumPoolSize(threadsPoolSize * 2);
 	}
 }

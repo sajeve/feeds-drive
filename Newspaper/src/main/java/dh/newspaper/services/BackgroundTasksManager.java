@@ -2,6 +2,7 @@ package dh.newspaper.services;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
@@ -19,6 +20,7 @@ import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
+import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.workflow.SaveSubscriptionWorkflow;
 import dh.newspaper.workflow.SearchFeedsWorkflow;
 import dh.tool.common.StrUtils;
@@ -29,7 +31,6 @@ import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -59,6 +60,7 @@ public class BackgroundTasksManager implements Closeable {
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mSharedPreferences;
+	@Inject ConnectivityManager mConnectivityManager;
 
 	private Handler mMainThreadHandler;
 
@@ -66,7 +68,7 @@ public class BackgroundTasksManager implements Closeable {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		mContext = context;
 		mMainThreadHandler = new Handler();
-		mArticlesLoader = PrifoExecutorFactory.newPrifoExecutor(1, Constants.THREAD_ARTICLES_LOADER);
+		mArticlesLoader = mRefData.createArticleLoader();
 	}
 
 	private boolean isInitWorkflowRun = false;
@@ -149,16 +151,18 @@ public class BackgroundTasksManager implements Closeable {
 			@Override
 			public void run() {
 				try {
-					if (mSelectTagWorkflow != null) {
-						//the same tag is loading
-						if (StrUtils.equalsIgnoreCases(mSelectTagWorkflow.getTag(), tag) && mSelectTagWorkflow.isRunning()) {
-							Log.d(TAG, String.format("%s is running (priority=%d%s)",
-									mSelectTagWorkflow,
-									mSelectTagWorkflow.getPriority(),
-									mSelectTagWorkflow.isFocused() ? " focused" : ""));
-						}
-						mSelectTagWorkflow.cancel();
-					}
+//					if (mSelectTagWorkflow != null) {
+//						//the same tag is loading
+//						if (StrUtils.equalsIgnoreCases(mSelectTagWorkflow.getTag(), tag) && mSelectTagWorkflow.isRunning()) {
+//							Log.d(TAG, String.format("%s is running (priority=%d%s)",
+//									mSelectTagWorkflow,
+//									mSelectTagWorkflow.getPriority(),
+//									mSelectTagWorkflow.isFocused() ? " focused" : ""));
+//						}
+//						mSelectTagWorkflow.cancel();
+//					}
+
+					mRefData.updateArticleLoaderPoolSize(mArticlesLoader);
 
 					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, isOnline(), Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
 						@Override
@@ -265,7 +269,8 @@ public class BackgroundTasksManager implements Closeable {
 
 
 	private boolean isOnline() {
-		return !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT);
+		return !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT)
+				&& NetworkUtils.networkConditionMatched(mConnectivityManager, mSharedPreferences);
 	}
 
 	private SearchFeedsWorkflow activeSearchFeedsWorkflow;

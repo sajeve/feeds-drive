@@ -1,10 +1,6 @@
 package dh.newspaper;
 
-import android.app.AlarmManager;
 import android.app.FragmentManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
@@ -43,13 +39,13 @@ public class MyApplication extends InjectingApplication {
 			StrictMode.enableDefaults();
 		}
 
-		AndroidLoggerAdapter.setLogLevel(Constants.DEBUG ? LogLevel.DEBUG : LogLevel.INFO);
+		AndroidLoggerAdapter.setLogLevel(Constants.DEBUG ? LogLevel.TRACE : LogLevel.INFO);
 
 		ResourceZoneInfoProvider.init(this);
 		mBackgroundTasksManager.runInitialisationWorkflow();
 
-		if (Constants.ENABLE_ALARM) {
-			setupAlarm(getApplicationContext(), Constants.SERVICE_START_AT, Constants.SERVICE_INTERVAL);
+		if (mRefData.getPreferenceServiceEnabled()) {
+			AlarmReceiver.setupAlarm(getApplicationContext(), Constants.SERVICE_START_AT, mRefData.getPreferenceServiceInterval());
 		}
 	}
 
@@ -83,31 +79,6 @@ public class MyApplication extends InjectingApplication {
 	@Override
 	public File getCacheDir() {
 		return mRefData.getCacheDir();
-	}
-
-	private void setupAlarm(Context context, long startAt, long interval) {
-		// let's grab new stuff at around 11:45 GMT, inexactly
-		/*Calendar updateTime = Calendar.getInstance();
-		updateTime.setTimeZone(TimeZone.getTimeZone("GMT"));
-		updateTime.set(Calendar.HOUR_OF_DAY, 11);
-		updateTime.set(Calendar.MINUTE, 45);*/
-
-		Intent downloader = new Intent(context, AlarmReceiver.class);
-		PendingIntent recurringDownload = PendingIntent.getBroadcast(context,
-				0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
-		AlarmManager alarms = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-
-		try {
-			alarms.cancel(recurringDownload);
-		}
-		catch (Exception ex) {
-			Log.w(TAG, ex);
-		}
-
-		alarms.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-				startAt,
-				interval,
-				recurringDownload);
 	}
 
 	public String getDatabasePathString(String name) {

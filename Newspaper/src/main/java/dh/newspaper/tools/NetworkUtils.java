@@ -1,13 +1,17 @@
 package dh.newspaper.tools;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.http.AndroidHttpClient;
+import android.preference.Preference;
+import android.text.TextUtils;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.squareup.okhttp.OkHttpClient;
 import dh.newspaper.Constants;
+import dh.tool.common.StrUtils;
 import dh.tool.thread.ICancellation;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -234,18 +238,28 @@ public class NetworkUtils {
 		return content;
 	}
 
-	public boolean isNetworkAvailable(ConnectivityManager cm) {
+	private static boolean isNetworkAvailable(ConnectivityManager cm) {
 		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 		boolean isConnected = activeNetwork != null &&
 				activeNetwork.isConnectedOrConnecting();
 		return isConnected;
 	}
 
-	public static boolean isWifiAvailable(ConnectivityManager cm) {
+	private static boolean isWifiAvailable(ConnectivityManager cm) {
 		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 		boolean isConnected = activeNetwork != null && activeNetwork.getType()==ConnectivityManager.TYPE_WIFI &&
 				activeNetwork.isConnectedOrConnecting();
 		return isConnected;
+	}
+
+	public static boolean networkConditionMatched(ConnectivityManager cm, SharedPreferences preferences) {
+		String networkConditionSetting = preferences.getString(Constants.PREF_NETWORK_CONDITION_KEY, Constants.PREF_NETWORK_CONDITION_DEFAULT);
+		if (StrUtils.equalsIgnoreCases(networkConditionSetting, "wifi")) {
+			return isWifiAvailable(cm);
+		}
+		else {
+			return isNetworkAvailable(cm);
+		}
 	}
 }
 

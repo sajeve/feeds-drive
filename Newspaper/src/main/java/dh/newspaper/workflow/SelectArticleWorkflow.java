@@ -199,7 +199,9 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		else {
 			articleContent = mFeedItem.getDescription();
 			mDoc = mFeedItem.getDocument();
-			mParseNotice.append(" Downloaded content is too short. Use feed description");
+			if (!mSuccessDownloadAndExtraction) {
+				mParseNotice.append(" Downloaded content is too short, use feed description.");
+			}
 		}
 
 		//endregion

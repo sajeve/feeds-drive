@@ -1,7 +1,6 @@
 package dh.newspaper.services;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
@@ -33,7 +32,7 @@ public class MainMenuHandler {
 				boolean newState = !item.isChecked();
 				item.setChecked(newState);
 				Log.d(TAG, "Switch to " + (newState ? "offline" : "online") + " mode");
-				mSharedPreferences.edit().putBoolean(Constants.PREF_OFFLINE, newState).apply();
+				mSharedPreferences.edit().putBoolean(Constants.PREF_OFFLINE_KEY, newState).apply();
 				return true;
 			case R.id.action_settings:
 				owner.startActivity(new Intent(owner, SettingsActivity.class));

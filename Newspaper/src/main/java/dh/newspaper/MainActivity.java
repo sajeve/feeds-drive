@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -13,10 +12,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.Injector;
-import dh.newspaper.services.AlarmReceiver;
 import dh.newspaper.services.MainMenuHandler;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.ManageSubscriptionActivity;
@@ -141,7 +138,7 @@ public class MainActivity extends Activity {
 
 		//restore menu state
 		MenuItem offlineItem = menu.findItem(R.id.action_offline);
-		offlineItem.setChecked(mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT));
+		offlineItem.setChecked(mSharedPreferences.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT));
 
 		restoreActionBar();
 		return true;
@@ -160,7 +157,7 @@ public class MainActivity extends Activity {
 //			boolean newState = !item.isChecked();
 //			item.setChecked(newState);
 //			Log.d(TAG, "Switch to "+(newState ? "offline": "online")+" mode");
-//			mSharedPreferences.edit().putBoolean(Constants.PREF_OFFLINE, newState).apply();
+//			mSharedPreferences.edit().putBoolean(Constants.PREF_OFFLINE_KEY, newState).apply();
 //			return true;
 //		}
 

@@ -116,37 +116,37 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 
 
 
-	public void runExtractContent(String address, String fileName, String xpath) throws IOException {
-		//download
-		InputStream in = NetworkUtils.getStreamFromUrl(address, NetworkUtils.MOBILE_USER_AGENT, null);
+//	public void runExtractContent(String address, String fileName, String xpath) throws IOException {
+//		//download
+//		InputStream in = NetworkUtils.getStreamFromUrl(address, NetworkUtils.MOBILE_USER_AGENT, null);
+//
+//		//parse
+//		Document doc = Jsoup.parse(in, Constants.DEFAULT_ENCODING, address);
+//
+//		//clean a little
+//		ContentParser.removeComments(doc);
+//		doc.select("script").remove();
+//
+//		//write to file
+//		TestUtils.writeToFile(fileName, doc.html(), false);
+//
+//		//extract content
+//		String content = contentParser.extractContent(doc, xpath, new StringBuilder()).html();
+//
+//		Log.i(TAG, content);
+//		assertFalse(Strings.isNullOrEmpty(content));
+//
+//		//write content to file
+//		TestUtils.writeToFile(fileName+" content.html", content, true);
+//	}
 
-		//parse
-		Document doc = Jsoup.parse(in, Constants.DEFAULT_ENCODING, address);
-
-		//clean a little
-		ContentParser.removeComments(doc);
-		doc.select("script").remove();
-
-		//write to file
-		TestUtils.writeToFile(fileName, doc.html(), false);
-
-		//extract content
-		String content = contentParser.extractContent(doc, xpath, new StringBuilder()).html();
-
-		Log.i(TAG, content);
-		assertFalse(Strings.isNullOrEmpty(content));
-
-		//write content to file
-		TestUtils.writeToFile(fileName+" content.html", content, true);
-	}
-
-	public void testNytimes1() throws IOException {
-		runExtractContent(
-				"http://www.nytimes.com/2014/06/17/business/gm-recalls-3-million-more-cars.html",
-				Constants.DEBUG_DATABASE_PATH + "/test/gm-recalls-3-million-more-cars.html",
-				"p.story-body-text, figure {or} div.article-body"
-		);
-	}
+//	public void testNytimes1() throws IOException {
+//		runExtractContent(
+//				"http://www.nytimes.com/2014/06/17/business/gm-recalls-3-million-more-cars.html",
+//				Constants.DEBUG_DATABASE_PATH + "/test/gm-recalls-3-million-more-cars.html",
+//				"p.story-body-text, figure {or} div.article-body"
+//		);
+//	}
 
 	public void testJsoup() {
 		Jsoup.parse("<img src='abc.htm' width='1' height='10'>", "localhost");

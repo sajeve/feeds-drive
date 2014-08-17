@@ -10,6 +10,7 @@
 				android:key="pref_intervals"
 				android:dependency="pref_serviceEnabled"
 				android:title="@string/download_interval"
+				android:summary="@string/download_interval_summ"
 				android:dialogTitle="@string/download_interval"
 				android:entries="@array/intervals"
 				android:entryValues="@array/interval_values"

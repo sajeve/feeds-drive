@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import de.greenrobot.event.EventBus;
@@ -15,9 +14,6 @@ import dh.newspaper.event.RawEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.services.MainMenuHandler;
-import dh.newspaper.view.ArticleFragment;
-import dh.newspaper.view.FeedsFragment;
-import dh.newspaper.view.TagsFragment;
 
 import javax.inject.Inject;
 
@@ -116,7 +112,7 @@ public class DetailActivity extends Activity {
 
 		//restore menu state
 		MenuItem offlineItem = menu.findItem(R.id.action_offline);
-		offlineItem.setChecked(mSharedPreferences.getBoolean(Constants.PREF_OFFLINE, Constants.PREF_OFFLINE_DEFAULT));
+		offlineItem.setChecked(mSharedPreferences.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT));
 
 		return true;
 	}

@@ -85,7 +85,7 @@ public class AppContextModule {
 	@Provides @Singleton
 	public RefData provideRefData() {
 		if (mRefData == null) {
-			mRefData = new RefData(provideDaoSession(), mAppContext);
+			mRefData = new RefData(mAppContext, provideDaoSession(), providePreferences());
 		}
 		return mRefData;
 	}

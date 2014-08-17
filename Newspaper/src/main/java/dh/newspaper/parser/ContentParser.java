@@ -2,30 +2,28 @@ package dh.newspaper.parser;
 
 import android.util.Log;
 import android.webkit.URLUtil;
-import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
-import dh.newspaper.tools.DateUtils;
 import dh.newspaper.tools.NetworkUtils;
+import dh.tool.common.PerfWatcher;
 import dh.tool.common.StrUtils;
-import dh.tool.thread.ICancellation;
 import dh.tool.justext.Configuration;
 import dh.tool.justext.Extractor;
-import org.jsoup.Connection;
+import dh.tool.thread.ICancellation;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
-import org.jsoup.nodes.Entities.EscapeMode;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ContentParser {
 	private static final String TAG = ContentParser.class.getName();
+	private static final Logger logger = LoggerFactory.getLogger(ContentParser.class);
 
 	private static final Configuration JusTextDefaultConfig = new Configuration.Builder()
 			.removeTitle(true)
@@ -66,42 +65,28 @@ public class ContentParser {
 	}
 
 	public Document extractContent(InputStream input, String charSet, String baseURI, StringBuilder notice, ICancellation cancellation) throws IOException {
-		Stopwatch sw;
+		PerfWatcher pf = new PerfWatcher(logger, "extraction "+baseURI);
 
-		if (Constants.DEBUG) {
-			sw = Stopwatch.createStarted();
-		}
 		Document doc = Jsoup.parse(input, charSet, baseURI);
-		if (Constants.DEBUG) {
-			sw.stop();
-			Log.v("Parser", "Jsoup parse "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms - "+doc.baseUri());
-		}
+		pf.d("Jsoup parse");
 
 		try {
 			Document resu = doc.clone();
-			if (Constants.DEBUG) {
-				sw.reset().start();
-			}
+			pf.d("Document clone");
+
 			new Extractor(JusTextDefaultConfig, cancellation).removeBoilerplate(resu);
-			if (Constants.DEBUG) {
-				sw.stop();
-				Log.v("Parser", "JusText extraction Default "+sw.elapsed(TimeUnit.MILLISECONDS)+" ms - "+resu.baseUri());
-			}
+			pf.d("Default extraction");
 
 			Element body = resu.body();
 			if (body==null || body.text().length() < Constants.ARTICLE_MIN_LENGTH) {
 				if (ENABLE_JUSTEXT_RELAX_CONFIG) {
 					notice.append("Default-extractor return nearly-empty content, switch to relax-extractor");
 
-					if (Constants.DEBUG) {
-						sw.reset().start();
-					}
+					pf.resetStopwatch();
+
 					resu = doc.clone();
 					new Extractor(JusTextRelaxConfig, cancellation).removeBoilerplate(resu);
-					if (Constants.DEBUG) {
-						sw.stop();
-						Log.v("Parser", "JusText extraction Relax " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms - " + resu.baseUri());
-					}
+					pf.d("Relax extraction");
 
 					body = resu.body();
 					if (body == null || body.text().length() < Constants.ARTICLE_MIN_LENGTH) {
@@ -124,6 +109,9 @@ public class ContentParser {
 		catch (Exception ex) {
 			Log.e(TAG, "Extraction failed - "+doc.baseUri(), ex);
 			notice.append("Extraction error "+ex.toString()+". Use full content");
+		}
+		finally {
+			pf.dg("done");
 		}
 		return doc;
 	}
