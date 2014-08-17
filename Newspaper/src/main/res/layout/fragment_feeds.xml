@@ -1,9 +1,8 @@
 <android.support.v4.widget.SwipeRefreshLayout
 		xmlns:android="http://schemas.android.com/apk/res/android"
-
 		android:layout_width="match_parent"
-		android:layout_height="match_parent">
-
+		android:layout_height="match_parent"
+		>
 
 	<!--<org.lucasr.smoothie.AsyncGridView
 			xmlns:android="http://schemas.android.com/apk/res/android"
@@ -24,8 +23,8 @@
 			android:layout_width="fill_parent"
 			android:layout_height="fill_parent"
 			android:choiceMode="singleChoice"
-			android:horizontalSpacing="8dp"
-			android:verticalSpacing="8dp"
+			android:horizontalSpacing="@dimen/small_padding"
+			android:verticalSpacing="@dimen/small_padding"
 			android:numColumns="@integer/grid_columns_count"
 			android:listSelector="@drawable/item_feed_bgcolor"
 			/>

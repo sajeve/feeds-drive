@@ -9,7 +9,9 @@
 		<LinearLayout
 				android:layout_width="fill_parent"
 				android:layout_height="fill_parent"
-				android:orientation="vertical">
+				android:orientation="vertical"
+				android:padding="@dimen/big_padding"
+				>
 
 			<TextView
 					android:id="@+id/txt_title"
@@ -39,21 +41,21 @@
 					android:textIsSelectable="true"
 					style="@style/Article.Info.Gray"
 					android:singleLine="true"
-					android:paddingBottom="8dp"
+					android:paddingBottom="@dimen/small_padding"
 					/>
 
 			<WebView
 					android:layout_width="fill_parent"
 					android:layout_height="fill_parent"
 					android:id="@+id/webview_article"
-					android:paddingBottom="16dp"
+					android:paddingBottom="@dimen/big_padding"
 					/>
 
 			<LinearLayout
 					android:id="@+id/panel_notice"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="16dp"
+					android:paddingTop="@dimen/big_padding"
 					android:orientation="horizontal">
 				<ImageView
 						android:layout_width="32dp"

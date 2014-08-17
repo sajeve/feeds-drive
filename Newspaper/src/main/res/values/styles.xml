@@ -4,7 +4,7 @@
         Base application theme, dependent on API level. This theme is replaced
         by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
     -->
-    <style name="AppBaseTheme" parent="android:Theme.Light">
+    <style name="AppBaseTheme" parent="FdTheme">
         <!--
             Theme customizations available in newer API levels can go in
             res/values-vXX/styles.xml, while customizations related to
@@ -17,7 +17,6 @@
     <style name="AppTheme" parent="AppBaseTheme">
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
-
 
 	<!--
 		Divider to use in layout:
@@ -49,17 +48,14 @@
 	</style>
 
 	<style name="Feed.TitleSmall" parent="Feed">
-		<item name="android:textSize">14sp</item>
 		<item name="android:textStyle">bold</item>
 	</style>
 
 	<style name="Feed.Date" parent="Feed">
-		<item name="android:textSize">12sp</item>
 		<item name="android:textColor">@color/gray_text</item>
 	</style>
 
 	<style name="Feed.Content" parent="Feed">
-		<item name="android:textSize">12sp</item>
 		<item name="android:textColor">@color/gray_secondary</item>
 	</style>
 
@@ -79,7 +75,6 @@
 	</style>
 
 	<style name="Article.Info" parent="Article">
-		<item name="android:textSize">12sp</item>
 		<item name="android:textColor">@color/gray_text</item>
 	</style>
 	<style name="Article.Info.Gray" parent="Article.Info">
