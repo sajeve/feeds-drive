@@ -64,7 +64,7 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 	@Override
 	public boolean offer(E e) {
 		if (e.isCancelled()) {
-			return true; //task is cancelled, no need to add it to the queue
+			return false; //task is cancelled, no need to add it to the queue
 		}
 		E existed = findItem(e);
 		if (e.isFocused()) {
@@ -167,6 +167,26 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 	@Override
 	public E peek() {
 		return queue.first();
+	}
+
+	public int countActiveTasks() {
+		int c = 0;
+		for (IPrifosable e : this) {
+			if (!e.isCancelled()) {
+				c++;
+			}
+		}
+		return c;
+	}
+
+	public String printActiveTask() {
+		StringBuilder s = new StringBuilder();
+		for (IPrifosable e : this) {
+			if (!e.isCancelled()) {
+				s.append("{"+e.toString() + " / " + e.getPriority()+ (e.isFocused() ?" / focused": "")+"}, ");
+			}
+		}
+		return s.toString();
 	}
 
 	public IQueueEmptyCallback getQueueEmptyCallback() {

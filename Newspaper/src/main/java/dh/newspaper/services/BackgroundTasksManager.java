@@ -23,12 +23,12 @@ import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.workflow.SaveSubscriptionWorkflow;
 import dh.newspaper.workflow.SearchFeedsWorkflow;
-import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.OncePrifoTask;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoExecutorFactory;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
+import dh.tool.thread.prifo.PrifoTask;
 
 import javax.inject.Inject;
 import java.io.Closeable;
@@ -53,10 +53,10 @@ public class BackgroundTasksManager implements Closeable {
 	private PrifoExecutor mArticlesLoader;
 
 	private SelectTagWorkflow mSelectTagWorkflow;
-	private ExecutorService mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(1, Integer.MAX_VALUE);
+	//private ExecutorService mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(2, Integer.MAX_VALUE);
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
-	private PrifoExecutor mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor(4, Integer.MAX_VALUE);
+	private PrifoExecutor mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor();
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mSharedPreferences;
@@ -186,7 +186,8 @@ public class BackgroundTasksManager implements Closeable {
 					});
 					mSelectTagWorkflow.setFocus(true);
 					EventBus.getDefault().post(new RefreshFeedsListEvent(mSelectTagWorkflow, Constants.SUBJECT_FEEDS_START_LOADING, mSelectTagWorkflow.getTag()));
-					mSelectTagLoader.execute(mSelectTagWorkflow);
+					//mSelectTagLoader.execute(mSelectTagWorkflow);
+					executeUniqueOnMainExecutor(mSelectTagWorkflow);
 				}
 				catch (Exception ex) {
 					Log.w(TAG, ex);
@@ -256,7 +257,7 @@ public class BackgroundTasksManager implements Closeable {
 					mSelectArticleWorkflow.setFocus(true);
 
 					EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_START_LOADING, mSelectArticleWorkflow.getArticleUrl()));
-					mainPrifoExecutor.executeUnique(mSelectArticleWorkflow);
+					executeUniqueOnMainExecutor(mSelectArticleWorkflow);
 				} catch (Exception ex) {
 					Log.w(TAG, ex);
 					EventBus.getDefault().post(new RefreshArticleEvent(mSelectArticleWorkflow, Constants.SUBJECT_ARTICLE_DONE_LOADING, mSelectArticleWorkflow.getArticleUrl()));
@@ -284,9 +285,12 @@ public class BackgroundTasksManager implements Closeable {
 		}*/
 		activeSearchFeedsWorkflow = new SearchFeedsWorkflow(mContext, query);
 		activeSearchFeedsWorkflow.setFocus(true);
-		mainPrifoExecutor.executeUnique(activeSearchFeedsWorkflow);
+		executeUniqueOnMainExecutor(activeSearchFeedsWorkflow);
 	}
 
+	/**
+	 * Save or delete
+	 */
 	private OncePrifoTask currentSaveDeleteSubscriptionTask;
 	public void saveSubscription(final SearchFeedsResult.ResponseData.Entry feedsSource, final Set<String> tags) {
 		if (feedsSource==null || !URLUtil.isValidUrl(feedsSource.getUrl())) {
@@ -296,7 +300,7 @@ public class BackgroundTasksManager implements Closeable {
 			return; //nothing to do
 		}
 		currentSaveDeleteSubscriptionTask = new SaveSubscriptionWorkflow(mContext, feedsSource, tags);
-		mainPrifoExecutor.executeUnique(currentSaveDeleteSubscriptionTask);
+		executeUniqueOnMainExecutor(currentSaveDeleteSubscriptionTask);
 	}
 
 	@Inject DaoSession daoSession;
@@ -342,7 +346,7 @@ public class BackgroundTasksManager implements Closeable {
 				EventBus.getDefault().post(saveSubscriptionState);
 			}
 		};
-		mainPrifoExecutor.executeUnique(currentSaveDeleteSubscriptionTask);
+		executeUniqueOnMainExecutor(currentSaveDeleteSubscriptionTask);
 	}
 
 	public SelectTagWorkflow getActiveSelectTagWorkflow() {
@@ -358,14 +362,24 @@ public class BackgroundTasksManager implements Closeable {
 		return currentSaveDeleteSubscriptionTask;
 	}
 
+	/**
+	 * submit new task on main executor, cancel all current task.
+	 * Use to execute only unique task, which should be done on GUI thread
+	 */
+	private void executeUniqueOnMainExecutor(PrifoTask task) {
+		mainPrifoExecutor.shutdownNow();
+		mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor();
+		mainPrifoExecutor.execute(task);
+	}
+
 	@Override
 	public void close() throws IOException {
 		if (mTagsListLoader != null) {
 			mTagsListLoader.shutdownNow();
 		}
-		if (mSelectTagLoader != null) {
+		/*if (mSelectTagLoader != null) {
 			mSelectTagLoader.shutdownNow();
-		}
+		}*/
 		if (mArticlesLoader != null) {
 			mArticlesLoader.shutdownNow();
 		}

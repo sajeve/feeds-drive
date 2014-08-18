@@ -46,12 +46,12 @@ public class SubscriptionDialog extends DialogFragment {
 	private static final String TAG = SubscriptionDialog.class.getName();
 
     private static final String ARG_FEEDS_SOURCE_INFO = "feedsSource";
-	private static final String ARG_TAGS_LIST_DATA = "tagsListData";
+	//private static final String ARG_TAGS_LIST_DATA = "tagsListData";
 
 	private ListView tagList;
 	private Button okButton;
 	private Button cancelButton;
-	private Button deleteButton;
+	private ImageButton deleteButton;
 	private TagListSelectorAdapter tagsListAdapter;
 	private ImageButton addTagButton;
 	private EditText tagNameEditor;
@@ -107,7 +107,7 @@ public class SubscriptionDialog extends DialogFragment {
 		tagList = (ListView)v.findViewById(R.id.tag_list);
 		okButton = (Button)v.findViewById(R.id.ok_button);
 		cancelButton = (Button)v.findViewById(R.id.cancel_button);
-		deleteButton = (Button)v.findViewById(R.id.delete_button);
+		deleteButton = (ImageButton)v.findViewById(R.id.delete_button);
 		tagNameEditor = (EditText)v.findViewById(R.id.tag_name_edit);
 		addTagButton = (ImageButton)v.findViewById(R.id.add_tag_button);
 
@@ -320,7 +320,7 @@ public class SubscriptionDialog extends DialogFragment {
 
 			if (StrUtils.equalsString(Constants.SUBJECT_SAVE_SUBSCRIPTION_PROGRESS_MESSAGE, event.getSubject())) {
 				savingProgressDialog.setMessage(event.getProgressMessage());
-				savingProgressDialog.show(); //TODO translate
+				savingProgressDialog.show();
 			}
 			else if (StrUtils.equalsString(Constants.SUBJECT_SAVE_SUBSCRIPTION_DONE, event.getSubject())) {
 				savingProgressDialog.setMessage(event.getProgressMessage());

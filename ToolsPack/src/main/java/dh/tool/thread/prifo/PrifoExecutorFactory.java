@@ -14,4 +14,7 @@ public class PrifoExecutorFactory {
 	public static PrifoExecutor newPrifoExecutor(int corePoolSize, int maxPoolSize) {
 		return newPrifoExecutor(corePoolSize, maxPoolSize, null);
 	}
+	public static PrifoExecutor newPrifoExecutor() {
+		return newPrifoExecutor(0, Integer.MAX_VALUE);
+	}
 }

@@ -2,36 +2,35 @@ package dh.newspaper.workflow;
 
 import android.content.Context;
 import android.os.Looper;
-import android.os.NetworkOnMainThreadException;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
-import com.nostra13.universalimageloader.core.ImageLoader;
 import de.greenrobot.dao.query.QueryBuilder;
 import de.greenrobot.dao.query.WhereCondition;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.adapter.IArticleCollection;
+import dh.newspaper.cache.RefData;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
 import dh.newspaper.tools.TagUtils;
-import dh.tool.thread.ICancellation;
-import dh.tool.common.StrUtils;
+import dh.tool.common.PerfWatcher;
 import dh.tool.thread.prifo.OncePrifoTask;
 import dh.tool.thread.prifo.PrifoExecutor;
-import dh.tool.thread.prifo.PrifoTask;
+import dh.tool.thread.prifo.PrifoQueue;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -45,6 +44,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollection {
 	private static final String TAG = SelectTagWorkflow.class.getName();
+	private static final Logger log = LoggerFactory.getLogger(SelectTagWorkflow.class);
+	private final PerfWatcher pw;
 
 	@Inject DaoSession mDaoSession;
 	@Inject ContentParser mContentParser;
@@ -81,8 +82,8 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	private List<SelectArticleWorkflow> mPendingLoadArticleWorkflow = new ArrayList<SelectArticleWorkflow>();
 
 	private List<String> mNotices = new ArrayList<String>();
-	private Stopwatch mStopwatch;
 
+	//private Stopwatch mStopwatchQueue;
 	private final boolean mOnlineMode;
 
 	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, boolean onlineMode, int pageSize, PrifoExecutor articlesLoader, SelectTagCallback callback) {
@@ -96,6 +97,8 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		mCallback = callback;
 		mPageSize = pageSize;
 		mOnlineMode = onlineMode;
+		//mStopwatchQueue = mStopwatchQueue.createStarted();
+		pw = new PerfWatcher(log, mTag);
 	}
 
 	/**
@@ -103,43 +106,41 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	 */
 	@Override
 	public void perform() {
-		logSimple("Start workflow");
-		Stopwatch genericStopWatch = Stopwatch.createStarted();
-		mStopwatch = Stopwatch.createStarted();
+		pw.debug("Start workflow");
 		try {
 			loadFirstPageArticlesFromCache();
 			if (mCallback != null && !isCancelled()) {
-				resetStopwatch();
+				pw.resetStopwatch();
 				mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
-				log("Callback onFinishedLoadFromCache()");
+				//pw.d("Callback onFinishedLoadFromCache()");
 			}
 
 			if (mOnlineMode) {
 				downloadFeeds();
 				if (mCallback != null && !isCancelled()) {
-					resetStopwatch();
+					pw.resetStopwatch();
 					mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
-					log("Callback onFinishedDownloadFeeds()");
+					//pw.d("Callback onFinishedDownloadFeeds()");
 				}
 
 				downloadArticles();
 				if (mCallback != null && !isCancelled()) {
-					resetStopwatch();
+					pw.resetStopwatch();
 					mCallback.onFinishedDownloadArticles(this);
-					log("Callback onFinishedDownloadArticles()");
+					//pw.d("Callback onFinishedDownloadArticles()");
 				}
 			}
 			else {
-				logSimple("Offline mode, only use cached articles");
+				pw.debug("Offline mode, only use cached articles");
 			}
 		}
 		finally {
 			if (mCallback!=null) {
-				resetStopwatch();
+				pw.resetStopwatch();
 				mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
-				log("Callback done()");
+				//pw.d("Callback done()");
 			}
-			logInfo("Workflow complete ("+genericStopWatch.elapsed(TimeUnit.MILLISECONDS)+" ms)");
+			pw.ig("Workflow complete");
 		}
 	}
 
@@ -147,10 +148,10 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		if (isCancelled()) {
 			return;
 		}
-		logSimple("Load articles from cache");
+		pw.debug("Load articles from cache");
 
 		if (mSubscriptions == null || mSubscriptions.isEmpty()) {
-			resetStopwatch();
+			pw.resetStopwatch();
 
 			mSubscriptions = new HashMap<Subscription, Feeds>();
 
@@ -159,11 +160,11 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 					mSubscriptions.put(sub, null);
 				}
 				else {
-					logWarn("GreenDAO return null object");
+					pw.warn("GreenDAO return null object");
 				}
 			}
 
-			log("Found " + mSubscriptions.size() + " active subscriptions");
+			pw.d("Found " + mSubscriptions.size() + " active subscriptions");
 		}
 
 		buildArticlesQuery();
@@ -175,10 +176,10 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		if (isCancelled() || mSelectArticleQueryBuilder==null) {
 			return false;
 		}
-		resetStopwatch();
+		pw.resetStopwatch();
 		int oldCount = mCountArticles;
 		mCountArticles = (int)mSelectArticleQueryBuilder.count();
-		log("Count total articles = "+mCountArticles);
+		pw.d("Count total articles = "+mCountArticles);
 
 		return oldCount!=mCountArticles;
 	}
@@ -191,7 +192,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	 */
 	public boolean loadPage(int offset) {
 		if (isCancelled()) {
-			logWarn("The workflow is cancelled");//consider to throw exception here
+			pw.warn("The workflow is cancelled");//consider to throw exception here
 			return false;
 		}
 
@@ -211,12 +212,12 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 			mOffset = offset;
 
-			resetStopwatch();
+			pw.resetStopwatch();
 
 			checkAccessDiskOnMainThread();
 			mArticles = mSelectArticleQueryBuilder.offset(mOffset).limit(mPageSize).list();
 
-			log("loadPage("+offset+")");
+			pw.d("loadPage("+offset+")");
 
 			if (offset==0 && mArticles.size()>0) {
 				//update the article-zero
@@ -261,7 +262,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				return;
 			}
 			if (!isExpiry(sub)) {
-				logSimple("Subscription is not yet expiry ttl="+mSubscriptionsTimeToLive+". No needs to re-download feeds list: " + sub);
+				pw.debug("Subscription is not yet expiry ttl="+mSubscriptionsTimeToLive+". No needs to re-download feeds list: " + sub);
 				continue;
 			}
 
@@ -270,15 +271,15 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				encoding = Constants.DEFAULT_ENCODING;
 			}
 			try {
-				resetStopwatch();
+				pw.resetStopwatch();
 				Feeds feeds = mContentParser.parseFeeds(sub.getFeedsUrl(), encoding, this);
 
 				if (feeds == null) {
-					log("Download and parse feeds cancelled "+sub);
+					pw.d("Download and parse feeds cancelled "+sub);
 					return;
 				}
 
-				log("Download and parse feeds of "+sub);
+				pw.d("Download and parse feeds of "+sub);
 
 				mSubscriptions.put(sub, feeds);
 
@@ -288,26 +289,26 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 						return;
 					}
 					try {
-						resetStopwatch();
+						pw.resetStopwatch();
 
 						mCurrentLoadArticleWorkflow = new SelectArticleWorkflow(mContext, feedItem, mArticleTimeToLive, false, null);
 						mCurrentLoadArticleWorkflow.run();
 
-						log("Download full content of "+feedItem);
+						pw.t("Download full content of "+feedItem);
 					}
 					catch (Exception e) {
-						logWarn(e);
+						pw.warn("Failed updating article", e);
 						mNotices.add("Failed updating article excerpt "+feedItem+": "+e.getMessage());
 					}
 				}
 			} catch (FeedParserException e) {
-				logWarn(e);
+				pw.warn("Failed parsing feed", e);
 				mNotices.add("Failed parsing feed of "+sub+": "+e.getMessage());
 			} catch (IOException e) {
-				logWarn(e);
+				pw.warn("Failed parsing feed", e);
 				mNotices.add("Failed connect feed of "+sub+": "+e.getMessage());
 			} catch (Exception e) {
-				logWarn(e);
+				pw.warn("Failed parsing feed", e);
 				mNotices.add("Fatal while parsing feed of "+sub+": "+e.getMessage());
 			}
 		}
@@ -332,7 +333,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				continue;
 			}
 
-			logSimple("Start download and parse full articles of " + sub);
+			pw.debug("Start download and parse full articles of " + sub);
 			for (FeedItem feedItem : feeds) {
 				if (isCancelled()) {
 					return;
@@ -341,27 +342,27 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 					final SelectArticleWorkflow wkflow = new SelectArticleWorkflow(mContext, feedItem, mArticleTimeToLive, true, null);
 
 					if (mArticlesLoader == null) {
-						resetStopwatch();
+						pw.resetStopwatch();
 
 						mCurrentLoadArticleWorkflow = wkflow;
 						mCurrentLoadArticleWorkflow.run();
 
-						log("Upsert excerpt "+feedItem);
+						pw.t("Upsert excerpt "+feedItem);
 					}
 					else {
-						logSimple("Add to article loader queue "+feedItem);
+						pw.trace("Add to article loader queue "+feedItem);
 						mPendingLoadArticleWorkflow.add(wkflow);
 						mArticlesLoader.execute(wkflow);
 					}
 				}
 				catch (Exception e) {
-					logWarn(e);
+					pw.warn("Failed updating article", e);
 					mNotices.add("Failed updating article "+feedItem+": "+e.getMessage());
 				}
 			}
-			logSimple("Finished download full articles of " + sub);
+			pw.debug("Finished download full articles of " + sub);
 
-			resetStopwatch();
+			pw.resetStopwatch();
 
 			if (!Strings.isNullOrEmpty(feeds.getDescription())) {
 				sub.setDescription(feeds.getDescription());
@@ -375,7 +376,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			sub.setLastUpdate(DateTime.now().toDate());
 			mDaoSession.getSubscriptionDao().update(sub);
 
-			log("Update " + sub + " in database");
+			pw.d("Update " + sub + " in database");
 		}
 	}
 
@@ -391,11 +392,11 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			return;
 		}
 		if (mSelectArticleQueryBuilder == null) {
-			resetStopwatch();
+			pw.resetStopwatch();
 
 			mSelectArticleQueryBuilder = buildArticlesQuery(mSubscriptions.keySet().toArray(new Subscription[mSubscriptions.size()]));
 
-			log("Build article query from " + mSubscriptions.size() + " subscriptions");
+			pw.d("Build article query from " + mSubscriptions.size() + " subscriptions");
 		}
 	}
 
@@ -436,25 +437,42 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		return queryBuilder;
 	}
 
+//	/**
+//	 * Find subscriptions by tag: Select * from Subscription where tag like "%|tag|%"
+//	 * @param tag
+//	 */
+//	public List<Subscription> getSubscriptions(String tag) {
+//		if (Strings.isNullOrEmpty(tag)) {
+//			QueryBuilder<Subscription> qb = mDaoSession.getSubscriptionDao().queryBuilder();
+//			qb.where(
+//					SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
+//					qb.or(SubscriptionDao.Properties.Tags.isNull(), SubscriptionDao.Properties.Tags.eq("")));
+//
+//			checkAccessDiskOnMainThread();
+//			return qb.list();
+//		}
+//
+//		checkAccessDiskOnMainThread();
+//		return mDaoSession.getSubscriptionDao().queryBuilder()
+//				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
+//						SubscriptionDao.Properties.Tags.like("%"+ TagUtils.getTechnicalTag(tag)+"%")).list();
+//	}
+
+
+	@Inject RefData mRefData;
+
 	/**
-	 * Find subscriptions by tag: Select * from Subscription where tag like "%|tag|%"
-	 * @param tag
+	 * Find subscriptions by tag from subscriptions list cached in memory
 	 */
 	public List<Subscription> getSubscriptions(String tag) {
-		if (Strings.isNullOrEmpty(tag)) {
-			QueryBuilder<Subscription> qb = mDaoSession.getSubscriptionDao().queryBuilder();
-			qb.where(
-					SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
-					qb.or(SubscriptionDao.Properties.Tags.isNull(), SubscriptionDao.Properties.Tags.eq("")));
-
-			checkAccessDiskOnMainThread();
-			return qb.list();
+		List<Subscription> resu = new ArrayList<Subscription>();
+		String normalizeTag = TagUtils.getTechnicalTag(tag);
+		for (Subscription sub : mRefData.getActiveSubscriptions()) {
+			if (sub.getTags().contains(normalizeTag)) {
+				resu.add(sub);
+			}
 		}
-
-		checkAccessDiskOnMainThread();
-		return mDaoSession.getSubscriptionDao().queryBuilder()
-				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
-						SubscriptionDao.Properties.Tags.like("%"+ TagUtils.getTechnicalTag(tag)+"%")).list();
+		return resu;
 	}
 
 	@Override
@@ -468,7 +486,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				saw.cancel();
 			}
 		}
-		logSimple("Cancelled workflow");
+		pw.debug("Cancelled workflow");
 	}
 
 	@Override
@@ -537,25 +555,25 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 	//<editor-fold desc="Simple Log Utils for Profiler">
 
-	private void logInfo(String message) {
-		Log.d(TAG, message + " - " + mTag);
-	}
-	private void logWarn(String message) {
-		Log.w(TAG, message + " - " + mTag);
-	}
-	private void logWarn(Throwable ex) {
-		Log.w(TAG, "Error " + mTag, ex);
-	}
-	private void logSimple(String message) {
-		Log.v(TAG, message + " - " + mTag);
-	}
-	private void log(String message) {
-		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mTag);
-		resetStopwatch();
-	}
-	private void resetStopwatch() {
-		mStopwatch.reset().start();
-	}
+//	private void logInfo(String message) {
+//		Log.d(TAG, message + " - " + mTag);
+//	}
+//	private void pw.warn(String message) {
+//		Log.w(TAG, message + " - " + mTag);
+//	}
+//	private void pw.warn(Throwable ex) {
+//		Log.w(TAG, "Error " + mTag, ex);
+//	}
+//	private void pw.debug(String message) {
+//		Log.v(TAG, message + " - " + mTag);
+//	}
+//	private void pw.d(String message) {
+//		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mTag);
+//		pw.resetStopwatch();
+//	}
+//	private void pw.resetStopwatch() {
+//		mStopwatch.reset().start();
+//	}
 
 	//</editor-fold>
 
@@ -571,12 +589,22 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 	private void checkAccessDiskOnMainThread() {
 		if (Looper.myLooper() == Looper.getMainLooper()) {
-			logWarn("Access disk on main thread");
+			pw.warn("Access disk on main thread");
 			if (Constants.DEBUG) {
 				throw new IllegalStateException("Access disk on main thread");
 			}
 		}
 	}
+
+//	@Override
+//	public void onEnterQueue(PrifoQueue queue) {
+//		Log.i(TAG, String.format("EnterQueue %s - %d/%d jobs (%d ms)", getMissionId(), queue.countActiveTasks(), queue.size(), mStopwatchQueue.elapsed(TimeUnit.MILLISECONDS)));
+//	}
+//
+//	@Override
+//	public void onDequeue(PrifoQueue queue) {
+//		Log.i(TAG, String.format("DeQueue %s - %d/%d jobs (%d ms)", getMissionId(), queue.countActiveTasks(), queue.size(), mStopwatchQueue.elapsed(TimeUnit.MILLISECONDS)));
+//	}
 
 	public static interface SelectTagCallback {
 		public void onFinishedLoadFromCache(SelectTagWorkflow sender, List<Article> articles, int count);

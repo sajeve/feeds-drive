@@ -16,7 +16,7 @@
 			android:paddingLeft="@dimen/big_padding"
 			android:paddingRight="@dimen/big_padding"
 			android:paddingTop="@dimen/big_padding"
-			android:paddingBottom="4dp"
+			android:paddingBottom="@dimen/small_padding"
 			>
 		<EditText
 				android:id="@+id/tag_name_edit"
@@ -25,7 +25,6 @@
 				android:hint="@string/add_new_category"
 				android:layout_weight="0.8"
 				android:singleLine="true"
-				android:imeActionId="1234"
 				android:imeOptions="actionDone"
 				/>
 		<ImageButton
@@ -43,7 +42,6 @@
 			android:layout_height="wrap_content"
 			android:choiceMode="multipleChoice"
 			android:layout_weight="1"
-			android:paddingBottom="@dimen/big_padding"
 			/>
 
 	<View style="@style/DividerH" />
@@ -54,23 +52,24 @@
 			android:orientation="horizontal"
 			android:gravity="bottom"
 			>
+
+		<ImageButton
+				android:id="@+id/delete_button"
+				android:layout_width="wrap_content"
+				android:layout_height="match_parent"
+				android:src="@drawable/trash_delete_black_e51c23ff"
+				android:layout_gravity="center"
+				android:hint="@string/delete_subscription"
+				android:padding="@dimen/medium_padding"
+				style="@style/ButtonBar"
+				/>
+		<View style="@style/DividerV" />
 		<Button
 				android:id="@+id/cancel_button"
 				android:layout_width="0dp"
 				android:layout_height="wrap_content"
 				android:layout_weight="0.5"
 				android:text="@android:string/cancel"
-				style="@style/ButtonBar"
-				/>
-		<View style="@style/DividerV" />
-		<Button
-				android:id="@+id/delete_button"
-				android:layout_width="0dp"
-				android:layout_height="wrap_content"
-				android:layout_weight="0.5"
-				android:text="@string/delete"
-				android:hint="@string/delete_subscription"
-				android:visibility="gone"
 				style="@style/ButtonBar"
 				/>
 		<View style="@style/DividerV" />

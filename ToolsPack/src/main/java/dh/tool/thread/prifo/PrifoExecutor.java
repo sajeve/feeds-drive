@@ -43,6 +43,7 @@ public class PrifoExecutor extends ThreadPoolExecutor {
 					PrifoTask t = (PrifoTask) o;
 					if (!StrUtils.equalsString(t.getMissionId(), task.getMissionId())) {
 						t.cancel();
+						Log.info(t.toString() + " is cancelled by executeUnique");
 					}
 				}
 			}
@@ -50,6 +51,8 @@ public class PrifoExecutor extends ThreadPoolExecutor {
 		catch (Exception ex) {
 			Log.warn("Failed cancel all prifo task", ex);
 		}
+
+		task.setFocus(true);
 		execute(task);
 	}
 

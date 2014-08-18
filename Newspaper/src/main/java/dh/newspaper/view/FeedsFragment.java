@@ -218,7 +218,8 @@ public class FeedsFragment extends Fragment {
 				Log.d(TAG, "FeedsFragment REFRESH (" + swRfle.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getTag());
 				swRfle.reset().start();
 
-				mGridViewAdapter.notifyDataSetChanged();
+				mGridViewAdapter.setData(event.getSender());
+				//mGridViewAdapter.notifyDataSetChanged();
 				return;
 			}
 
@@ -233,7 +234,8 @@ public class FeedsFragment extends Fragment {
 
 
 				String notices = Joiner.on('\n').join(event.getSender().getNotices()).trim();
-				mGridViewAdapter.notifyDataSetChanged();
+				mGridViewAdapter.setData(event.getSender());
+				//mGridViewAdapter.notifyDataSetChanged();
 				mSwipeRefreshLayout.setRefreshing(false);
 
 				if (!TextUtils.isEmpty(notices)) {
