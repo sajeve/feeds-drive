@@ -1,15 +1,16 @@
-package dh.newspaper.tools.thread;
+package dh.tool.thread;
 
-import android.test.ActivityInstrumentationTestCase2;
-import dh.newspaper.MainActivity;
 import dh.tool.thread.prifo.IPrifosable;
 import dh.tool.thread.prifo.PrifoQueue;
 import dh.tool.thread.prifo.PrifoTask;
+import junit.framework.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Created by hiep on 9/06/2014.
  */
-public class PrifoQueueTest extends ActivityInstrumentationTestCase2<MainActivity> {
+public class PrifoQueueTest {
 
 	public static class WorkflowTask extends PrifoTask {
 		private String id;
@@ -38,10 +39,6 @@ public class PrifoQueueTest extends ActivityInstrumentationTestCase2<MainActivit
 		}
 	}
 
-	public PrifoQueueTest() {
-		super(MainActivity.class);
-	}
-
 	public void testOfferBasic() {
 		PrifoQueue queue = new PrifoQueue();
 		WorkflowTask[] t = new WorkflowTask[] {
@@ -59,18 +56,18 @@ public class PrifoQueueTest extends ActivityInstrumentationTestCase2<MainActivit
 		queue.offer(t[1]); //hit t1 again -> t1.priority = 2
 		queue.offer(t[4].increasePriority()); //t4.priority = 1
 
-		assertEquals(2, queue.peek().getPriority());
-		assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t4", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals(2, queue.peek().getPriority());
+		Assert.assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t4", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
 	}
 
 	PrifoQueue queue = new PrifoQueue();
 	IPrifosable[] t;
 
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		queue = new PrifoQueue();
 		t = new IPrifosable[] {
 				new WorkflowTask("t0"),
@@ -82,13 +79,16 @@ public class PrifoQueueTest extends ActivityInstrumentationTestCase2<MainActivit
 		};
 	}
 
+	@Test
 	public void testOfferActiveTask1() {
 		queue.offer(t[0]);
 		queue.offer(t[1]); //active = t1
 
-		assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
 	}
+
+	@Test
 	public void testOfferActiveTask2() {
 		queue.offer(t[0]);
 		queue.offer(t[1]); //active = t1
@@ -96,11 +96,13 @@ public class PrifoQueueTest extends ActivityInstrumentationTestCase2<MainActivit
 		queue.offer(t[3]);
 		queue.offer(t[2]); //hit t2
 
-		assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t3", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t3", ((PrifoTask) queue.poll()).getMissionId());
 	}
+
+	@Test
 	public void testOfferActiveTask3() {
 		queue.offer(t[0]);
 		queue.offer(t[1]); //active = t1
@@ -109,15 +111,15 @@ public class PrifoQueueTest extends ActivityInstrumentationTestCase2<MainActivit
 		queue.offer(t[2]); //hit t2
 		queue.offer(t[2]); //hit t2 again -> t2.priority = 2
 
-		assertTrue(t[1].isFocused());
+		Assert.assertTrue(t[1].isFocused());
 		queue.offer(t[4]); //active = t4 (t1 becomes normal)
-		assertFalse(t[1].isFocused());
+		Assert.assertFalse(t[1].isFocused());
 
-		assertEquals("t4", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
-		assertEquals("t3", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t4", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
+		Assert.assertEquals("t3", ((PrifoTask) queue.poll()).getMissionId());
 	}
 
 //	private void testPriorityQueueOffer() {

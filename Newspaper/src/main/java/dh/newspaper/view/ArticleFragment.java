@@ -291,12 +291,7 @@ public class ArticleFragment extends Fragment {
 
 	private String getArticleSourceName(Article article) {
 		try {
-			String hostName = (new URL(article.getArticleUrl())).getHost();
-
-			//remove prefix "www."
-			if (hostName.startsWith("www.")) {
-				hostName = hostName.substring(4, hostName.length());
-			}
+			String hostName = StrUtils.domainName(article.getArticleUrl());
 
 			//transform to a link to the original article
 			return String.format("<a href=\"%s\">%s</a>", article.getArticleUrl(), hostName);

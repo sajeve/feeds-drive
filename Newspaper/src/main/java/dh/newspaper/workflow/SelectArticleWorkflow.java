@@ -199,9 +199,9 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		else {
 			articleContent = mFeedItem.getDescription();
 			mDoc = mFeedItem.getDocument();
-			if (!mSuccessDownloadAndExtraction) {
+			/*if (!mSuccessDownloadAndExtraction) {
 				mParseNotice.append(" Downloaded content is too short, use feed description.");
-			}
+			}*/
 		}
 
 		//endregion
@@ -231,8 +231,9 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 				null,//date archive
 				null,//last open
 				DateTime.now().toDate(), //last updated
-				null, //mPathToContent == null ? null : mPathToContent.getXpath(), //xpath
-				mParseNotice.toString().trim());
+				mParseNotice.toString().trim(),
+				mSuccessDownloadAndExtraction ? DateTime.now().toDate() : null //last update success
+		);
 
 		resetStopwatch();
 		mDaoSession.getArticleDao().insert(mArticle);
@@ -252,7 +253,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		if (isCancelled()) {
 			return;
 		}
-		boolean articleIsExpiry = mArticleTimeToLive==null || mArticle.getLastUpdated()==null  || new Duration(new DateTime(mArticle.getLastUpdated()), DateTime.now()).isLongerThan(mArticleTimeToLive);
+		boolean articleIsExpiry = mArticleTimeToLive==null || mArticle.getLastDownloadSuccess()==null || new Duration(new DateTime(mArticle.getLastDownloadSuccess()), DateTime.now()).isLongerThan(mArticleTimeToLive);
 
 		if (articleIsExpiry) {
 			updateArticleContent();
@@ -278,6 +279,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 				logSimple("article content will be updated");
 				mArticle.setContent(mArticleContentDownloaded);
 			}
+			mArticle.setLastDownloadSuccess(DateTime.now().toDate());
 		}
 		else {
 			//choose content between existed in node and feed description
@@ -407,7 +409,6 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 	private void downloadAndExtractArticleContent() {
 		if (!mOnlineMode) {
 			logSimple("Mode offline: use Feed Description as content");
-			mSuccessDownloadAndExtraction = false;
 			return;
 		}
 
@@ -512,8 +513,8 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		else if (mFeedItem!=null) {
 			return new Article(null, mFeedItem.getUri(), mFeedItem.getParentUrl(), mFeedItem.getImageUrl(),
 					mFeedItem.getTitle(), mFeedItem.getAuthor(), mFeedItem.getExcerpt(), mFeedItem.getDescription(),
-					null, mFeedItem.getLanguage(), null, mFeedItem.getPublishedDate(), null, null, null, null, null,
-					"Fake article created from Feed Item");
+					null, mFeedItem.getLanguage(), null, mFeedItem.getPublishedDate(), null, null, null, null,
+					"Fake article created from Feed Item", null);
 		}
 		return null;
 	}

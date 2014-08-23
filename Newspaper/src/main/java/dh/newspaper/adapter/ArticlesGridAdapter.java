@@ -15,6 +15,7 @@ import dh.newspaper.R;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.tools.DateUtils;
 import dh.newspaper.workflow.SelectTagWorkflow;
+import dh.tool.common.StrUtils;
 
 /**
 * Created by hiep on 8/05/2014.
@@ -145,8 +146,12 @@ public class ArticlesGridAdapter extends BaseAdapter {
 
 			Article article = (Article)this.getItem(position);
 			if (article != null) {
+				String publishDate = DateUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString());
+				if (Constants.DEBUG) {
+					publishDate += " | "+StrUtils.domainName(article.getArticleUrl())+" | "+ DateUtils.getTimeAgo(mContext.getResources(), article.getLastDownloadSuccess());
+				}
 				titleLabel.setText(article.getTitle());
-				dateLabel.setText(DateUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString()));
+				dateLabel.setText(publishDate);
 				excerptLabel.setText(article.getExcerpt());
 
 				//imageView.setVisibility(View.VISIBLE);
@@ -182,10 +187,12 @@ public class ArticlesGridAdapter extends BaseAdapter {
 	}
 
 	public void setData(IArticleCollection data) {
-		Log.d(TAG, "setData("+data+") count="+data.getTotalSize());
-		this.mData = data;
-		//this.mData.setCacheChangeListener(cacheChangedListener);
-		notifyDataSetChanged();
+		if (this.mData != data) {
+			Log.d(TAG, "setData(" + data + ") count=" + data.getTotalSize());
+			this.mData = data;
+			//this.mData.setCacheChangeListener(cacheChangedListener);
+			notifyDataSetChanged();
+		}
 	}
 
 /*	@Override

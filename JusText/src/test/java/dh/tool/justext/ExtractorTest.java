@@ -48,7 +48,7 @@ public class ExtractorTest {
 		{
 			Document document = originDoc.clone();
 			sw.reset().start();
-			Extractor.cleanUselessContent(document);
+			//Extractor.cleanUselessContent(document);
 			System.out.println("Clean ignorable content " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
 			TestUtils.writeToFile(fileName+"-cleanIgnorableTags.html", originDoc.html(), false);
 		}
@@ -142,7 +142,7 @@ public class ExtractorTest {
 		System.out.println(document);
 
 		System.out.println("Cleaning..");
-		Extractor.cleanUselessContent(document);
+		//Extractor.cleanUselessContent(document);
 
 		System.out.println(document);
 	}

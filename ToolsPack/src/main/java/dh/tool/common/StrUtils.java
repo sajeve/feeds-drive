@@ -137,9 +137,15 @@ public class StrUtils {
 		return lenStr < shortestLenAllowed;
 	}
 
-	public static String hostName(String address) throws MalformedURLException {
-		return (new URL(address)).getHost();
+	public static String domainName(String url) throws MalformedURLException {
+		String hostName = (new URL(url)).getHost();
+		//remove prefix "www."
+		if (hostName.startsWith("www.")) {
+			hostName = hostName.substring(4, hostName.length());
+		}
+		return hostName;
 	}
+
 
 	public static String removeTrailingSlash(String str) {
 		return str.replaceFirst("/*$", "");

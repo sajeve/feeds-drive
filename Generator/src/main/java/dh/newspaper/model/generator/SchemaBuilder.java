@@ -40,8 +40,9 @@ public class SchemaBuilder {
 		article.addDateProperty("archived");
 		article.addDateProperty("lastOpened");
 		article.addDateProperty("lastUpdated");
-		article.addStringProperty("xpath");
+		//article.addStringProperty("xpath");
 		article.addStringProperty("parseNotice");
+		article.addDateProperty("lastDownloadSuccess");
 
 		article.implementsSerializable();
 

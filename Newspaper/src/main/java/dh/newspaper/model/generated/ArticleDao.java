@@ -39,8 +39,8 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         public final static Property Archived = new Property(13, java.util.Date.class, "archived", false, "ARCHIVED");
         public final static Property LastOpened = new Property(14, java.util.Date.class, "lastOpened", false, "LAST_OPENED");
         public final static Property LastUpdated = new Property(15, java.util.Date.class, "lastUpdated", false, "LAST_UPDATED");
-        public final static Property Xpath = new Property(16, String.class, "xpath", false, "XPATH");
-        public final static Property ParseNotice = new Property(17, String.class, "parseNotice", false, "PARSE_NOTICE");
+        public final static Property ParseNotice = new Property(16, String.class, "parseNotice", false, "PARSE_NOTICE");
+        public final static Property LastDownloadSuccess = new Property(17, java.util.Date.class, "lastDownloadSuccess", false, "LAST_DOWNLOAD_SUCCESS");
     };
 
 
@@ -72,8 +72,8 @@ public class ArticleDao extends AbstractDao<Article, Long> {
                 "'ARCHIVED' INTEGER," + // 13: archived
                 "'LAST_OPENED' INTEGER," + // 14: lastOpened
                 "'LAST_UPDATED' INTEGER," + // 15: lastUpdated
-                "'XPATH' TEXT," + // 16: xpath
-                "'PARSE_NOTICE' TEXT);"); // 17: parseNotice
+                "'PARSE_NOTICE' TEXT," + // 16: parseNotice
+                "'LAST_DOWNLOAD_SUCCESS' INTEGER);"); // 17: lastDownloadSuccess
     }
 
     /** Drops the underlying database table. */
@@ -155,14 +155,14 @@ public class ArticleDao extends AbstractDao<Article, Long> {
             stmt.bindLong(16, lastUpdated.getTime());
         }
  
-        String xpath = entity.getXpath();
-        if (xpath != null) {
-            stmt.bindString(17, xpath);
-        }
- 
         String parseNotice = entity.getParseNotice();
         if (parseNotice != null) {
-            stmt.bindString(18, parseNotice);
+            stmt.bindString(17, parseNotice);
+        }
+ 
+        java.util.Date lastDownloadSuccess = entity.getLastDownloadSuccess();
+        if (lastDownloadSuccess != null) {
+            stmt.bindLong(18, lastDownloadSuccess.getTime());
         }
     }
 
@@ -192,8 +192,8 @@ public class ArticleDao extends AbstractDao<Article, Long> {
             cursor.isNull(offset + 13) ? null : new java.util.Date(cursor.getLong(offset + 13)), // archived
             cursor.isNull(offset + 14) ? null : new java.util.Date(cursor.getLong(offset + 14)), // lastOpened
             cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)), // lastUpdated
-            cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16), // xpath
-            cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17) // parseNotice
+            cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16), // parseNotice
+            cursor.isNull(offset + 17) ? null : new java.util.Date(cursor.getLong(offset + 17)) // lastDownloadSuccess
         );
         return entity;
     }
@@ -217,8 +217,8 @@ public class ArticleDao extends AbstractDao<Article, Long> {
         entity.setArchived(cursor.isNull(offset + 13) ? null : new java.util.Date(cursor.getLong(offset + 13)));
         entity.setLastOpened(cursor.isNull(offset + 14) ? null : new java.util.Date(cursor.getLong(offset + 14)));
         entity.setLastUpdated(cursor.isNull(offset + 15) ? null : new java.util.Date(cursor.getLong(offset + 15)));
-        entity.setXpath(cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16));
-        entity.setParseNotice(cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17));
+        entity.setParseNotice(cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16));
+        entity.setLastDownloadSuccess(cursor.isNull(offset + 17) ? null : new java.util.Date(cursor.getLong(offset + 17)));
      }
     
     /** @inheritdoc */

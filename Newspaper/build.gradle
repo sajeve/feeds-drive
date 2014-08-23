@@ -24,6 +24,16 @@ android {
 		sourceCompatibility JavaVersion.VERSION_1_6
 		targetCompatibility JavaVersion.VERSION_1_6
 	}
+
+	signingConfigs {
+		release {
+			storeFile file('keystore/feedsDrive.jks')
+			storePassword "themummy"
+			keyAlias "Feeds Drive"
+			keyPassword "themummy"
+		}
+	}
+
 	buildTypes {
 		release {
 			runProguard false

@@ -55,6 +55,13 @@ public class DateUtils {
 		}
 	}
 
+	public static String getTimeAgo(Resources resources, java.util.Date date) {
+		if (date==null) {
+			return "";
+		}
+		return getTimeAgo(resources, new DateTime(date));
+	}
+
 	public static String getTimeAgo(Resources resources, DateTime date) {
 		Period period = new Period(date, DateTime.now());
 

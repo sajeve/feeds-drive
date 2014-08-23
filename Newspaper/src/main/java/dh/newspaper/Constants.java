@@ -16,7 +16,7 @@ public class Constants {
 	public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
 	public static final String DEBUG_DATABASE_PATH = "/mnt/shared/bridge";
 	public static final String DATABASE_NAME = "newspaper";
-	public static final int DATABASE_VERSION = 101;
+	public static final int DATABASE_VERSION = 102;
 	public static final String CACHE_IMAGE_FOLDER = "images";
 	public static final String DEFAULT_ENCODING = "UTF-8";
 	public static final int EXCERPT_LENGTH = 320;

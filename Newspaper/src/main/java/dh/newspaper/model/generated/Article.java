@@ -29,8 +29,8 @@ public class Article implements java.io.Serializable {
     private java.util.Date archived;
     private java.util.Date lastOpened;
     private java.util.Date lastUpdated;
-    private String xpath;
     private String parseNotice;
+    private java.util.Date lastDownloadSuccess;
 
     // KEEP FIELDS - put your custom fields here
     // KEEP FIELDS END
@@ -42,7 +42,7 @@ public class Article implements java.io.Serializable {
         this.id = id;
     }
 
-    public Article(Long id, String articleUrl, String parentUrl, String imageUrl, String title, String author, String excerpt, String content, String checksum, String language, Long openedCount, String publishedDateString, java.util.Date publishedDate, java.util.Date archived, java.util.Date lastOpened, java.util.Date lastUpdated, String xpath, String parseNotice) {
+    public Article(Long id, String articleUrl, String parentUrl, String imageUrl, String title, String author, String excerpt, String content, String checksum, String language, Long openedCount, String publishedDateString, java.util.Date publishedDate, java.util.Date archived, java.util.Date lastOpened, java.util.Date lastUpdated, String parseNotice, java.util.Date lastDownloadSuccess) {
         this.id = id;
         this.articleUrl = articleUrl;
         this.parentUrl = parentUrl;
@@ -59,8 +59,8 @@ public class Article implements java.io.Serializable {
         this.archived = archived;
         this.lastOpened = lastOpened;
         this.lastUpdated = lastUpdated;
-        this.xpath = xpath;
         this.parseNotice = parseNotice;
+        this.lastDownloadSuccess = lastDownloadSuccess;
     }
 
     public Long getId() {
@@ -197,20 +197,20 @@ public class Article implements java.io.Serializable {
         this.lastUpdated = lastUpdated;
     }
 
-    public String getXpath() {
-        return xpath;
-    }
-
-    public void setXpath(String xpath) {
-        this.xpath = xpath;
-    }
-
     public String getParseNotice() {
         return parseNotice;
     }
 
     public void setParseNotice(String parseNotice) {
         this.parseNotice = parseNotice;
+    }
+
+    public java.util.Date getLastDownloadSuccess() {
+        return lastDownloadSuccess;
+    }
+
+    public void setLastDownloadSuccess(java.util.Date lastDownloadSuccess) {
+        this.lastDownloadSuccess = lastDownloadSuccess;
     }
 
     // KEEP METHODS - put your custom methods here

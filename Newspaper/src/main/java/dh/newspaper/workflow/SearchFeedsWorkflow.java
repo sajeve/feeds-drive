@@ -243,7 +243,7 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 	private void insertResult(String feedsLink, Feeds feeds, SearchFeedsResult searchResult) throws MalformedURLException {
 		SearchFeedsResult.ResponseData.Entry entry = new SearchFeedsResult.ResponseData.Entry();
 		entry.setContentSnippet(feeds.getDescription());
-		entry.setTitle(StrUtils.hostName(feeds.getUrl()));
+		entry.setTitle(StrUtils.domainName(feeds.getUrl()));
 		entry.setLink(feeds.getUrl());
 		entry.setUrl(feedsLink);
 		entry.setValidity(SearchFeedsResult.FeedsSourceValidity.OK);

@@ -14,5 +14,4 @@ public class StrUtilsTest {
 		Assert.assertEquals(str, StrUtils.removeTrailingSlash(str+"/"));
 		Assert.assertEquals(str, StrUtils.removeTrailingSlash(str+"//"));
 	}
-
 }

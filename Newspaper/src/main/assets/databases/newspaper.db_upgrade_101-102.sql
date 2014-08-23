@@ -1,0 +1,1 @@
+alter table ARTICLE add column LAST_DOWNLOAD_SUCCESS INTEGER;
