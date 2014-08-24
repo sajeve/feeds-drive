@@ -3,6 +3,8 @@ package dh.tool.thread.prifo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -13,6 +15,10 @@ public abstract class OncePrifoTask extends PrifoTask {
 	private static final Logger log = LoggerFactory.getLogger(OncePrifoTask.class);
 	private volatile boolean used = false;
 	private volatile boolean running = true;
+	private volatile boolean finished = false;
+	private volatile Calendar startTime = null;
+	private volatile Calendar endTime = null;
+
 	/**
 	 * Other blocking method should use this lock
 	 */
@@ -27,13 +33,16 @@ public abstract class OncePrifoTask extends PrifoTask {
 			final ReentrantLock lock = this.lock;
 			lock.lock();
 			running = true;
-			if (used) {
-				throw new IllegalStateException("OncePrifoTask run twice");
-			}
-			used = true;
 			try {
+				startTime = Calendar.getInstance();
+				if (used) {
+					throw new IllegalStateException("OncePrifoTask run twice");
+				}
+				used = true;
 				perform();
 			} finally {
+				endTime = Calendar.getInstance();
+				finished = true;
 				running = false;
 				lock.unlock();
 			}
@@ -49,6 +58,28 @@ public abstract class OncePrifoTask extends PrifoTask {
 
 	public boolean isRunning() {
 		return running;
+	}
+
+	public boolean isFinished() {
+		return finished;
+	}
+
+	public Calendar getStartTime() {
+		return startTime;
+	}
+
+	public Calendar getEndTime() {
+		return endTime;
+	}
+
+	@Override
+	public void onEnterQueue(PrifoQueue queue) {
+
+	}
+
+	@Override
+	public void onDequeue(PrifoQueue queue) {
+
 	}
 
 	abstract public void perform();

@@ -21,6 +21,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/.gradle" />
       <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
@@ -29,6 +30,9 @@
     <orderEntry type="library" exported="" name="guava-15.0" level="project" />
     <orderEntry type="library" exported="" name="slf4j-api-1.7.7" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="junit-4.4" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="log4j-api-2.0.2" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="log4j-core-2.0.2" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="log4j-slf4j-impl-2.0.2" level="project" />
   </component>
 </module>
 

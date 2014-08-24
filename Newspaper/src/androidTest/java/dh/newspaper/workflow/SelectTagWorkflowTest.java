@@ -1,5 +1,6 @@
 package dh.newspaper.workflow;
 
+import android.os.Environment;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import com.google.common.base.Stopwatch;
@@ -32,6 +33,12 @@ public class SelectTagWorkflowTest extends ActivityInstrumentationTestCase2<Main
 //		mContentParser = ((MyApplication)this.getActivity().getApplication()).getObjectGraph().get(ContentParser.class);;
 //		//((MyApplication)this.getActivity().getApplication()).getObjectGraph().inject(this);
 //	}
+
+	public void testEnv() {
+		System.out.println(Environment.getExternalStorageDirectory().getAbsolutePath());
+		Log.i(TAG, Environment.getExternalStorageDirectory().getAbsolutePath());
+	}
+
 
 	public void testSelectTagWorkflow1() {
 		SelectTagWorkflow stw = new SelectTagWorkflow(this.getActivity(), "technology", null, null, true, Constants.ARTICLES_PER_PAGE, null, null);

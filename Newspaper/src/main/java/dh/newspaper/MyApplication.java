@@ -1,8 +1,11 @@
 package dh.newspaper;
 
 import android.app.FragmentManager;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;

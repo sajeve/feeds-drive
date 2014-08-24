@@ -48,7 +48,9 @@
 	<string name="background_service">Background service</string>
 	<string name="downloader">Downloader</string>
 	<string name="enable_service">Enable background service</string>
-	<string name="enable_service_summ">Download articles in a background service</string>
+	<string name="charge_condition">Download start only while charging</string>
+	<string name="charge_condition_sum">Service run only if devices is charging</string>
+	<string name="enable_service_summ">Service start only while charging</string>
 	<string name="network_condition">Network condition</string>
 	<string name="network_condition_summ">Download happens under the connectivity condition</string>
 	<string name="download_interval">Downloading interval</string>

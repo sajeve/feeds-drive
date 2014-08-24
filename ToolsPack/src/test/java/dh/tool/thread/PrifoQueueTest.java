@@ -1,16 +1,18 @@
 package dh.tool.thread;
 
-import dh.tool.thread.prifo.IPrifosable;
-import dh.tool.thread.prifo.PrifoQueue;
-import dh.tool.thread.prifo.PrifoTask;
+import dh.tool.thread.prifo.*;
 import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by hiep on 9/06/2014.
  */
 public class PrifoQueueTest {
+	private static final Logger Log = LoggerFactory.getLogger(PrifoQueueTest.class);
+
 
 	public static class WorkflowTask extends PrifoTask {
 		private String id;
@@ -27,7 +29,7 @@ public class PrifoQueueTest {
 		@Override
 		public void run() {
 			try {
-				Thread.sleep(100);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -37,8 +39,19 @@ public class PrifoQueueTest {
 		public String toString() {
 			return id;
 		}
+
+		@Override
+		public void onEnterQueue(PrifoQueue queue) {
+
+		}
+
+		@Override
+		public void onDequeue(PrifoQueue queue) {
+
+		}
 	}
 
+	@Test
 	public void testOfferBasic() {
 		PrifoQueue queue = new PrifoQueue();
 		WorkflowTask[] t = new WorkflowTask[] {
@@ -120,6 +133,51 @@ public class PrifoQueueTest {
 		Assert.assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
 		Assert.assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
 		Assert.assertEquals("t3", ((PrifoTask) queue.poll()).getMissionId());
+	}
+
+	@Test
+	public void testQueueSize() throws InterruptedException {
+		final int totalDuration = 60*1000;
+		final int oneThreadDuration=200;
+
+		PrifoExecutor executor = PrifoExecutorFactory.newPrifoExecutor(2, Integer.MAX_VALUE);
+
+		final int N = totalDuration/oneThreadDuration;
+		Log.info("Call execute "+N+" times");
+		for (int i = 0; i<N; i++) {
+			final int x = i;
+
+			PrifoTask t = new PrifoTask() {
+				@Override
+				public String getMissionId() {
+					return Integer.toString(x);
+				}
+
+				@Override
+				public void onEnterQueue(PrifoQueue queue) {
+					Log.info(String.format("#%s Enter queue size = %d", getMissionId(), queue.size()));
+				}
+
+				@Override
+				public void onDequeue(PrifoQueue queue) {
+					Log.info(String.format("#%s DeQueue size = %d", getMissionId(), queue.size()));
+				}
+
+				@Override
+				public void run() {
+					try {
+						Log.info(String.format("#%s run",getMissionId()));
+						Thread.sleep(oneThreadDuration);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+
+			executor.execute(t);
+		}
+
+		Thread.sleep(totalDuration);
 	}
 
 //	private void testPriorityQueueOffer() {

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -86,6 +87,17 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	//private Stopwatch mStopwatchQueue;
 	private final boolean mOnlineMode;
 
+	/**
+	 *
+	 * @param context
+	 * @param tag
+	 * @param subscriptionsTimeToLive
+	 * @param articleTimeToLive
+	 * @param onlineMode
+	 * @param pageSize
+	 * @param articlesLoader synchronise mode if null
+	 * @param callback
+	 */
 	public SelectTagWorkflow(Context context, String tag, Duration subscriptionsTimeToLive, Duration articleTimeToLive, boolean onlineMode, int pageSize, PrifoExecutor articlesLoader, SelectTagCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 
@@ -298,18 +310,18 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 					}
 					catch (Exception e) {
 						pw.warn("Failed updating article", e);
-						mNotices.add("Failed updating article excerpt "+feedItem+": "+e.getMessage());
+						mNotices.add("Failed updating article excerpt "+feedItem+": "+e);
 					}
 				}
 			} catch (FeedParserException e) {
 				pw.warn("Failed parsing feed", e);
-				mNotices.add("Failed parsing feed of "+sub+": "+e.getMessage());
+				mNotices.add("Failed parsing feed of "+sub+": "+e);
 			} catch (IOException e) {
 				pw.warn("Failed parsing feed", e);
-				mNotices.add("Failed connect feed of "+sub+": "+e.getMessage());
+				mNotices.add("Failed connect feed of "+sub+": "+e);
 			} catch (Exception e) {
 				pw.warn("Failed parsing feed", e);
-				mNotices.add("Fatal while parsing feed of "+sub+": "+e.getMessage());
+				mNotices.add("Fatal while parsing feed of "+sub+": "+e);
 			}
 		}
 
@@ -341,7 +353,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				try {
 					final SelectArticleWorkflow wkflow = new SelectArticleWorkflow(mContext, feedItem, mArticleTimeToLive, true, null);
 
-					if (mArticlesLoader == null) {
+					if (mArticlesLoader == null) { //synchronize mode, download article in the same thread as tag loading
 						pw.resetStopwatch();
 
 						mCurrentLoadArticleWorkflow = wkflow;
@@ -357,7 +369,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				}
 				catch (Exception e) {
 					pw.warn("Failed updating article", e);
-					mNotices.add("Failed updating article "+feedItem+": "+e.getMessage());
+					mNotices.add("Failed updating article "+feedItem+": "+e);
 				}
 			}
 			pw.debug("Finished download full articles of " + sub);
@@ -533,13 +545,14 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		}
 	}
 
-	public int getOffset() {
+	/*public int getOffset() {
 		return mOffset;
-	}
+	}*/
 
-	public List<Article> getInMemoryCache() {
+	/*public List<Article> getInMemoryCache() {
 		return mArticles;
-	}
+	}*/
+
 	@Override
 	public int getTotalSize() {
 		return mCountArticles;
@@ -551,6 +564,73 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 	public String getTag() {
 		return mTag;
+	}
+
+	/**
+	 * return true if the tag and all the articles is finished downloading
+	 */
+	public boolean isFinishedAll() {
+		if (mArticlesLoader == null || !mOnlineMode) { //sync mode or offline mode
+			return isFinished();
+		}
+		else {
+			if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
+				if (Constants.DEBUG) {
+					throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
+				}
+				else {
+					return false;
+				}
+			}
+			for (SelectArticleWorkflow wk : mPendingLoadArticleWorkflow) {
+				if (!wk.isFinished()) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	public int countArticlesToDownload() {
+		if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
+			if (Constants.DEBUG) {
+				throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
+			}
+			else {
+				return -1;
+			}
+		}
+		return mPendingLoadArticleWorkflow.size();
+	}
+
+	/**
+	 * return end time of the last download article workflow task
+	 */
+	public Calendar getEndTimeAll() {
+		if (mArticlesLoader == null || !mOnlineMode) { //sync mode or offline mode
+			return getEndTime();
+		}
+		else {
+			if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
+				if (Constants.DEBUG) {
+					throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
+				}
+				else {
+					return null;
+				}
+			}
+
+			Calendar lastEndTime = null;
+			for (SelectArticleWorkflow wk : mPendingLoadArticleWorkflow) {
+				if (wk.getEndTime() == null) {
+					return null;
+				}
+				if (lastEndTime == null || lastEndTime.before(wk.getEndTime())) {
+					lastEndTime = wk.getEndTime();
+				}
+			}
+			return lastEndTime;
+		}
 	}
 
 	//<editor-fold desc="Simple Log Utils for Profiler">

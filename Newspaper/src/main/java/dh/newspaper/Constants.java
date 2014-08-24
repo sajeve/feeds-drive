@@ -72,6 +72,8 @@ public class Constants {
 	public static final String PREF_INTERVALS_DEFAULT = "7200000";
 	public static final String PREF_NETWORK_CONDITION_KEY = "pref_networkCondition";
 	public static final String PREF_NETWORK_CONDITION_DEFAULT = "wifi";
+	public static final String PREF_CHARGE_CONDITION_KEY = "pref_chargeCondition";
+	public static final boolean PREF_CHARGE_CONDITION_DEFAULT = false;
 	public static final String PREF_DOWNLOADING_THREAD_KEY = "pref_downloadingThread";
 	public static final String PREF_DOWNLOADING_THREAD_DEFAULT = "2";
 	public static final String PREF_IMAGE_CACHE_SIZE_KEY = "pref_imageDiskCacheSize";

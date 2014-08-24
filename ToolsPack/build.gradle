@@ -4,5 +4,18 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 	compile 'com.google.guava:guava:15.0'
 	compile 'org.slf4j:slf4j-api:1.7.+'
-	testCompile('junit:junit:4.4+')
+	testCompile 'junit:junit:4.4+'
+	testCompile 'org.apache.logging.log4j:log4j-api:2.+'
+	testCompile 'org.apache.logging.log4j:log4j-core:2.+'
+	testCompile 'org.apache.logging.log4j:log4j-slf4j-impl:2.+'
+}
+
+sourceSets {
+	test {
+		resources {
+			srcDir 'resources'
+			include '*.*'
+			output.resourcesDir = "${project.buildDir}/classes/main"
+		}
+	}
 }

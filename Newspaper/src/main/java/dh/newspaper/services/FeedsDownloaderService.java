@@ -14,7 +14,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.Toast;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.R;
@@ -29,12 +28,18 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
 import javax.inject.Inject;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 /**
  * Created by hiep on 30/05/2014.
  */
 public class FeedsDownloaderService extends Service {
 	private static final String TAG = FeedsDownloaderService.class.getName();
+	private static final SimpleDateFormat TimeFormat = new SimpleDateFormat("H:mm");
+	private static final int WaitLastTaskFinishDuration = 10000;
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mPreferences;
@@ -75,6 +80,17 @@ public class FeedsDownloaderService extends Service {
 			return Service.START_FLAG_REDELIVERY;
 		}
 
+		//check charging condition
+		if (mRefData.getPreferenceOnlyRunServiceIfCharging()) {
+			if (!mRefData.isBatteryCharging()) {
+				Log.i(TAG, "Device is not charging");
+				if (Constants.DEBUG) {
+					displayNotification("Articles receiving is not happen", "Device is not charging");
+				}
+				return Service.START_FLAG_REDELIVERY;
+			}
+		}
+
 		//compute article TTL base on the service interval
 		articlesTTL = new Duration(mRefData.getPreferenceServiceInterval());
 
@@ -95,6 +111,8 @@ public class FeedsDownloaderService extends Service {
 		Log.i("ALARM", "Service is called: "+startId);
 		Toast.makeText(this, "Service is called: "+startId, Toast.LENGTH_SHORT).show();
 	}*/
+
+	List<SelectTagWorkflow> selectTagWorkflowList;
 
 	public void downloadAll() {
 		new AsyncTask<Object, Object, Boolean>() {
@@ -122,16 +140,18 @@ public class FeedsDownloaderService extends Service {
 					mRefData.initImageLoader();
 					displayNotificationOnMainThread("Start download articles", "Start download all articles from " + mRefData.getActiveTags().size() + " tags");
 
+					selectTagWorkflowList = new ArrayList<SelectTagWorkflow>();
+
 					for (String tag : mRefData.getActiveTags()) {
 						SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(getApplicationContext(), tag,
 								Constants.SUBSCRIPTION_TTL, articlesTTL, true, Constants.ARTICLES_PER_PAGE,
 								mArticlesLoader, null);
-
+						selectTagWorkflowList.add(selectTagWorkflow);
 						mSelectTagLoader.execute(selectTagWorkflow);
 					}
 
-					mSelectTagLoader.setQueueEmptyCallback(feedsDownloadFinished);
-					mArticlesLoader.setQueueEmptyCallback(articleDownloadFinished);
+					mSelectTagLoader.setQueueEmptyCallback(tagQueueEmptyCallback);
+					mArticlesLoader.setQueueEmptyCallback(articleQueueEmptyCallback);
 				}
 				catch (Exception ex) {
 					Log.w(TAG, ex);
@@ -153,15 +173,102 @@ public class FeedsDownloaderService extends Service {
 	}
 
 
-	private final IQueueEmptyCallback feedsDownloadFinished = new IQueueEmptyCallback() {
+	private final IQueueEmptyCallback tagQueueEmptyCallback = new IQueueEmptyCallback() {
 		@Override
 		public void onQueueEmpty() {
-			displayNotification("Download tags", "Tags queue is empty");
+			//the queue is empty, but the last item is still processing
+			//we will wait 10s and hope that the last one will be finished
+			// then check if all the pending task was complete
+			Handler mainThread = new Handler(Looper.getMainLooper());
+			mainThread.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						if (selectTagWorkflowList == null || selectTagWorkflowList.size() == 0) {
+							Log.w(TAG, "IllegalStateException: Tag queue empty, but the task list is null");
+							return;
+						}
+
+						Calendar startTime = null;
+						Calendar endTime = null;
+						for (SelectTagWorkflow wf : selectTagWorkflowList) {
+							Calendar s = wf.getStartTime();
+							Calendar e = wf.getEndTime();
+							if (s == null || e == null) {
+								Log.i(TAG, "Tag queue empty, but a workflow is still processing: "+wf);
+								return; //not finish all the workflow
+							}
+							if (startTime == null || startTime.after(s)) {
+								startTime = s;
+							}
+							if (endTime == null || endTime.before(e)) {
+								endTime = e;
+							}
+						}
+
+						Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
+						displayNotification("Download tags finished", String.format("Downloaded %d tags at %s in %d sec",
+								selectTagWorkflowList.size(),
+								TimeFormat.format(startTime.getTime()),
+								duration.getStandardSeconds()
+								));
+					}
+					catch (Exception ex) {
+						Log.w(TAG, ex);
+					}
+				}
+			}, WaitLastTaskFinishDuration);
 		}
 	};
-	private final IQueueEmptyCallback articleDownloadFinished = new IQueueEmptyCallback() {
+	private final IQueueEmptyCallback articleQueueEmptyCallback = new IQueueEmptyCallback() {
 		@Override
 		public void onQueueEmpty() {
+			//the queue is empty, but the last item is still processing
+			//we will wait 10s and hope that the last one will be finished
+			// then check if all the pending task was complete
+			Handler mainThread = new Handler(Looper.getMainLooper());
+			mainThread.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						if (selectTagWorkflowList == null || selectTagWorkflowList.size() == 0) {
+							Log.w(TAG, "IllegalStateException: Article queue empty, but the task list is null");
+							return;
+						}
+
+						Calendar startTime = null;
+						Calendar endTime = null;
+						int countDownloadedArticles = 0;
+						for (SelectTagWorkflow wf : selectTagWorkflowList) {
+							Calendar s = wf.getStartTime();
+							Calendar e = wf.getEndTimeAll();
+							if (s == null || e == null) {
+								Log.i(TAG, "Tag queue empty, but a workflow is still processing: "+wf);
+								return; //not finish all the workflow
+							}
+							if (startTime == null || startTime.after(s)) {
+								startTime = s;
+							}
+							if (endTime == null || endTime.before(e)) {
+								endTime = e;
+							}
+							countDownloadedArticles += wf.countArticlesToDownload();
+						}
+
+						Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
+						displayNotification("Download all articles finished", String.format("Downloaded %d articles at %s in %d sec",
+								countDownloadedArticles,
+								TimeFormat.format(startTime.getTime()),
+								duration.getStandardSeconds()
+						));
+					}
+					catch (Exception ex) {
+						Log.w(TAG, ex);
+					}
+				}
+			}, WaitLastTaskFinishDuration);
+
+
 			displayNotification("Download articles", "Articles queue is empty");
 		}
 	};
@@ -194,7 +301,7 @@ public class FeedsDownloaderService extends Service {
 
 	public void displayNotificationOnMainThread(String title, String text) {
 		try {
-			text = DateTime.now().toString("HH:m")+" "+text;
+			//text = DateTime.now().toString("HH:mm")+" "+text;
 			Log.i(TAG, title+": "+text);
 
 			Intent resultIntent = new Intent(this, MainActivity.class);

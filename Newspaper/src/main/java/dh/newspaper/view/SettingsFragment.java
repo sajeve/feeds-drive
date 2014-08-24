@@ -46,6 +46,10 @@ public class SettingsFragment extends PreferenceFragment {
 					return;
 				}
 
+				if (StrUtils.equalsString(key, Constants.PREF_CHARGE_CONDITION_KEY)) {
+					return;
+				}
+
 				if (StrUtils.equalsString(key, Constants.PREF_INTERVALS_KEY)) {
 					long interval = RefData.getPreferenceServiceInterval(sharedPreferences);
 					AlarmReceiver.setupAlarm(appContext, interval, interval);

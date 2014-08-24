@@ -18,6 +18,11 @@
 	</PreferenceCategory>
 
 	<PreferenceCategory android:title="@string/downloader">
+		<CheckBoxPreference
+				android:key="pref_chargeCondition"
+				android:title="@string/charge_condition"
+				android:summary="@string/enable_service_summ"
+				android:defaultValue="false" />
 		<ListPreference
 				android:key="pref_networkCondition"
 				android:title="@string/network_condition"

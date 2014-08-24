@@ -48,22 +48,6 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 	}
 
 	@Override
-	public void onEnterQueue(PrifoQueue queue) {
-		//TODO try/catch
-		/*pw = new PerfWatcher(log, getMissionId());
-		pw.t("Enter-Queue (size = "+queue.size()+")");*/
-	}
-	@Override
-	public void onDequeue(PrifoQueue queue) {
-		/*try {
-			pw.t("De-Queue (size = "+queue.size()+")");
-		}
-		catch (NullPointerException ex) {
-			ex.printStackTrace();
-		}*/
-	}
-
-	@Override
 	public boolean isCancelled() {
 		return cancelled || Thread.interrupted();
 	}

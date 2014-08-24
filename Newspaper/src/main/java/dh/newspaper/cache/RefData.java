@@ -1,7 +1,10 @@
 package dh.newspaper.cache;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
@@ -216,7 +219,7 @@ public class RefData {
 				.build();
 		ImageLoaderConfiguration.Builder config = new ImageLoaderConfiguration.Builder(mContext)
 				.diskCache(getLruDiscCache())
-				.diskCacheSize(getPreferenceImageCacheSize())
+				//.diskCacheSize(getPreferenceImageCacheSize())
 				.defaultDisplayImageOptions(displayImageOptions);
 
 		if (Constants.DEBUG) {
@@ -230,6 +233,9 @@ public class RefData {
 	public boolean getPreferenceServiceEnabled() {
 		return getPreferenceServiceEnabled(mSharedPreferences);
 	}
+	public static boolean getPreferenceServiceEnabled(SharedPreferences sp) {
+		return sp.getBoolean(Constants.PREF_SERVICE_ENABLED_KEY, Constants.PREF_SERVICE_ENABLED_DEFAULT);
+	}
 	public long getPreferenceServiceInterval() {
 		return getPreferenceServiceInterval(mSharedPreferences);
 	}
@@ -240,9 +246,7 @@ public class RefData {
 		return getPreferenceImageCacheSize(mSharedPreferences);
 	}
 
-	public static boolean getPreferenceServiceEnabled(SharedPreferences sp) {
-		return sp.getBoolean(Constants.PREF_SERVICE_ENABLED_KEY, Constants.PREF_SERVICE_ENABLED_DEFAULT);
-	}
+
 	public static long getPreferenceServiceInterval(SharedPreferences sp) {
 		try {
 			return Long.parseLong(sp.getString(Constants.PREF_INTERVALS_KEY, Constants.PREF_INTERVALS_DEFAULT));
@@ -251,6 +255,12 @@ public class RefData {
 			Log.w(TAG, ex);
 			return 7200000L;
 		}
+	}
+	public boolean getPreferenceOnlyRunServiceIfCharging() {
+		return getPreferenceOnlyRunServiceIfCharging(mSharedPreferences);
+	}
+	public static boolean getPreferenceOnlyRunServiceIfCharging(SharedPreferences sp) {
+		return sp.getBoolean(Constants.PREF_CHARGE_CONDITION_KEY, Constants.PREF_CHARGE_CONDITION_DEFAULT);
 	}
 	public int getPreferenceNumberOfThread(SharedPreferences sp) {
 		try {
@@ -289,5 +299,11 @@ public class RefData {
 		int threadsPoolSize = getPreferenceNumberOfThread();
 		articlesLoader.setCorePoolSize(threadsPoolSize);
 		articlesLoader.setMaximumPoolSize(threadsPoolSize * 2);
+	}
+
+	public boolean isBatteryCharging() {
+		Intent batteryStatus = mContext.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+		return status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
 	}
 }

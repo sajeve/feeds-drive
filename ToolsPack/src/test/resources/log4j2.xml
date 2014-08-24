@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+<!--
+	<Properties>
+		<Property name="filename">logs/JusTextDemo</Property>
+	</Properties>
+-->
+	<Appenders>
+		<Console name="STDOUT" target="SYSTEM_OUT">
+			<!--<PatternLayout pattern="%C{1}.%M %m %ex%n"/>-->
+			<PatternLayout pattern="%d %-5p %m  [%c{1}]%n" />
+		</Console>
+
+	<!--	<RollingFile name="RollingFile" fileName="${filename}.log"
+				filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+			<PatternLayout>
+				<Pattern>%d %-5p %m  [%c{1}]%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="200 MB"/>
+			</Policies>
+		</RollingFile>
+		<Async name="Async">
+			<AppenderRef ref="RollingFile"/>
+		</Async>
+
+		<RollingFile name="RollingFileFull" fileName="${filename}_full.log"
+				filePattern="logs/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+			<PatternLayout>
+				<Pattern>%d %-5p %m  [%c{1}]%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="200 MB"/>
+			</Policies>
+		</RollingFile>
+		<Async name="AsyncFull">
+			<AppenderRef ref="RollingFileFull"/>
+		</Async>-->
+	</Appenders>
+
+	<Loggers>
+		<Root level="TRACE">
+			<!--<AppenderRef ref="Async"/>-->
+			<AppenderRef ref="STDOUT"/>
+		</Root>
+		<!--<Root level="TRACE">
+			<AppenderRef ref="AsyncFull"/>
+		</Root>-->
+	</Loggers>
+</Configuration>
