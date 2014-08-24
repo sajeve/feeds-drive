@@ -36,7 +36,7 @@ public abstract class OncePrifoTask extends PrifoTask {
 			try {
 				startTime = Calendar.getInstance();
 				if (used) {
-					throw new IllegalStateException("OncePrifoTask run twice");
+					throw new IllegalStateException("OncePrifoTask run twice "+ this);
 				}
 				used = true;
 				perform();
