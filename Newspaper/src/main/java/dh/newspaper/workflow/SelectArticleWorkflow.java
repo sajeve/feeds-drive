@@ -3,6 +3,7 @@ package dh.newspaper.workflow;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
@@ -17,6 +18,7 @@ import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
 import dh.newspaper.tools.DateUtils;
 import dh.newspaper.tools.NetworkUtils;
+import dh.tool.common.PerfWatcher;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.OncePrifoTask;
 import org.joda.time.DateTime;
@@ -25,13 +27,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import android.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.MessageDigest;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
@@ -49,10 +51,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class SelectArticleWorkflow extends OncePrifoTask {
 	private static final String TAG = SelectArticleWorkflow.class.getName();
+	private static final Logger log = LoggerFactory.getLogger(SelectArticleWorkflow.class);
 
 	@Inject DaoSession mDaoSession;
 	@Inject ContentParser mContentParser;
-	@Inject MessageDigest mMessageDigest;
+	//@Inject MessageDigest mMessageDigest;
 	@Inject RefData refData;
 
 	private final Duration mArticleTimeToLive;
@@ -73,8 +76,8 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 	private StringBuilder mParseNotice = new StringBuilder();
 	private Subscription mParentSubscription;
 
-	private Stopwatch mStopwatch;
-	//private PerfWatcher pw;
+	//private Stopwatch mStopwatch;
+	private PerfWatcher pw;
 
 	private SelectArticleWorkflow(Context context, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
@@ -89,6 +92,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 	public SelectArticleWorkflow(Context context, FeedItem feedItem, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
 		this(context, articleTimeToLive, online, callback);
 		mFeedItem = feedItem;
+		pw = new PerfWatcher(log, feedItem.getUri());
 	}
 
 	/**
@@ -98,6 +102,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		this(context, articleTimeToLive, online, callback);
 		mArticle = article;
 		mFeedItem = new FeedItem(article.getParentUrl(), article.getTitle(), article.getPublishedDateString(), article.getExcerpt(), article.getArticleUrl(), article.getLanguage(), article.getAuthor());
+		pw = new PerfWatcher(log, article.getArticleUrl());
 	}
 
 	/**
@@ -105,18 +110,13 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 	 */
 	@Override
 	public void perform() {
-		logSimple("Start SelectArticleWorkflow");
-		Stopwatch genericStopWatch = Stopwatch.createStarted();
-
-		mStopwatch = Stopwatch.createStarted();
+		pw.i("Start SelectArticleWorkflow");
 		try {
-			resetStopwatch();
-
 			mParentSubscription = mDaoSession.getSubscriptionDao().queryBuilder()
 					.whereOr(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()),
 							SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()+"/"))
 					.unique();
-			log("Find Parent subscription", mParentSubscription);
+			pw.t("Found Parent subscription " + mParentSubscription);
 
 			if (isCancelled()) {
 				return;
@@ -126,15 +126,14 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 				//find mArticle from database
 				mArticle = mDaoSession.getArticleDao().queryBuilder()
 						.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
-				log("Find Article in cache", mArticle);
+				pw.t("Found Article in cache " + mArticle);
 				if (isCancelled()) {
 					return;
 				}
 
 				if (mCallback!=null) {
-					resetStopwatch();
 					mCallback.onFinishedCheckCache(this, getArticle());
-					log("Callback onFinishedCheckCache()");
+					pw.t("Callback onFinishedCheckCache()");
 				}
 
 				//upsert the article
@@ -148,15 +147,14 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			else { //mArticle is not null, refresh it from database
 				try {
 					mDaoSession.getArticleDao().refresh(mArticle);
-					log("Refresh cached Article from database", mArticle);
+					pw.t("Refreshed cached Article from database " + mArticle);
 					if (isCancelled()) {
 						return;
 					}
 
 					if (mCallback!=null) {
-						resetStopwatch();
 						mCallback.onFinishedCheckCache(this, getArticle());
-						log("Callback onFinishedCheckCache()");
+						pw.t("Callback onFinishedCheckCache()");
 					}
 
 					checkArticleExpirationThenUpdate();
@@ -171,10 +169,10 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 		} finally {
 			if (mCallback!=null) {
-				logSimple("callback done");
 				mCallback.done(this, getArticle(), isCancelled());
+				pw.t("callback done");
 			}
-			logInfo("Workflow complete (" + genericStopWatch.elapsed(TimeUnit.MILLISECONDS) + " ms)");
+			pw.ig("SelectArticleWorkflow complete");
 		}
 	}
 
@@ -195,10 +193,12 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		String articleContent;
 		if (mSuccessDownloadAndExtraction && !StrUtils.tooShort(mArticleTextPlainDownloaded, mFeedItem.getTextPlainDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 			articleContent = mArticleContentDownloaded;
+			pw.t("Choose downloaded content");
 		}
 		else {
 			articleContent = mFeedItem.getDescription();
 			mDoc = mFeedItem.getDocument();
+			pw.t("Choose feed description");
 			/*if (!mSuccessDownloadAndExtraction) {
 				mParseNotice.append(" Downloaded content is too short, use feed description.");
 			}*/
@@ -211,8 +211,13 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		}
 
 		DateTime publishedDateTime = DateUtils.parseDateTime(mFeedItem.getPublishedDate());
-		if (Constants.DEBUG && publishedDateTime==null) {
-			throw new IllegalStateException("Failed parse "+mFeedItem.getPublishedDate());
+		if (publishedDateTime==null) {
+			if (Constants.DEBUG) {
+				throw new IllegalStateException("Failed parse " + mFeedItem.getPublishedDate());
+			}
+			else {
+				pw.w("Failed parse " + mFeedItem.getPublishedDate());
+			}
 		}
 
 		mArticle = new Article(null, //id
@@ -235,17 +240,15 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 				mSuccessDownloadAndExtraction ? DateTime.now().toDate() : null //last update success
 		);
 
-		resetStopwatch();
 		mDaoSession.getArticleDao().insert(mArticle);
-		log("Insert new", mArticle);
+		pw.d("Insert new "+mArticle);
 
 		//load image or in offline mode, replace image source by cache URL
 		loadArticleImages();
 
 		if (mCallback!=null && !isCancelled()) {
-			resetStopwatch();
 			mCallback.onFinishedUpdateCache(this, getArticle(), true);
-			log("Callback onFinishedUpdateCache()");
+			pw.t("Callback onFinishedUpdateCache()");
 		}
 	}
 
@@ -259,7 +262,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			updateArticleContent();
 		}
 		else {
-			logSimple("Article is not yet expiry ttl="+mArticleTimeToLive+ ". No need to re-download.");
+			pw.trace("Article is not yet expiry ttl="+mArticleTimeToLive+ ". No need to re-download.");
 		}
 	}
 
@@ -275,9 +278,10 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			if (StrUtils.tooShort(mArticleContentDownloaded, mArticle.getContent(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 				mParseNotice.append(" Downloaded content is too short (<"+Constants.ARTICLE_LENGTH_PERCENT_TOLERANT+"%), keep cache content unchanged.");
 				mDoc = null; //invalidate Document
+				pw.t("Keep cache content (downloaded content is too short)");
 			} else {
-				logSimple("article content will be updated");
 				mArticle.setContent(mArticleContentDownloaded);
+				pw.t("Choose downloaded content");
 			}
 			mArticle.setLastDownloadSuccess(DateTime.now().toDate());
 		}
@@ -286,6 +290,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			if (StrUtils.tooShort(mArticle.getContent(), mFeedItem.getDescription(), Constants.ARTICLE_LENGTH_PERCENT_TOLERANT)) {
 				mParseNotice.append(" Cached content is too short, use feed description.");
 				mArticle.setContent(mFeedItem.getDescription());
+				pw.t("Choose feed description (cached content is too short)");
 				mDoc = null;
 			}
 		}
@@ -300,17 +305,16 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		mArticle.setParseNotice(mParseNotice.toString().trim());
 		mArticle.setLastUpdated(DateTime.now().toDate());
 
-		resetStopwatch();
+		pw.resetStopwatch();
 		mDaoSession.getArticleDao().update(mArticle);
-		log("Update article content", mArticle);
+		pw.d("Update article content " + mArticle);
 
 		//load image or in offline mode, replace image source by cache URL
 		loadArticleImages(); //content changed, re-compute image
 
 		if (mCallback!=null && !isCancelled()) {
-			resetStopwatch();
 			mCallback.onFinishedUpdateCache(this, getArticle(), false);
-			log("Callback onFinishedUpdateCache()");
+			pw.t("Callback onFinishedUpdateCache()");
 		}
 	}
 
@@ -326,11 +330,11 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 		Elements elems = getArticleContentDocument().select("img");
 		if (elems == null || elems.isEmpty()) {
-			log("No image found");
+			pw.d("No image found");
 			return;
 		}
 
-		log("Found "+elems.size()+ " images");
+		pw.d("Found "+elems.size()+ " images");
 
 		if (mOnlineMode) {
 			for (Element e : elems) {
@@ -361,7 +365,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 			String avatar = elems.get((elems.size() - 1) / 2).attr("abs:src");
 			mArticle.setImageUrl(avatar);
-			log("Set avatar", avatar);
+			pw.d("Set avatar "+avatar);
 		}
 		else {
 			/**
@@ -375,7 +379,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 						e.attr("style", "border:2px solid green;");
 					}
 				}
-				log("Change images border to recognise cached images");
+				pw.t("Change images border to recognise cached images");
 			}
 		}
 	}
@@ -394,12 +398,13 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		checkNotOnMainThread();
 		if (Strings.isNullOrEmpty(mArticle.getContent())) {
 			mDoc = null;
-			logWarn("Null content");
+			pw.info("Null content");
 			return null;
 		}
-		resetStopwatch();
+
+		pw.resetStopwatch();
 		mDoc = Jsoup.parse(mArticle.getContent());
-		log("Jsoup parse", StrUtils.glimpse(mArticle.getContent()));
+		pw.d("Jsoup parse" + StrUtils.glimpse(mArticle.getContent()));
 		return mDoc;
 	}
 
@@ -408,7 +413,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 	 */
 	private void downloadAndExtractArticleContent() {
 		if (!mOnlineMode) {
-			logSimple("Mode offline: use Feed Description as content");
+			pw.trace("Mode offline: use Feed Description as content");
 			return;
 		}
 
@@ -417,32 +422,30 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		}
 
 		try {
-			resetStopwatch();
+			pw.resetStopwatch();
 
 			//download content
 
 			InputStream inputStream = NetworkUtils.getStreamFromUrl(mFeedItem.getUri(), NetworkUtils.DESKTOP_USER_AGENT, this);
 			if (inputStream == null) {
-				log("Download article content Cancelled");
+				pw.trace("Download article content Cancelled");
 				return;
 			}
-			log("Content downloaded");
+			pw.d("Content downloaded");
 
 			extractContent(inputStream);
-
 			mSuccessDownloadAndExtraction = true;
 		} catch (IOException e) {
 			mParseNotice.append(" IOException: "+e.toString());
-			Log.w(TAG, e.toString());
+			pw.w("IOException", e);
 		} catch (Exception e) {
 			mParseNotice.append(" Exception: "+e.toString());
-			Log.w(TAG, e);
+			pw.w("Exception", e);
 		}
 
 		if (mCallback!=null && !isCancelled()) {
-			resetStopwatch();
 			mCallback.onFinishedDownloadContent(this, getArticle());
-			log("Callback onFinishedDownloadContent()");
+			pw.t("Callback onFinishedDownloadContent()");
 		}
 	}
 
@@ -458,7 +461,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			encoding = mParentSubscription.getEncoding();
 		}
 
-		resetStopwatch();
+		pw.resetStopwatch();
 
 		/*if (mDownloadOriginal) {
 			mDoc = Jsoup.parse(inputStream, encoding, mFeedItem.getUri());
@@ -475,11 +478,11 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		mArticleTextPlainDownloaded = docBody == null ? null : docBody.text();
 
 		if (Strings.isNullOrEmpty(mArticleTextPlainDownloaded)) {
-			log("Extract content done", "Empty content: "+mParseNotice);
+			pw.t("Extract content done. Empty content: "+mParseNotice);
 			mParseNotice.append(" Justext returns empty content.");
 		}
 		else {
-			log("Extract content done", StrUtils.glimpse(mArticleContentDownloaded));
+			pw.t("Extract content done " + StrUtils.glimpse(mArticleContentDownloaded));
 		}
 	}
 
@@ -540,30 +543,30 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		return null;
 	}
 
-	//<editor-fold desc="Simple Log Utils for Profiler">
-
-	private void logWarn(String message) {
-		Log.w(TAG, message + " - "  + mFeedItem.getUri());
-	}
-	private void logInfo(String message) {
-		Log.d(TAG, message + " - " + mFeedItem.getUri());
-	}
-	private void logSimple(String message) {
-		Log.v(TAG, message + " - " + mFeedItem.getUri());
-	}
-	private void log(String message) {
-		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mFeedItem.getUri());
-		mStopwatch.reset().start();
-	}
-	private void log(String message, Object data) {
-		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms): "+data+" - " + mFeedItem.getUri());
-		mStopwatch.reset().start();
-	}
-	private void resetStopwatch() {
-		mStopwatch.reset().start();
-	}
-
-	//</editor-fold>
+//	//<editor-fold desc="Simple Log Utils for Profiler">
+//
+//	private void logWarn(String message) {
+//		Log.w(TAG, message + " - "  + mFeedItem.getUri());
+//	}
+//	private void logInfo(String message) {
+//		Log.d(TAG, message + " - " + mFeedItem.getUri());
+//	}
+//	private void logSimple(String message) {
+//		Log.v(TAG, message + " - " + mFeedItem.getUri());
+//	}
+//	private void log(String message) {
+//		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mFeedItem.getUri());
+//		mStopwatch.reset().start();
+//	}
+//	private void log(String message, Object data) {
+//		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms): "+data+" - " + mFeedItem.getUri());
+//		mStopwatch.reset().start();
+//	}
+//	private void resetStopwatch() {
+//		mStopwatch.reset().start();
+//	}
+//
+//	//</editor-fold>
 
 	@Override
 	public String toString() {
@@ -577,7 +580,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 	private void checkNotOnMainThread() {
 		if (Looper.myLooper() == Looper.getMainLooper()) {
-			logWarn("should not on main thread");
+			pw.warn("should not on main thread");
 			if (Constants.DEBUG) {
 				throw new IllegalStateException("Access disk on main thread");
 			}
