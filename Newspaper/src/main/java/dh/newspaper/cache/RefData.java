@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.os.BatteryManager;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -16,6 +18,8 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import dh.newspaper.Constants;
+import dh.newspaper.model.DatabaseHelper;
+import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
@@ -23,6 +27,7 @@ import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoExecutorFactory;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +52,11 @@ public class RefData {
 	private List<Subscription> subscriptions;
 	private SharedPreferences mSharedPreferences;
 
-	public RefData(Context context, DaoSession daoSession, SharedPreferences sharedPreferences) {
+	public RefData(Context context, DaoSession daoSession, DatabaseHelper databaseHelper, SharedPreferences sharedPreferences) {
 		mDaoSession = daoSession;
 		mContext = context;
 		mSharedPreferences = sharedPreferences;
+		this.databaseHelper = databaseHelper;
 	}
 
 //	/**
@@ -288,7 +294,7 @@ public class RefData {
 	 */
 	public PrifoExecutor createArticleLoader() {
 		int threadsPoolSize = getPreferenceNumberOfThread();
-		return PrifoExecutorFactory.newPrifoExecutor(threadsPoolSize, threadsPoolSize * 2);
+		return PrifoExecutorFactory.newPrifoExecutor("ArticleLoader", threadsPoolSize);
 	}
 
 	/**
@@ -298,7 +304,6 @@ public class RefData {
 	public void updateArticleLoaderPoolSize(PrifoExecutor articlesLoader) {
 		int threadsPoolSize = getPreferenceNumberOfThread();
 		articlesLoader.setCorePoolSize(threadsPoolSize);
-		articlesLoader.setMaximumPoolSize(threadsPoolSize * 2);
 	}
 
 	public boolean isBatteryCharging() {
@@ -306,4 +311,15 @@ public class RefData {
 		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
 		return status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
 	}
+
+
+	private DatabaseHelper databaseHelper;
+
+	public DaoMaster createReadOnlyDaoMaster() {
+		return new DaoMaster(databaseHelper.createReadOnlyDatabase());
+	}
+	public DaoMaster createWritableDaoMaster() {
+		return new DaoMaster(databaseHelper.createWritableDatabase());
+	}
+
 }

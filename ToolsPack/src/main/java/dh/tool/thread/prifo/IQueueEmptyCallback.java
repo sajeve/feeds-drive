@@ -12,5 +12,5 @@ package dh.tool.thread.prifo;
  * Created by hiep on 3/08/2014.
  */
 public interface IQueueEmptyCallback {
-	public void onQueueEmpty();
+	public void onQueueEmpty(String queueName);
 }

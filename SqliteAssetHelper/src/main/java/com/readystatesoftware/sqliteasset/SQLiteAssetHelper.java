@@ -260,11 +260,10 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = null;
         try {
             mIsInitializing = true;
-            String path = mContext.getDatabasePath(mName).getPath();
-            db = SQLiteDatabase.openDatabase(path, mFactory, SQLiteDatabase.OPEN_READONLY);
+            db = createReadOnlyDatabase();
             if (db.getVersion() != mNewVersion) {
                 throw new SQLiteException("Can't upgrade read-only database from version " +
-                        db.getVersion() + " to " + mNewVersion + ": " + path);
+                        db.getVersion() + " to " + mNewVersion + ": " + getDbPath());
             }
 
             onOpen(db);
@@ -276,6 +275,14 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
             if (db != null && db != mDatabase) db.close();
         }
     }
+
+	public SQLiteDatabase createReadOnlyDatabase() {
+		return SQLiteDatabase.openDatabase(getDbPath(), mFactory, SQLiteDatabase.OPEN_READONLY);
+	}
+
+	private String getDbPath() {
+		return mContext.getDatabasePath(mName).getPath();
+	}
 
     /**
      * Close any open database object.
@@ -383,27 +390,27 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = null;
         File file = new File (mDatabasePath + "/" + mName);
         if (file.exists()) {
-            db = returnDatabase();
+            db = createWritableDatabase();
         }
-        //SQLiteDatabase db = returnDatabase();
+        //SQLiteDatabase db = createWritableDatabase();
 
         if (db != null) {
             // database already exists
             if (force) {
                 Log.w(TAG, "forcing database upgrade!");
                 copyDatabaseFromAssets();
-                db = returnDatabase();
+                db = createWritableDatabase();
             }
             return db;
         } else {
             // database does not exist, copy it from assets and return it
             copyDatabaseFromAssets();
-            db = returnDatabase();
+            db = createWritableDatabase();
             return db;
         }
     }
 
-    private SQLiteDatabase returnDatabase(){
+    public SQLiteDatabase createWritableDatabase(){
         //try {
             SQLiteDatabase db = SQLiteDatabase.openDatabase(mDatabasePath + "/" + mName, mFactory, SQLiteDatabase.OPEN_READWRITE);
             Log.i(TAG, "successfully opened database " + mName);

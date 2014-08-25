@@ -49,11 +49,22 @@ public class PrifoQueueTest {
 		public void onDequeue(PrifoQueue queue) {
 
 		}
+
+		@Override
+		public int compareTo(Object another) {
+			int c = super.compareTo(another);
+			if (c==0) {
+				return this.getMissionId().compareTo(((PrifoTask)another).getMissionId());
+			}
+			else {
+				return c;
+			}
+		}
 	}
 
 	@Test
 	public void testOfferBasic() {
-		PrifoQueue queue = new PrifoQueue();
+		PrifoBlockingQueue queue = new PrifoBlockingQueue("testOfferBasic");
 		WorkflowTask[] t = new WorkflowTask[] {
 				new WorkflowTask("t0"),
 				new WorkflowTask("t1"),
@@ -76,12 +87,12 @@ public class PrifoQueueTest {
 		Assert.assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
 	}
 
-	PrifoQueue queue = new PrifoQueue();
+	PrifoBlockingQueue queue = new PrifoBlockingQueue("queue");
 	IPrifosable[] t;
 
 	@Before
 	public void setUp() throws Exception {
-		queue = new PrifoQueue();
+		queue = new PrifoBlockingQueue("setUp");
 		t = new IPrifosable[] {
 				new WorkflowTask("t0"),
 				new WorkflowTask("t1").setFocus(true),
@@ -135,12 +146,12 @@ public class PrifoQueueTest {
 		Assert.assertEquals("t3", ((PrifoTask) queue.poll()).getMissionId());
 	}
 
-	@Test
+	//@Test
 	public void testQueueSize() throws InterruptedException {
 		final int totalDuration = 60*1000;
 		final int oneThreadDuration=200;
 
-		PrifoExecutor executor = PrifoExecutorFactory.newPrifoExecutor(2, Integer.MAX_VALUE);
+		PrifoExecutor executor = PrifoExecutorFactory.newPrifoExecutor("testQueueSize", 2, Integer.MAX_VALUE);
 
 		final int N = totalDuration/oneThreadDuration;
 		Log.info("Call execute "+N+" times");

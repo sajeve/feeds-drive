@@ -56,13 +56,6 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 		cancelled = true;
 	}
 
-	/**
-	 * Use to recognise if the two task has the same mission,
-	 * in {@link PrifoExecutorFactory} if we add 2 task of the same id (a twin) into the queue, it will not
-	 * add the task but increase the priority of the existing twin-task in the queue.
-	 */
-	public abstract String getMissionId();
-
 	@Override
 	public int compareTo(Object another) {
 		if (another==null) {
@@ -77,9 +70,9 @@ public abstract class PrifoTask implements IPrifosable, Comparable {
 			return Integer.MAX_VALUE;
 		}
 
-		if (other.getPriority() == this.getPriority()) {
+		/*if (other.getPriority() == this.getPriority()) {
 			return this.getMissionId().compareTo(other.getMissionId());
-		}
+		}*/
 		return other.getPriority()-this.getPriority();
 	}
 

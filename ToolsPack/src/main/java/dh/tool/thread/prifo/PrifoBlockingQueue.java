@@ -1,9 +1,6 @@
 package dh.tool.thread.prifo;
 
-import java.util.AbstractQueue;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -17,14 +14,42 @@ public class PrifoBlockingQueue<E extends IPrifosable> extends AbstractQueue<E> 
 
 	private final PrifoQueue<E> queue;
 
-	public PrifoBlockingQueue() {
+	public PrifoBlockingQueue(String name) {
 		super();
-		queue = new PrifoQueue<E>();
+		queue = new PrifoQueue<E>(name/*, new Comparator<E>() {
+			@Override
+			public int compare(E o1, E o2) {
+				if (o1==null && o2==null) {
+					return 0;
+				}
+				if (o1==null) {
+					return 1000;
+				}
+				if (o2==null) {
+					return -1000;
+				}
+
+				if (o1.isFocused() && !o2.isFocused()) {
+					return Integer.MIN_VALUE;
+				}
+				if (!o1.isFocused() && o2.isFocused()) {
+					return Integer.MAX_VALUE;
+				}
+
+				int c = o2.getPriority()-o1.getPriority();
+
+				if (c!=0) {
+					return c;
+				}
+
+				return o1.getMissionId().compareTo(o2.getMissionId());
+			}
+		}*/);
 	}
 
-	public PrifoBlockingQueue(IQueueEmptyCallback queueEmptyCallback) {
+	public PrifoBlockingQueue(String name, IQueueEmptyCallback queueEmptyCallback) {
 		super();
-		queue = new PrifoQueue<E>(queueEmptyCallback);
+		queue = new PrifoQueue<E>(name, queueEmptyCallback);
 	}
 
 	/**
@@ -160,6 +185,10 @@ public class PrifoBlockingQueue<E extends IPrifosable> extends AbstractQueue<E> 
 		} finally {
 			lock.unlock();
 		}
+	}
+
+	public String getName() {
+		return queue.getName();
 	}
 
 	public IQueueEmptyCallback getQueueEmptyCallback() {

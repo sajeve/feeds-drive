@@ -1,8 +1,10 @@
 package dh.tool.thread.prifo;
 
+import dh.tool.common.PerfWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
@@ -12,6 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by hiep on 12/06/2014.
  */
 public abstract class OncePrifoTask extends PrifoTask {
+	private static final SimpleDateFormat SDF = new SimpleDateFormat("H:m:s,S");
 	private static final Logger log = LoggerFactory.getLogger(OncePrifoTask.class);
 	private volatile boolean used = false;
 	private volatile boolean running = true;
@@ -34,10 +37,14 @@ public abstract class OncePrifoTask extends PrifoTask {
 			lock.lock();
 			running = true;
 			try {
-				startTime = Calendar.getInstance();
 				if (used) {
-					throw new IllegalStateException("OncePrifoTask run twice "+ this);
+					throw new IllegalStateException(String.format("OncePrifoTask run twice (Started at %s, End: %s%s) - %s",
+							SDF.format(getStartTime().getTime()),
+							getEndTime() == null ? "null" : SDF.format(getEndTime().getTime()),
+							isCancelled() ? " cancelled" : "",
+							this));
 				}
+				startTime = Calendar.getInstance();
 				used = true;
 				perform();
 			} finally {
@@ -74,12 +81,12 @@ public abstract class OncePrifoTask extends PrifoTask {
 
 	@Override
 	public void onEnterQueue(PrifoQueue queue) {
-
+		log.trace("EnterQueue " + queue.getName() + " size=" + queue.size() + " - " + toString());
 	}
 
 	@Override
 	public void onDequeue(PrifoQueue queue) {
-
+		log.trace("DeQueue "+queue.getName()+" size="+queue.size()+ " - "+toString());
 	}
 
 	abstract public void perform();

@@ -124,6 +124,8 @@ public class ArticlesGridAdapter extends BaseAdapter {
 			TextView titleLabel;
 			TextView dateLabel;
 			TextView excerptLabel;
+			TextView sourceLabel;
+			TextView lastUpdateLabel;
 
 			if (convertView == null) {
 				// create new view
@@ -132,7 +134,9 @@ public class ArticlesGridAdapter extends BaseAdapter {
 				titleLabel = (TextView) v.findViewById(R.id.article_title);
 				dateLabel = (TextView) v.findViewById(R.id.article_date);
 				excerptLabel = (TextView) v.findViewById(R.id.article_excerpt);
-				v.setTag(new View[]{imageView, titleLabel, dateLabel, excerptLabel});
+				sourceLabel = (TextView) v.findViewById(R.id.source);
+				lastUpdateLabel = (TextView) v.findViewById(R.id.last_update);
+				v.setTag(new View[]{imageView, titleLabel, dateLabel, excerptLabel, sourceLabel, lastUpdateLabel});
 			} else {
 				v = (ViewSwitcher)convertView;
 				View[] viewsHolder = (View[]) v.getTag();
@@ -140,6 +144,8 @@ public class ArticlesGridAdapter extends BaseAdapter {
 				titleLabel = (TextView) viewsHolder[1];
 				dateLabel = (TextView) viewsHolder[2];
 				excerptLabel = (TextView) viewsHolder[3];
+				sourceLabel = (TextView) viewsHolder[4];
+				lastUpdateLabel = (TextView) viewsHolder[5];
 			}
 
 			/* bind value to view */
@@ -147,9 +153,9 @@ public class ArticlesGridAdapter extends BaseAdapter {
 			Article article = (Article)this.getItem(position);
 			if (article != null) {
 				String publishDate = DateUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString());
-				if (Constants.DEBUG) {
+				/*if (Constants.DEBUG) {
 					publishDate += " | "+StrUtils.domainName(article.getArticleUrl())+" | "+ DateUtils.getTimeAgo(mContext.getResources(), article.getLastDownloadSuccess());
-				}
+				}*/
 				titleLabel.setText(article.getTitle());
 				dateLabel.setText(publishDate);
 				excerptLabel.setText(article.getExcerpt());
@@ -160,6 +166,8 @@ public class ArticlesGridAdapter extends BaseAdapter {
 				if (!Strings.isNullOrEmpty(imageUrl)) {
 					ImageLoader.getInstance().displayImage(imageUrl, imageView);
 				}
+				sourceLabel.setText(StrUtils.domainName(article.getArticleUrl()));
+				lastUpdateLabel.setText(DateUtils.getTimeAgo(mContext.getResources(), article.getLastDownloadSuccess()));
 			}
 			/*else {
 				imageView.setVisibility(View.INVISIBLE);
@@ -187,12 +195,10 @@ public class ArticlesGridAdapter extends BaseAdapter {
 	}
 
 	public void setData(IArticleCollection data) {
-		if (this.mData != data) {
-			Log.d(TAG, "setData(" + data + ") count=" + data.getTotalSize());
-			this.mData = data;
-			//this.mData.setCacheChangeListener(cacheChangedListener);
-			notifyDataSetChanged();
-		}
+		Log.d(TAG, "setData(" + data + ") count=" + data.getTotalSize());
+		this.mData = data;
+		//this.mData.setCacheChangeListener(cacheChangedListener);
+		notifyDataSetChanged();
 	}
 
 /*	@Override

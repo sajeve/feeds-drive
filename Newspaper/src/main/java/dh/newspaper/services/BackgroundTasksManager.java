@@ -17,6 +17,7 @@ import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.model.generated.Article;
+import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
@@ -56,7 +57,7 @@ public class BackgroundTasksManager implements Closeable {
 	//private ExecutorService mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(2, Integer.MAX_VALUE);
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
-	private PrifoExecutor mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor();
+	private PrifoExecutor mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main", 2);
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mSharedPreferences;
@@ -303,12 +304,14 @@ public class BackgroundTasksManager implements Closeable {
 		executeUniqueOnMainExecutor(currentSaveDeleteSubscriptionTask);
 	}
 
-	@Inject DaoSession daoSession;
+	//@Inject DaoSession daoSession;
 	public void deleteSubscription(final Subscription sub) {
 		currentSaveDeleteSubscriptionTask = new OncePrifoTask() {
 			@Override
 			public void perform() {
+				DaoMaster daoMaster = mRefData.createWritableDaoMaster();
 				try {
+					DaoSession daoSession = daoMaster.newSession();
 					sendProgressMessage("Deleting subscription.."); //TODO: translate
 					daoSession.getSubscriptionDao().delete(sub);
 					sendProgressMessage("Reloading cache.."); //TODO: translate
@@ -317,6 +320,14 @@ public class BackgroundTasksManager implements Closeable {
 				}catch (Exception ex) {
 					sendError("Failed deleting subscription: " + ex); //TODO: translate
 					Log.w(TAG, ex);
+				}
+				finally {
+					try {
+						daoMaster.getDatabase().close();
+					}
+					catch (Exception ex) {
+						Log.wtf(TAG, "Cannot close database", ex);
+					}
 				}
 			}
 
@@ -367,9 +378,11 @@ public class BackgroundTasksManager implements Closeable {
 	 * Use to execute only unique task, which should be done on GUI thread
 	 */
 	private void executeUniqueOnMainExecutor(PrifoTask task) {
-		mainPrifoExecutor.shutdownNow();
-		mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor();
-		mainPrifoExecutor.execute(task);
+/*		mainPrifoExecutor.cancelAll();
+		mainPrifoExecutor.shutdown();
+		mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main");
+		mainPrifoExecutor.execute(task);*/
+		mainPrifoExecutor.executeUnique(task);
 	}
 
 	@Override

@@ -37,19 +37,24 @@ public class PrifoExecutor extends ThreadPoolExecutor {
 			Iterator it = this.getQueue().iterator();
 
 			//cancel all other PrifoTask, except the twin of task
+			int count = 0;
 			while (it.hasNext()) {
 				Object o=it.next();
 				if (o instanceof PrifoTask) {
 					PrifoTask t = (PrifoTask) o;
 					if (!StrUtils.equalsString(t.getMissionId(), task.getMissionId())) {
 						t.cancel();
-						Log.info(t.toString() + " is cancelled by executeUnique");
+						count++;
+						Log.debug(t + " is cancelled by executeUnique - "+getName());
 					}
 				}
 			}
+			if (count>0) {
+				Log.info(count + " tasks is cancelled by executeUnique - " + getName());
+			}
 		}
 		catch (Exception ex) {
-			Log.warn("Failed cancel all prifo task", ex);
+			Log.warn("Failed cancel all prifo task - "+getName(), ex);
 		}
 
 		task.setFocus(true);
@@ -60,13 +65,22 @@ public class PrifoExecutor extends ThreadPoolExecutor {
 	 * Cancel all prifo task
 	 */
 	public void cancelAll() {
+		int count = 0;
 		Iterator it = this.getQueue().iterator();
 		while (it.hasNext()) {
 			Object o=it.next();
 			if (o instanceof PrifoTask) {
 				((PrifoTask)o).cancel();
+				count++;
 			}
 		}
+		if (count>0) {
+			Log.info(count + " tasks is cancelled by cancelAll - " + getName());
+		}
+	}
+
+	public String getName() {
+		return ((PrifoBlockingQueue)getQueue()).getName();
 	}
 
 	public IQueueEmptyCallback getQueueEmptyCallback() {

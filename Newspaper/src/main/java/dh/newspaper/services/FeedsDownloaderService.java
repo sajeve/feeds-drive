@@ -54,7 +54,7 @@ public class FeedsDownloaderService extends Service {
 		Log.i(TAG, "onCreate Service");
 
 		mArticlesLoader = mRefData.createArticleLoader();
-		mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(1, 2);
+		mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor("TagLoader", 1);
 	}
 
 	@Override
@@ -175,7 +175,7 @@ public class FeedsDownloaderService extends Service {
 
 	private final IQueueEmptyCallback tagQueueEmptyCallback = new IQueueEmptyCallback() {
 		@Override
-		public void onQueueEmpty() {
+		public void onQueueEmpty(String queueName) {
 			//the queue is empty, but the last item is still processing
 			//we will wait 10s and hope that the last one will be finished
 			// then check if all the pending task was complete
@@ -222,7 +222,7 @@ public class FeedsDownloaderService extends Service {
 	};
 	private final IQueueEmptyCallback articleQueueEmptyCallback = new IQueueEmptyCallback() {
 		@Override
-		public void onQueueEmpty() {
+		public void onQueueEmpty(String queueName) {
 			//the queue is empty, but the last item is still processing
 			//we will wait 10s and hope that the last one will be finished
 			// then check if all the pending task was complete

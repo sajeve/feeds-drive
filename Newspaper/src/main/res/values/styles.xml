@@ -59,6 +59,11 @@
 		<item name="android:textColor">@color/gray_secondary</item>
 	</style>
 
+	<style name="Feed.Footer" parent="Feed">
+		<item name="android:textColor">@color/gray_hint</item>
+		<item name="android:textSize">12sp</item>
+	</style>
+
 
 	<!--article style-->
 

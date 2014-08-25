@@ -18,9 +18,7 @@ import dh.newspaper.parser.ContentParser;
 import dh.newspaper.parser.FeedParserException;
 import dh.newspaper.tools.TagUtils;
 import dh.tool.common.PerfWatcher;
-import dh.tool.thread.prifo.OncePrifoTask;
-import dh.tool.thread.prifo.PrifoExecutor;
-import dh.tool.thread.prifo.PrifoQueue;
+import dh.tool.thread.prifo.*;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -48,7 +46,6 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	private static final Logger log = LoggerFactory.getLogger(SelectTagWorkflow.class);
 	private final PerfWatcher pw;
 
-	@Inject DaoSession mDaoSession;
 	@Inject ContentParser mContentParser;
 	//@Inject MessageDigest mMessageDigest;
 	//@Inject RefData refData;
@@ -113,18 +110,22 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		pw = new PerfWatcher(log, mTag);
 	}
 
+	private DaoSession mDaoSession;
 	/**
 	 * Start the workflow. This method can only be executed once. Otherwise, create other Workflow
 	 */
 	@Override
 	public void perform() {
-		pw.debug("Start workflow");
+		pw.i("Start SelectTagWorkflow");
+		DaoMaster daoMaster = mRefData.createWritableDaoMaster();
 		try {
+			mDaoSession = daoMaster.newSession();
+
 			loadFirstPageArticlesFromCache();
 			if (mCallback != null && !isCancelled()) {
 				pw.resetStopwatch();
 				mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
-				//pw.d("Callback onFinishedLoadFromCache()");
+				pw.t("Callback onFinishedLoadFromCache()");
 			}
 
 			if (mOnlineMode) {
@@ -132,14 +133,14 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				if (mCallback != null && !isCancelled()) {
 					pw.resetStopwatch();
 					mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
-					//pw.d("Callback onFinishedDownloadFeeds()");
+					pw.t("Callback onFinishedDownloadFeeds()");
 				}
 
 				downloadArticles();
 				if (mCallback != null && !isCancelled()) {
 					pw.resetStopwatch();
 					mCallback.onFinishedDownloadArticles(this);
-					//pw.d("Callback onFinishedDownloadArticles()");
+					pw.t("Callback onFinishedDownloadArticles()");
 				}
 			}
 			else {
@@ -147,12 +148,18 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			}
 		}
 		finally {
+			try {
+				daoMaster.getDatabase().close();
+			}
+			catch (Exception ex) {
+				pw.e("Cannot close database", ex);
+			}
 			if (mCallback!=null) {
 				pw.resetStopwatch();
 				mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
 				//pw.d("Callback done()");
 			}
-			pw.ig("Workflow complete");
+			pw.ig("SelectTagWorkflow complete");
 		}
 	}
 
@@ -229,7 +236,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			checkAccessDiskOnMainThread();
 			mArticles = mSelectArticleQueryBuilder.offset(mOffset).limit(mPageSize).list();
 
-			pw.d("loadPage("+offset+")");
+			pw.t("loadPage("+offset+")");
 
 			if (offset==0 && mArticles.size()>0) {
 				//update the article-zero
@@ -633,30 +640,6 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		}
 	}
 
-	//<editor-fold desc="Simple Log Utils for Profiler">
-
-//	private void logInfo(String message) {
-//		Log.d(TAG, message + " - " + mTag);
-//	}
-//	private void pw.warn(String message) {
-//		Log.w(TAG, message + " - " + mTag);
-//	}
-//	private void pw.warn(Throwable ex) {
-//		Log.w(TAG, "Error " + mTag, ex);
-//	}
-//	private void pw.debug(String message) {
-//		Log.v(TAG, message + " - " + mTag);
-//	}
-//	private void pw.d(String message) {
-//		Log.v(TAG, message + " ("+mStopwatch.elapsed(TimeUnit.MILLISECONDS)+" ms) - " + mTag);
-//		pw.resetStopwatch();
-//	}
-//	private void pw.resetStopwatch() {
-//		mStopwatch.reset().start();
-//	}
-
-	//</editor-fold>
-
 	@Override
 	public String toString() {
 		return String.format("[SelectTagWorkflow: %s]", mTag);
@@ -673,6 +656,17 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			if (Constants.DEBUG) {
 				throw new IllegalStateException("Access disk on main thread");
 			}
+		}
+	}
+
+	@Override
+	public int compareTo(Object another) {
+		int c = super.compareTo(another);
+		if (c==0) {
+			return this.getMissionId().compareTo(((PrifoTask)another).getMissionId());
+		}
+		else {
+			return c;
 		}
 	}
 

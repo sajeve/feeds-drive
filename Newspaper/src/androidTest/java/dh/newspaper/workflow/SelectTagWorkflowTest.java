@@ -54,9 +54,8 @@ public class SelectTagWorkflowTest extends ActivityInstrumentationTestCase2<Main
 
 	private void runSelectTagWorkflow(int numberOfThread) throws InterruptedException {
 
-		PrifoExecutor articlesLoader = PrifoExecutorFactory.newPrifoExecutor(1, 2);
+		PrifoExecutor articlesLoader = PrifoExecutorFactory.newPrifoExecutor("articlesLoader", 1);
 		articlesLoader.setCorePoolSize(numberOfThread);
-		articlesLoader.setMaximumPoolSize(numberOfThread*2);
 
 		SelectTagWorkflow stw = new SelectTagWorkflow(this.getActivity(), "technology",
 				null, null, true,
@@ -68,7 +67,7 @@ public class SelectTagWorkflowTest extends ActivityInstrumentationTestCase2<Main
 
 		articlesLoader.setQueueEmptyCallback(new IQueueEmptyCallback() {
 			@Override
-			public void onQueueEmpty() {
+			public void onQueueEmpty(String queueName) {
 				synchronized (completion) {
 					completion.notifyAll();
 				}

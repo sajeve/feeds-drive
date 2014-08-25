@@ -9,6 +9,7 @@ import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.model.Feeds;
+import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
@@ -35,7 +36,7 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 	//private final Context context;
 	private SaveSubscriptionEvent saveSubscriptionState;
 	@Inject ContentParser contentParser;
-	@Inject DaoSession daoSession;
+	//@Inject DaoSession daoSession;
 	@Inject RefData refData;
 
 	public SaveSubscriptionWorkflow(Context context, SearchFeedsResult.ResponseData.Entry feedsSource, Set<String> tags) {
@@ -69,8 +70,13 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 //		}
 //	}
 
+	private DaoSession daoSession;
+
 	public void perform() {
+		DaoMaster daoMaster = refData.createWritableDaoMaster();
 		try {
+			daoSession = daoMaster.newSession();
+
 			String feedsSourceUrl = StrUtils.removeTrailingSlash(feedsSource.getUrl());
 
 			if (feedsSource.getValidity() == SearchFeedsResult.FeedsSourceValidity.UNKNOWN) {
@@ -145,6 +151,14 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 		}catch (Exception ex) {
 			sendError("Failed saving subscription: " + ex); //TODO: translate
 			Log.w(TAG, ex);
+		}
+		finally {
+			try {
+				daoMaster.getDatabase().close();
+			}
+			catch (Exception ex) {
+				Log.wtf(TAG, "Cannot close database", ex);
+			}
 		}
 	}
 

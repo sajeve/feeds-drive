@@ -1,5 +1,6 @@
 package dh.tool.thread.prifo;
 
+import dh.tool.common.StrUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,19 +24,21 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 	private static final Logger log = LoggerFactory.getLogger(PrifoQueue.class);
 	private transient TreeSet<E> queue;
 	private IQueueEmptyCallback queueEmptyCallback;
+	private final String name;
 
-	public PrifoQueue(Comparator<? super E> comparator, IQueueEmptyCallback queueEmptyCallback) {
+	public PrifoQueue(String name, Comparator<? super E> comparator, IQueueEmptyCallback queueEmptyCallback) {
 		this.queue = new TreeSet<E>(comparator);
 		this.queueEmptyCallback = queueEmptyCallback;
+		this.name=name;
 	}
-	public PrifoQueue(IQueueEmptyCallback queueEmptyCallback) {
-		this(null, queueEmptyCallback);
+	public PrifoQueue(String name, IQueueEmptyCallback queueEmptyCallback) {
+		this(name, null, queueEmptyCallback);
 	}
-	public PrifoQueue(Comparator<? super E> comparator) {
-		this(comparator, null);
+	public PrifoQueue(String name, Comparator<? super E> comparator) {
+		this(name, comparator, null);
 	}
-	public PrifoQueue() {
-		this(null, null);
+	public PrifoQueue(String name) {
+		this(name, null, null);
 	}
 
 	@Override
@@ -135,7 +138,7 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 		Iterator<E> it = iterator();
 		while (it.hasNext()) {
 			E resu = it.next();
-			if (((Object)resu).equals(e) || (queue.comparator()!=null && queue.comparator().compare(resu,e) == 0)) {
+			if (((Object)resu).equals(e) || StrUtils.equalsString(resu.getMissionId(), e.getMissionId())) {
 				return resu;
 			}
 		}
@@ -155,7 +158,7 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 		}
 		if (queueEmptyCallback!=null && queue.isEmpty()) {
 			try {
-				queueEmptyCallback.onQueueEmpty();
+				queueEmptyCallback.onQueueEmpty(getName());
 			}
 			catch (Exception ex) {
 				log.warn("onQueueEmpty ", ex);
@@ -195,5 +198,9 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 
 	public void setQueueEmptyCallback(IQueueEmptyCallback queueEmptyCallback) {
 		this.queueEmptyCallback = queueEmptyCallback;
+	}
+
+	public String getName() {
+		return name;
 	}
 }

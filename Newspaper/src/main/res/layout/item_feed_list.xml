@@ -42,16 +42,36 @@
 		<TextView
 				android:id="@+id/article_excerpt"
 				android:layout_width="fill_parent"
-				android:layout_height="fill_parent"
+				android:layout_height="wrap_content"
 				style="@style/Feed.Content"
 				android:text="Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
 				android:singleLine="true"
 				android:layout_toRightOf="@id/article_image"
 				android:layout_below="@id/article_date"
 				/>
+
+		<TextView
+				android:id="@+id/source"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_below="@+id/article_image"
+				android:text="www.vnexpress.net"
+				style="@style/Feed.Footer"
+				/>
+		<TextView
+				android:id="@+id/last_update"
+				android:gravity="right"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_alignParentRight="true"
+				android:layout_below="@+id/article_image"
+				android:layout_toRightOf="@+id/source"
+				android:text="Just now"
+				style="@style/Feed.Footer"
+				/>
 		<View
 				style="@style/DividerH"
-				android:layout_below="@id/article_excerpt"
+				android:layout_below="@id/source"
 				/>
 	</RelativeLayout>
 	<ProgressBar

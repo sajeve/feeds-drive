@@ -37,7 +37,7 @@ public class AppContextModule {
 
 	private Context mAppContext;
 	//private RequestQueue mRequestQueue;
-	private SQLiteOpenHelper mDbHelper;
+	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDatabase;
 	private DaoMaster mDaoMaster;
 	private DaoSession mDaoSession;
@@ -57,11 +57,17 @@ public class AppContextModule {
 	}*/
 
 	@Provides @Singleton
+	public DatabaseHelper provideDatabaseHelper() {
+		if (mDbHelper == null) {
+			mDbHelper = new DatabaseHelper(mAppContext); //install with the database in assets
+		}
+		return mDbHelper;
+	}
+
+	@Provides @Singleton
 	public SQLiteDatabase provideDatabase() {
 		if (mDatabase == null) {
-			//SQLiteOpenHelper mDbHelper = new DaoMaster.DevOpenHelper((Context)this, Constants.DATABASE_NAME, null); //debug only (because drops all tables)
-			mDbHelper = new DatabaseHelper(mAppContext); //install with the database in assets
-			mDatabase = mDbHelper.getReadableDatabase();
+			mDatabase = provideDatabaseHelper().getReadableDatabase();
 		}
 		return mDatabase;
 	}
@@ -85,7 +91,7 @@ public class AppContextModule {
 	@Provides @Singleton
 	public RefData provideRefData() {
 		if (mRefData == null) {
-			mRefData = new RefData(mAppContext, provideDaoSession(), providePreferences());
+			mRefData = new RefData(mAppContext, provideDaoSession(), provideDatabaseHelper(), providePreferences());
 		}
 		return mRefData;
 	}

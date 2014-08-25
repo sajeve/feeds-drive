@@ -13,4 +13,11 @@ public interface IPrifosable extends Runnable, ICancellation {
 	public boolean isFocused();
 	public void onEnterQueue(PrifoQueue queue);
 	public void onDequeue(PrifoQueue queue);
+
+	/**
+	 * Use to recognise if the two task has the same mission,
+	 * in {@link PrifoExecutorFactory} if we add 2 task of the same id (a twin) into the queue, it will not
+	 * add the task but increase the priority of the existing twin-task in the queue.
+	 */
+	public String getMissionId();
 }

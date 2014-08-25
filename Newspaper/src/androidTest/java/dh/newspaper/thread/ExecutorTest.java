@@ -23,7 +23,7 @@ public class ExecutorTest extends ActivityInstrumentationTestCase2<MainActivity>
 		final int totalDuration = 60*1000;
 		final int oneThreadDuration=200;
 
-		PrifoExecutor executor = PrifoExecutorFactory.newPrifoExecutor(2, Integer.MAX_VALUE);
+		PrifoExecutor executor = PrifoExecutorFactory.newPrifoExecutor("Q", 2);
 
 		final int N = totalDuration/oneThreadDuration;
 		Log.info("Call execute "+N+" times");

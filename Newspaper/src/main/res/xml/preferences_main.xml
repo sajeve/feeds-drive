@@ -48,6 +48,6 @@
 				android:dialogTitle="@string/image_disk_cache_size"
 				android:entries="@array/images_cache_size_label"
 				android:entryValues="@array/images_cache_size_value"
-				android:defaultValue="2" />
+				android:defaultValue="104857600" />
 	</PreferenceCategory>
 </PreferenceScreen>

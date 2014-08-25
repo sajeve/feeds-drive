@@ -20,6 +20,7 @@ import dh.newspaper.adapter.SubscriptionListAdapter;
 import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SaveSubscriptionEvent;
+import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.view.utils.BgCheckbox;
@@ -33,7 +34,7 @@ public class ManageSubscriptionActivity extends ListActivity {
 	private static final String TAG = ManageSubscriptionActivity.class.getName();
 
 	@Inject RefData refData;
-	@Inject DaoSession daoSession;
+	//@Inject DaoSession daoSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +68,9 @@ public class ManageSubscriptionActivity extends ListActivity {
 	private BgCheckbox.ICheckedAction toggleSubscription = new BgCheckbox.ICheckedAction() {
 		@Override
 		public boolean performActionInBackground(boolean isChecked, Object senderTag) {
+			DaoMaster daoMaster = refData.createWritableDaoMaster();
 			try {
+				DaoSession daoSession = daoMaster.newSession();
 				Subscription sub = (Subscription)senderTag;
 				sub.setEnable(isChecked);
 				daoSession.getSubscriptionDao().update(sub);
@@ -75,6 +78,14 @@ public class ManageSubscriptionActivity extends ListActivity {
 			} catch (Exception ex) {
 				Log.w(TAG, ex);
 				return false;
+			}
+			finally {
+				try {
+					daoMaster.getDatabase().close();
+				}
+				catch (Exception ex) {
+					Log.wtf(TAG, "Cannot close database", ex);
+				}
 			}
 		}
 

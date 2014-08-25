@@ -122,7 +122,7 @@ public class DateUtils {
 			}
 		}
 		catch (IllegalArgumentException iae) {
-			Log.w(TAG, "Failed joda DateTime parse '"+dateTimeStr+"': "+iae.getMessage()+". Try java DateTime parse");
+			Log.w(TAG, "Failed joda DateTime parse '"+dateTimeStr+"': "+iae+". Try java DateTime parse");
 		}
 
 		for (SimpleDateFormat sdf : javaDateTimeFormatter) {
@@ -134,7 +134,7 @@ public class DateUtils {
 				}
 			}
 			catch (ParseException pe) {
-				Log.w(TAG, "Failed parse DateTime '"+dateTimeStr+"' (tried both java and joda parser). Add template in DateUtils.java");
+				Log.w(TAG, "Failed parse DateTime '"+dateTimeStr+"' (tried both java and joda parser). Add template in DateUtils.java. "+ pe);
 			}
 		}
 
@@ -145,7 +145,7 @@ public class DateUtils {
 			}
 		}
 		catch (Exception ex) {
-			Log.w(TAG, "Failed PoJava parse DateTime '"+dateTimeStr+"'.");
+			Log.w(TAG, "Failed PoJava parse DateTime '"+dateTimeStr+"'. "+ex);
 		}
 
 		try {
@@ -155,7 +155,7 @@ public class DateUtils {
 			}
 		}
 		catch (Exception ex) {
-			Log.e(TAG, "Failed Natty parse DateTime '"+dateTimeStr+"'.");
+			Log.e(TAG, "Failed Natty parse DateTime '"+dateTimeStr+"'. "+ex);
 		}
 
 		return resu;
