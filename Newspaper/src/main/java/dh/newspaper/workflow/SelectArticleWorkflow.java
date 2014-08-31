@@ -5,12 +5,10 @@ import android.graphics.Bitmap;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
-import de.greenrobot.dao.identityscope.IdentityScopeType;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
@@ -22,7 +20,6 @@ import dh.newspaper.tools.NetworkUtils;
 import dh.tool.common.PerfWatcher;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.OncePrifoTask;
-import dh.tool.thread.prifo.PrifoTask;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.jsoup.Jsoup;
@@ -38,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Workflow:
@@ -52,11 +48,11 @@ import java.util.concurrent.TimeUnit;
  *
  * Created by hiep on 3/06/2014.
  */
-public class SelectArticleWorkflow extends OncePrifoTask {
+public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	private static final String TAG = SelectArticleWorkflow.class.getName();
 	private static final Logger log = LoggerFactory.getLogger(SelectArticleWorkflow.class);
 
-	//@Inject DaoSession mDaoSession;
+	@Inject DaoSession daoSessionReadonly;
 	@Inject ContentParser mContentParser;
 	//@Inject MessageDigest mMessageDigest;
 	@Inject RefData refData;
@@ -108,7 +104,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		pw = new PerfWatcher(log, article.getArticleUrl());
 	}
 
-	private DaoSession mDaoSession;
+	//private DaoSession daoSessionReadonly;
 
 	/**
 	 * Start the workflow. This method can only be executed once. Otherwise, create other Workflow
@@ -116,11 +112,8 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 	@Override
 	public void perform() {
 		pw.i("Start SelectArticleWorkflow");
-		DaoMaster daoMaster = refData.createWritableDaoMaster();
 		try {
-			mDaoSession = daoMaster.newSession();
-
-			mParentSubscription = mDaoSession.getSubscriptionDao().queryBuilder()
+			mParentSubscription = daoSessionReadonly.getSubscriptionDao().queryBuilder()
 					.whereOr(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()),
 							SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()+"/"))
 					.unique();
@@ -132,7 +125,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 			if (mArticle == null) {
 				//find mArticle from database
-				mArticle = mDaoSession.getArticleDao().queryBuilder()
+				mArticle = daoSessionReadonly.getArticleDao().queryBuilder()
 						.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
 				pw.t("Found Article in cache " + mArticle);
 				if (isCancelled()) {
@@ -154,7 +147,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			}
 			else { //mArticle is not null, refresh it from database
 				try {
-					mDaoSession.getArticleDao().refresh(mArticle);
+					daoSessionReadonly.getArticleDao().refresh(mArticle);
 					pw.t("Refreshed cached Article from database " + mArticle);
 					if (isCancelled()) {
 						return;
@@ -176,12 +169,6 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 			getArticleContentDocument(); //parse the article content with jsoup if it is not parsed yet
 
 		} finally {
-			try {
-				daoMaster.getDatabase().close();
-			}
-			catch (Exception ex) {
-				pw.e("Cannot close database", ex);
-			}
 			if (mCallback!=null) {
 				mCallback.done(this, getArticle(), isCancelled());
 				pw.t("callback done");
@@ -254,7 +241,24 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 				mSuccessDownloadAndExtraction ? DateTime.now().toDate() : null //last update success
 		);
 
-		mDaoSession.getArticleDao().insert(mArticle);
+
+
+		DaoMaster daoMaster = refData.createWritableDaoMaster();
+		try {
+			DaoSession daoSession = daoMaster.newSession();
+			daoSession.getArticleDao().insert(mArticle);
+		}
+		catch (Exception ex) {
+			pw.e("Failed to insert article to database", ex);
+		}
+		finally {
+			try {
+				daoMaster.getDatabase().close();
+			}
+			catch (Exception ex) {
+				pw.e("Cannot close database", ex);
+			}
+		}
 		pw.d("Insert new "+mArticle);
 
 		//load image or in offline mode, replace image source by cache URL
@@ -320,7 +324,23 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 		mArticle.setLastUpdated(DateTime.now().toDate());
 
 		pw.resetStopwatch();
-		mDaoSession.getArticleDao().update(mArticle);
+
+		DaoMaster daoMaster = refData.createWritableDaoMaster();
+		try {
+			DaoSession daoSession = daoMaster.newSession();
+			daoSession.getArticleDao().update(mArticle);
+		}
+		catch (Exception ex) {
+			pw.e("Failed to update article in database", ex);
+		}
+		finally {
+			try {
+				daoMaster.getDatabase().close();
+			}
+			catch (Exception ex) {
+				pw.e("Cannot close database", ex);
+			}
+		}
 		pw.d("Update article content " + mArticle);
 
 		//load image or in offline mode, replace image source by cache URL
@@ -559,7 +579,7 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 	@Override
 	public String toString() {
-		return String.format("[SelectArticleWorkflow: %s]", getFeedItem().getUri());
+		return String.format("[SelectArticleWorkflow: %s  successDownload = %s]", getFeedItem().getUri(), Boolean.toString(mSuccessDownloadAndExtraction));
 	}
 
 	@Override
@@ -578,24 +598,19 @@ public class SelectArticleWorkflow extends OncePrifoTask {
 
 	@Override
 	public int compareTo(Object another) {
-		int c = super.compareTo(another);
-		if (c==0) {
-			Date anotherPublishedDate = ((SelectArticleWorkflow)another).getPublishedDate();
-			if (anotherPublishedDate == null) {
-				return 1;
-			}
-			Date publishedDate = getPublishedDate();
-			if (publishedDate == null) {
-				return -1;
-			}
-
-			c = publishedDate.compareTo(anotherPublishedDate);
-			if (c==0) {
-				return this.getMissionId().compareTo(((PrifoTask)another).getMissionId());
-			}
+		//return thisPublishDate - anotherPublishDate
+		Date anotherPublishedDate = ((SelectArticleWorkflow)another).getPublishedDate();
+		Date publishedDate = getPublishedDate();
+		if (publishedDate==null && anotherPublishedDate==null) {
+			return 0;
 		}
-
-		return c;
+		if (anotherPublishedDate == null) {
+			return -1;
+		}
+		if (publishedDate == null) {
+			return 1;
+		}
+		return anotherPublishedDate.compareTo(publishedDate);
 	}
 
 	public Date getPublishedDate() {

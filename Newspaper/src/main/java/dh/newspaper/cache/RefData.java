@@ -180,12 +180,12 @@ public class RefData {
 		return mContext.getExternalCacheDir().getAbsolutePath();
 	}
 
-	public File getCacheDir() {
+	/*public File getCacheDir() {
 		if (Constants.DEBUG) {
 			return new File(Constants.DEBUG_DATABASE_PATH);
 		}
 		return mContext.getExternalCacheDir();
-	}
+	}*/
 
 	private void checkAccessDiskOnMainThread() {
 		if (Looper.myLooper() == Looper.getMainLooper()) {

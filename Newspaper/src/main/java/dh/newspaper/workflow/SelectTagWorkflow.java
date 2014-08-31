@@ -110,17 +110,14 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		pw = new PerfWatcher(log, mTag);
 	}
 
-	private DaoSession mDaoSession;
+	//private DaoSession daoSessionReadonly;
 	/**
 	 * Start the workflow. This method can only be executed once. Otherwise, create other Workflow
 	 */
 	@Override
 	public void perform() {
 		pw.i("Start SelectTagWorkflow");
-		DaoMaster daoMaster = mRefData.createWritableDaoMaster();
 		try {
-			mDaoSession = daoMaster.newSession();
-
 			loadFirstPageArticlesFromCache();
 			if (mCallback != null && !isCancelled()) {
 				pw.resetStopwatch();
@@ -148,12 +145,6 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			}
 		}
 		finally {
-			try {
-				daoMaster.getDatabase().close();
-			}
-			catch (Exception ex) {
-				pw.e("Cannot close database", ex);
-			}
 			if (mCallback!=null) {
 				pw.resetStopwatch();
 				mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
@@ -236,7 +227,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			checkAccessDiskOnMainThread();
 			mArticles = mSelectArticleQueryBuilder.offset(mOffset).limit(mPageSize).list();
 
-			pw.t("loadPage("+offset+")");
+			pw.t("loadPage(" + offset + ")");
 
 			if (offset==0 && mArticles.size()>0) {
 				//update the article-zero
@@ -393,8 +384,20 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				sub.setPublishedDateString(feeds.getPubDate());
 			}
 			sub.setLastUpdate(DateTime.now().toDate());
-			mDaoSession.getSubscriptionDao().update(sub);
 
+			DaoMaster daoMaster = mRefData.createWritableDaoMaster();
+			try {
+				DaoSession daoSession = daoMaster.newSession();
+				daoSession.getSubscriptionDao().update(sub);
+			}
+			finally {
+				try {
+					daoMaster.getDatabase().close();
+				}
+				catch (Exception ex) {
+					pw.e("Cannot close database", ex);
+				}
+			}
 			pw.d("Update " + sub + " in database");
 		}
 	}
@@ -418,6 +421,8 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			pw.d("Build article query from " + mSubscriptions.size() + " subscriptions");
 		}
 	}
+
+	@Inject DaoSession mDaoSession;
 
 	/**
 	 * Query to find all article related to a subscription list. Use to find all article of a given Tag
@@ -462,7 +467,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 //	 */
 //	public List<Subscription> getSubscriptions(String tag) {
 //		if (Strings.isNullOrEmpty(tag)) {
-//			QueryBuilder<Subscription> qb = mDaoSession.getSubscriptionDao().queryBuilder();
+//			QueryBuilder<Subscription> qb = daoSessionReadonly.getSubscriptionDao().queryBuilder();
 //			qb.where(
 //					SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
 //					qb.or(SubscriptionDao.Properties.Tags.isNull(), SubscriptionDao.Properties.Tags.eq("")));
@@ -472,7 +477,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 //		}
 //
 //		checkAccessDiskOnMainThread();
-//		return mDaoSession.getSubscriptionDao().queryBuilder()
+//		return daoSessionReadonly.getSubscriptionDao().queryBuilder()
 //				.where(SubscriptionDao.Properties.Enable.eq(Boolean.TRUE),
 //						SubscriptionDao.Properties.Tags.like("%"+ TagUtils.getTechnicalTag(tag)+"%")).list();
 //	}
@@ -573,39 +578,41 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		return mTag;
 	}
 
-	/**
-	 * return true if the tag and all the articles is finished downloading
-	 */
-	public boolean isFinishedAll() {
-		if (mArticlesLoader == null || !mOnlineMode) { //sync mode or offline mode
-			return isFinished();
-		}
-		else {
-			if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
-				if (Constants.DEBUG) {
-					throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
-				}
-				else {
-					return false;
-				}
-			}
-			for (SelectArticleWorkflow wk : mPendingLoadArticleWorkflow) {
-				if (!wk.isFinished()) {
-					return false;
-				}
-			}
-			return true;
-		}
-	}
+//	/**
+//	 * return true if the tag and all the articles is finished downloading
+//	 */
+//	public boolean isFinishedAll() {
+//		if (mArticlesLoader == null || !mOnlineMode) { //sync mode or offline mode
+//			return isFinished();
+//		}
+//		else {
+//			if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
+//				/*if (Constants.DEBUG) {
+//					throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
+//				}
+//				else {
+//					return false;
+//				}*/
+//				return false;
+//			}
+//			for (SelectArticleWorkflow wk : mPendingLoadArticleWorkflow) {
+//				if (!wk.isFinished()) {
+//					return false;
+//				}
+//			}
+//			return true;
+//		}
+//	}
 
 	public int countArticlesToDownload() {
 		if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
-			if (Constants.DEBUG) {
-				throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
-			}
-			else {
-				return -1;
-			}
+//			if (Constants.DEBUG) {
+//				throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
+//			}
+//			else {
+//				return -1;
+//			}
+			return -1;
 		}
 		return mPendingLoadArticleWorkflow.size();
 	}
@@ -619,12 +626,13 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		}
 		else {
 			if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
-				if (Constants.DEBUG) {
+				/*if (Constants.DEBUG) {
 					throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
 				}
 				else {
 					return null;
-				}
+				}*/
+				return null;
 			}
 
 			Calendar lastEndTime = null;
@@ -659,16 +667,16 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		}
 	}
 
-	@Override
-	public int compareTo(Object another) {
-		int c = super.compareTo(another);
-		if (c==0) {
-			return this.getMissionId().compareTo(((PrifoTask)another).getMissionId());
-		}
-		else {
-			return c;
-		}
-	}
+//	@Override
+//	public int compareTo(Object another) {
+//		int c = super.compareTo(another);
+//		if (c==0) {
+//			return this.getMissionId().compareTo(((PrifoTask)another).getMissionId());
+//		}
+//		else {
+//			return c;
+//		}
+//	}
 
 //	@Override
 //	public void onEnterQueue(PrifoQueue queue) {

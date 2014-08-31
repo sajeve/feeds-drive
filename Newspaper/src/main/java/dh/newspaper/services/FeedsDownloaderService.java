@@ -239,28 +239,41 @@ public class FeedsDownloaderService extends Service {
 						Calendar startTime = null;
 						Calendar endTime = null;
 						int countDownloadedArticles = 0;
+						int wfLeft = 0;
 						for (SelectTagWorkflow wf : selectTagWorkflowList) {
 							Calendar s = wf.getStartTime();
 							Calendar e = wf.getEndTimeAll();
-							if (s == null || e == null) {
+							if (s == null || e == null) { //workflow was in progress
 								Log.i(TAG, "Tag queue empty, but a workflow is still processing: "+wf);
-								return; //not finish all the workflow
+								wfLeft++;
 							}
-							if (startTime == null || startTime.after(s)) {
-								startTime = s;
+							else { //workflow is complete
+								if (startTime == null || startTime.after(s)) {
+									startTime = s;
+								}
+								if (endTime == null || endTime.before(e)) {
+									endTime = e;
+								}
+
+								int d = wf.countArticlesToDownload();
+								if (d > 0) {
+									countDownloadedArticles += d;
+								}
 							}
-							if (endTime == null || endTime.before(e)) {
-								endTime = e;
-							}
-							countDownloadedArticles += wf.countArticlesToDownload();
 						}
 
-						Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
-						displayNotification("Download all articles finished", String.format("Downloaded %d articles at %s in %d sec",
-								countDownloadedArticles,
-								TimeFormat.format(startTime.getTime()),
-								duration.getStandardSeconds()
-						));
+						if (wfLeft == 0) {
+							Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
+							displayNotification("Download all articles finished", String.format("Downloaded %d articles at %s in %d sec",
+									countDownloadedArticles,
+									TimeFormat.format(startTime.getTime()),
+									duration.getStandardSeconds()
+							));
+						}
+						else if (countDownloadedArticles > 0) {
+							displayNotification("Download articles in progress",
+									String.format("%d articles downloaded. %d/%d tags left to download", countDownloadedArticles, wfLeft, selectTagWorkflowList.size()));
+						}
 					}
 					catch (Exception ex) {
 						Log.w(TAG, ex);
@@ -268,8 +281,7 @@ public class FeedsDownloaderService extends Service {
 				}
 			}, WaitLastTaskFinishDuration);
 
-
-			displayNotification("Download articles", "Articles queue is empty");
+			//displayNotification("Download articles", "Articles queue is empty");
 		}
 	};
 

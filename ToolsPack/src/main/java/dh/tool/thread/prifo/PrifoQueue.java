@@ -26,19 +26,70 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 	private IQueueEmptyCallback queueEmptyCallback;
 	private final String name;
 
-	public PrifoQueue(String name, Comparator<? super E> comparator, IQueueEmptyCallback queueEmptyCallback) {
-		this.queue = new TreeSet<E>(comparator);
+	/**
+	 * tasks are queued and ordered by this comparator.
+	 * - The focused task is the top-most priority
+	 * - Priority attribute
+	 * - The natural order of item (if items are comparable)
+	 * - The missionId
+	 *
+	 * them item with the same missionId are always equals even if the natural order are not the same
+	 */
+	public final Comparator PrifoComparator = new Comparator<E>() {
+		@Override
+		public int compare(E o1, E o2) {
+			if (o1==null && o2==null) {
+				return 0;
+			}
+			else {
+				if (o1 == null) {
+					return 1000;
+				}
+				if (o2 == null) {
+					return -1000;
+				}
+			}
+
+			if (StrUtils.equalsString(o1.getMissionId(), o2.getMissionId())) {
+				return 0;
+			}
+
+			if (o1.isFocused() && !o2.isFocused()) {
+				return Integer.MIN_VALUE;
+			}
+			if (!o1.isFocused() && o2.isFocused()) {
+				return Integer.MAX_VALUE;
+			}
+
+			int c = o2.getPriority()-o1.getPriority();
+			if (c!=0) {
+				return c;
+			}
+
+			if (o1 instanceof Comparable) {
+				c = ((Comparable) o1).compareTo(o2);
+				if (c!=0) {
+					return c;
+				}
+			}
+
+			if (o2.getMissionId()==null) {
+				return -10;
+			}
+			if (o1.getMissionId()==null) {
+				return 10;
+			}
+			return o1.getMissionId().compareTo(o2.getMissionId());
+		}
+	};
+
+	public PrifoQueue(String name, IQueueEmptyCallback queueEmptyCallback) {
+		this.queue = new TreeSet<E>(PrifoComparator);
 		this.queueEmptyCallback = queueEmptyCallback;
 		this.name=name;
 	}
-	public PrifoQueue(String name, IQueueEmptyCallback queueEmptyCallback) {
-		this(name, null, queueEmptyCallback);
-	}
-	public PrifoQueue(String name, Comparator<? super E> comparator) {
-		this(name, comparator, null);
-	}
 	public PrifoQueue(String name) {
-		this(name, null, null);
+		this(name, null);
 	}
 
 	@Override
@@ -69,7 +120,7 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 		if (e.isCancelled()) {
 			return false; //task is cancelled, no need to add it to the queue
 		}
-		E existed = findItem(e);
+
 		if (e.isFocused()) {
 			/*
 			 * update focusing so that queue can only has 1 focused item
@@ -80,41 +131,17 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 				lastFocusedItem.setFocus(false);
 				queue.add(lastFocusedItem);
 			}
-			if (existed!=null) {
-				existed.setFocus(true);
-				queue.remove(existed);
-				if (existed.isCancelled()) {
-					/*
-					replace the existed task which was cancelled by the fresh new twin
-					the priority will be reset with the priority of the twin
-					 */
-					existed = e;
-				}
-				else {
-					existed.increasePriority();
-				}
-				queue.add(existed);
-				return true;
-			}
 		}
-		else {
-			if (existed!=null) {
-				queue.remove(existed);
-				if (existed.isCancelled()) {
-					/*
-					replace the existed task which was cancelled by the fresh new twin
-					the priority will be reset with the priority of the twin
-					 */
-					existed = e;
-				}
-				else {
-					existed.increasePriority();
-				}
-				queue.add(existed);
-				return true;
-			}
+
+		E existed = findItem(e);
+
+		if (existed != null) {
+			queue.remove(existed);
+			e.setPriority(existed.isCancelled() ? 0 : existed.getPriority()+1);
 		}
+
 		queue.add(e);
+
 		try {
 			e.onEnterQueue(this);
 		}

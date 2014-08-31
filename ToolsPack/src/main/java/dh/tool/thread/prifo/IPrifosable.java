@@ -8,7 +8,7 @@ import dh.tool.thread.ICancellation;
  */
 public interface IPrifosable extends Runnable, ICancellation {
 	public int getPriority();
-	public IPrifosable increasePriority();
+	public IPrifosable setPriority(int p);
 	public IPrifosable setFocus(boolean focused);
 	public boolean isFocused();
 	public void onEnterQueue(PrifoQueue queue);

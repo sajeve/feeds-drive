@@ -70,12 +70,12 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 //		}
 //	}
 
-	private DaoSession daoSession;
+	//private DaoSession daoSession;
 
 	public void perform() {
 		DaoMaster daoMaster = refData.createWritableDaoMaster();
 		try {
-			daoSession = daoMaster.newSession();
+			DaoSession daoSession = daoMaster.newSession();
 
 			String feedsSourceUrl = StrUtils.removeTrailingSlash(feedsSource.getUrl());
 

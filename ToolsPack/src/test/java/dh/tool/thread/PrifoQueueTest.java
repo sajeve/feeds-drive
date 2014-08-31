@@ -1,5 +1,6 @@
 package dh.tool.thread;
 
+import dh.tool.common.DateUtils;
 import dh.tool.thread.prifo.*;
 import junit.framework.Assert;
 import org.junit.Before;
@@ -7,14 +8,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.Date;
+
 /**
  * Created by hiep on 9/06/2014.
  */
 public class PrifoQueueTest {
 	private static final Logger Log = LoggerFactory.getLogger(PrifoQueueTest.class);
 
-
-	public static class WorkflowTask extends PrifoTask {
+	public static class WorkflowTask extends PrifoTask implements Comparable {
 		private String id;
 
 		public WorkflowTask(String id) {
@@ -50,42 +54,83 @@ public class PrifoQueueTest {
 
 		}
 
-		@Override
+		private Date publishedDate;
+		public Date getPublishedDate() {
+			return publishedDate;
+		}
+		public WorkflowTask setPublishedDate(Date publishedDate) {
+			this.publishedDate = publishedDate;
+			return this;
+		}
 		public int compareTo(Object another) {
-			int c = super.compareTo(another);
-			if (c==0) {
-				return this.getMissionId().compareTo(((PrifoTask)another).getMissionId());
+			//return thisPublishDate - anotherPublishDate
+			Date anotherPublishedDate = ((WorkflowTask)another).getPublishedDate();
+			Date publishedDate = getPublishedDate();
+			if (publishedDate==null && anotherPublishedDate==null) {
+				return 0;
 			}
-			else {
-				return c;
+			if (anotherPublishedDate == null) {
+				return -1;
 			}
+			if (publishedDate == null) {
+				return 1;
+			}
+			return anotherPublishedDate.compareTo(publishedDate);
 		}
 	}
 
 	@Test
+	public void testCompareTo() {
+		Assert.assertTrue("a".compareTo("b") < 0);
+	}
+
+	@Test
 	public void testOfferBasic() {
-		PrifoBlockingQueue queue = new PrifoBlockingQueue("testOfferBasic");
+		PrifoQueue queue = new PrifoQueue("testOfferBasic");
 		WorkflowTask[] t = new WorkflowTask[] {
 				new WorkflowTask("t0"),
 				new WorkflowTask("t1"),
 				new WorkflowTask("t2"),
 				new WorkflowTask("t3"),
-				new WorkflowTask("t4")
+				new WorkflowTask("t4"),
+				new WorkflowTask("t5").setPublishedDate(DateUtils.createDate(2014, 9, 30)),
+				new WorkflowTask("t6").setPublishedDate(DateUtils.createDate(2014, 8, 29)),
+				new WorkflowTask("t7"),
+				new WorkflowTask("t8").setPublishedDate(DateUtils.createDate(2014, 9, 15))
 		};
 
 		queue.offer(t[0]);
+		queue.offer(t[6]);
 		queue.offer(t[1]);
-		queue.offer(t[2]);
+		queue.offer(t[2].setFocus(true));
 		queue.offer(t[1]); //hit t1
 		queue.offer(t[1]); //hit t1 again -> t1.priority = 2
-		queue.offer(t[4].increasePriority()); //t4.priority = 1
+		queue.offer(t[4].setPriority(1)); //t4.priority = 1
+		queue.offer(t[5]);
+		queue.offer(t[7].setFocus(true));
+		queue.offer(t[8]);
 
-		Assert.assertEquals(2, queue.peek().getPriority());
-		Assert.assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
-		Assert.assertEquals("t4", ((PrifoTask) queue.poll()).getMissionId());
+
+
+		//Assert.assertTrue(queue.PrifoComparator.compare(t[1], t[4]) < 0);
+
+		//t0 < t6 < t5
+		//Assert.assertTrue(queue.PrifoComparator.compare(t[5], t[0]) < 0);
+		/*Assert.assertTrue("a".compareTo("b") < 0);
+		Assert.assertTrue(t[6].compareTo(t[5])>0);
+		Assert.assertTrue(t[0].compareTo(t[6])>0);*/
+
+
+		Assert.assertEquals("t7", ((PrifoTask) queue.poll()).getMissionId()); //focused
+		Assert.assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId()); //t1.priority = 2
+		Assert.assertEquals("t4", ((PrifoTask) queue.poll()).getMissionId()); //t4.priority = 1
+		Assert.assertEquals("t5", ((PrifoTask) queue.poll()).getMissionId()); //t5.publishedDate = 2014-9-30
+		Assert.assertEquals("t8", ((PrifoTask) queue.poll()).getMissionId()); //t8.publishedDate = 2014-9-15
+		Assert.assertEquals("t6", ((PrifoTask) queue.poll()).getMissionId()); //t6.publishedDate = 2014-8-29
 		Assert.assertEquals("t0", ((PrifoTask) queue.poll()).getMissionId());
 		Assert.assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
 	}
+
 
 	PrifoBlockingQueue queue = new PrifoBlockingQueue("queue");
 	IPrifosable[] t;
@@ -114,11 +159,15 @@ public class PrifoQueueTest {
 
 	@Test
 	public void testOfferActiveTask2() {
+		PrifoQueue queue = new PrifoQueue("queue");
+
 		queue.offer(t[0]);
-		queue.offer(t[1]); //active = t1
+		queue.offer(t[1].setFocus(true)); //active = t1
 		queue.offer(t[2]);
 		queue.offer(t[3]);
 		queue.offer(t[2]); //hit t2
+
+		//1 2 0 3
 
 		Assert.assertEquals("t1", ((PrifoTask) queue.poll()).getMissionId());
 		Assert.assertEquals("t2", ((PrifoTask) queue.poll()).getMissionId());
@@ -151,7 +200,7 @@ public class PrifoQueueTest {
 		final int totalDuration = 60*1000;
 		final int oneThreadDuration=200;
 
-		PrifoExecutor executor = PrifoExecutorFactory.newPrifoExecutor("testQueueSize", 2, Integer.MAX_VALUE);
+		PrifoExecutor executor = PrifoExecutorFactory.newPrifoExecutor("testQueueSize", 2);
 
 		final int N = totalDuration/oneThreadDuration;
 		Log.info("Call execute "+N+" times");

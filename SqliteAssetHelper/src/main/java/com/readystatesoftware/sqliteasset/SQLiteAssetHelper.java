@@ -251,7 +251,8 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
         }
 
         try {
-            return getWritableDatabase();
+			SQLiteDatabase wdb = getWritableDatabase();
+			wdb.close();
         } catch (SQLiteException e) {
             if (mName == null) throw e;  // Can't open a temp database read-only!
             Log.e(TAG, "Couldn't open " + mName + " for writing (will try read-only):", e);

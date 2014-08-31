@@ -83,11 +83,14 @@ public class MyApplication extends InjectingApplication {
 
 	@Override
 	public File getCacheDir() {
-		return mRefData.getCacheDir();
+		if (Constants.DEBUG) {
+			return new File(Constants.DEBUG_DATABASE_PATH);
+		}
+		return getExternalCacheDir();
 	}
 
 	public String getDatabasePathString(String name) {
-		return getCacheDir()+"/"+name+".mDb";
+		return getCacheDir()+"/"+name;
 	}
 
 	public static void showErrorDialog(final FragmentManager fm, final String message, final Throwable ex) {

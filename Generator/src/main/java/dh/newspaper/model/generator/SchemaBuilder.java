@@ -45,6 +45,7 @@ public class SchemaBuilder {
 		article.addDateProperty("lastDownloadSuccess");
 
 		article.implementsSerializable();
+		//article.addContentProvider();
 
 //		Entity articleCategory = schema.addEntity("ArticleCategory");
 //		articleCategory.addIdProperty();
@@ -81,5 +82,6 @@ public class SchemaBuilder {
 		entity.addDateProperty("lastUpdate");
 
 		entity.implementsSerializable();
+		//entity.addContentProvider();
 	}
 }
