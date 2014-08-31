@@ -32,6 +32,7 @@ import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.concurrent.CancellationException;
 
 /**
  * Compute feed sources from an input query
@@ -85,6 +86,8 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 			else {
 				processNormalQuery();
 			}
+		} catch (CancellationException e) {
+			throw e;
 		} catch (Exception ex) {
 			pf.error("Search error", ex);
 			searchResultEvent = new SearchFeedsEvent(this, Constants.SUBJECT_SEARCH_FEEDS_DONE_LOADING, query, ex);
@@ -102,7 +105,7 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 	 */
 	private void processUrlQuery() throws IOException {
 		InputStream input = NetworkUtils.getStreamFromUrl(query, NetworkUtils.DESKTOP_USER_AGENT, this);
-		if (input==null || isCancelled()) {return;}
+		checkCancellation();
 
 		boolean queryIsDirectFeedsSource = false;
 		Feeds feeds = null;
@@ -112,6 +115,8 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 			if (feeds.size()>1) {
 				queryIsDirectFeedsSource = true;
 			}
+		} catch (CancellationException e) {
+			throw e;
 		} catch (Exception ex) {
 			pf.i("Query is not a valid feed source", ex);
 		}
@@ -129,11 +134,11 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 	 *  The input query is a web page which contains links to feeds sources
 	 */
 	private void processPageHtml(InputStream input) throws IOException {
-		if (isCancelled()) { return; }
+		checkCancellation();
 
 		Document doc = Jsoup.parse(input, Constants.DEFAULT_ENCODING, query);
 
-		if (isCancelled()) { return; }
+		checkCancellation();
 		Elements links = doc.select("a[href]");
 		if (links==null) {
 			pf.d("No links found in web page");
@@ -148,7 +153,7 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 		// interesting address will be on the top of this list, remove all duplication
 		int interestLink = 0;
 		for (Element link : links) {
-			if (isCancelled()) { return; }
+			checkCancellation();
 			String src = link.attr("abs:href");
 
 			if (sources.contains(src)) {
@@ -169,7 +174,7 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 		//visit all links extracted from the web page, start from most interesting one, which highly
 		//probably a feeds sources
 		for (String src : sources) {
-			if (isCancelled()) { return; }
+			checkCancellation();
 			if (!Strings.isNullOrEmpty(src) && URLUtil.isValidUrl(src)) {
 				processLink(src, searchResult);
 			}
@@ -196,18 +201,18 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 	 * Detect if the link src is a feeds source, if yes, send a partial result to the GUI
 	 */
 	private void processLink(String src, SearchFeedsResult searchResult) {
-		if (isCancelled()) { return; }
+		checkCancellation();
 		try {
 			String input = NetworkUtils.quickDownloadXml(src, NetworkUtils.DESKTOP_USER_AGENT, this);
 			if (Strings.isNullOrEmpty(input)) {
 				pf.d("Invalid feed source " + src+" not in xml format");
 				return;
 			}
-
-			if (isCancelled()) { return; }
+			
+			checkCancellation();
 			Document doc = Jsoup.parse(input, query, Parser.xmlParser());
 
-			if (isCancelled()) { return; }
+			checkCancellation();
 			Feeds feeds = contentParser.parseFeeds(doc, this);
 
 			if (feeds.size()>1) {
@@ -215,8 +220,10 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 				pf.d("Detect valid feed source "+src);
 			}
 
-			if (isCancelled()) { return; }
+			checkCancellation();
 			sendPartialResult(searchResult);
+		} catch (CancellationException e) {
+			throw e;
 		} catch (Exception ex) {
 			pf.d("Invalid feed source " + src, ex);
 		}
@@ -226,7 +233,7 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 	 * Send Feeds as SearchFeedsResult
 	 */
 	private void sendDirectFinalResult(Feeds feeds) throws MalformedURLException {
-		if (isCancelled()) { return; }
+		checkCancellation();
 		pf.d("Query is a valid feed source, sendDirectResult "+feeds);
 
 		//build result from source feeds
@@ -270,20 +277,20 @@ public class SearchFeedsWorkflow extends OncePrifoTask {
 	private boolean processNormalQuery() throws IOException {
 		final String queryUrl = "https://ajax.googleapis.com/ajax/services/feed/find?v=1.0&q="+ URLEncoder.encode(query, "UTF-8");
 		pf.d("processNormalQuery "+queryUrl);
-		if (isCancelled()) { return true; }
+		checkCancellation();
 
 		byte[] rawData = NetworkUtils.downloadContent(queryUrl, NetworkUtils.DESKTOP_USER_AGENT, this);
 
-		if (isCancelled()) { return true; }
+		checkCancellation();
 		SearchFeedsResult searchResult = objectMapper.readValue(rawData, SearchFeedsResult.class);
 
 
-		if (isCancelled()) { return true; }
+		checkCancellation();
 
 		//check if the result is already subscribed then set the subscription properties
 		refData.matchExistSubscriptions(searchResult);
 
-		if (isCancelled()) { return true; }
+		checkCancellation();
 		sendFinalResult(searchResult);
 		return false;
 	}

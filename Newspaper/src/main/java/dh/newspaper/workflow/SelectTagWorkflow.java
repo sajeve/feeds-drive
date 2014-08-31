@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -122,7 +123,10 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			mDaoSessionReadonly = daoMaster.newSession();
 
 			loadFirstPageArticlesFromCache();
-			if (mCallback != null && !isCancelled()) {
+
+			checkCancellation();
+
+			if (mCallback!=null) {
 				pw.resetStopwatch();
 				mCallback.onFinishedLoadFromCache(this, mArticles, mCountArticles);
 				pw.t("Callback onFinishedLoadFromCache()");
@@ -130,14 +134,18 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 			if (mOnlineMode) {
 				downloadFeeds();
-				if (mCallback != null && !isCancelled()) {
+
+				checkCancellation();
+				if (mCallback!=null) {
 					pw.resetStopwatch();
 					mCallback.onFinishedDownloadFeeds(this, mArticles, mCountArticles);
 					pw.t("Callback onFinishedDownloadFeeds()");
 				}
 
 				downloadArticles();
-				if (mCallback != null && !isCancelled()) {
+
+				checkCancellation();
+				if (mCallback!=null) {
 					pw.resetStopwatch();
 					mCallback.onFinishedDownloadArticles(this);
 					pw.t("Callback onFinishedDownloadArticles()");
@@ -148,12 +156,13 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			}
 		}
 		finally {
-			daoMaster.getDatabase().close();
 			if (mCallback!=null) {
 				pw.resetStopwatch();
 				mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
-				//pw.d("Callback done()");
+				pw.t("Callback done()");
 			}
+
+			daoMaster.getDatabase().close();
 
 			try {
 				long duration = (new Duration(new DateTime(getStartTime()), DateTime.now())).getMillis();
@@ -167,9 +176,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	}
 
 	private void loadFirstPageArticlesFromCache() {
-		if (isCancelled()) {
-			return;
-		}
+		checkCancellation();
 		pw.debug("Load articles from cache");
 
 		if (mSubscriptions == null || mSubscriptions.isEmpty()) {
@@ -213,10 +220,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	 * @return
 	 */
 	public boolean loadPage(int offset) {
-		if (isCancelled()) {
-			pw.warn("The workflow is cancelled");//consider to throw exception here
-			return false;
-		}
+		checkCancellation();
 
 		final ReentrantLock lock = this.lock;
 		lock.lock();
@@ -276,13 +280,9 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 */
 
 	private void downloadFeeds() {
-		if (isCancelled()) {
-			return;
-		}
+		checkCancellation();
 		for(Subscription sub : getSubscriptions(mTag)) {
-			if (isCancelled()) {
-				return;
-			}
+			checkCancellation();
 			if (!isExpiry(sub)) {
 				pw.debug("Subscription is not yet expiry ttl="+mSubscriptionsTimeToLive+". No needs to re-download feeds list: " + sub);
 				continue;
@@ -297,32 +297,33 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				Feeds feeds = mContentParser.parseFeeds(sub.getFeedsUrl(), encoding, this);
 
 				if (feeds == null) {
-					pw.d("Download and parse feeds cancelled "+sub);
+					pw.d("Download and parse feeds cancelled " + sub);
 					return;
 				}
 
-				pw.d("Download and parse feeds of "+sub);
+				pw.d("Download and parse feeds of " + sub);
 
 				mSubscriptions.put(sub, feeds);
 
 				//upsert article to database with excerpt
 				for (FeedItem feedItem : feeds) {
-					if (isCancelled()) {
-						return;
-					}
+					checkCancellation();
 					try {
 						pw.resetStopwatch();
 
 						mCurrentLoadArticleWorkflow = new SelectArticleWorkflow(mContext, feedItem, mArticleTimeToLive, false, null);
 						mCurrentLoadArticleWorkflow.run();
 
-						pw.t("Download full content of "+feedItem);
-					}
-					catch (Exception e) {
+						pw.t("Download full content of " + feedItem);
+					} catch (CancellationException e) {
+						throw e;
+					} catch (Exception e) {
 						pw.warn("Failed updating article", e);
-						mNotices.add("Failed updating article excerpt "+feedItem+": "+e);
+						mNotices.add("Failed updating article excerpt " + feedItem + ": " + e);
 					}
 				}
+			} catch (CancellationException e) {
+				throw e;
 			} catch (FeedParserException e) {
 				pw.warn("Failed parsing feed", e);
 				mNotices.add("Failed parsing feed of "+sub+": "+e);
@@ -340,14 +341,10 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	}
 
 	private void downloadArticles() {
-		if (isCancelled()) {
-			return;
-		}
+		checkCancellation();
 
 		for(Subscription sub : mSubscriptions.keySet()) {
-			if (isCancelled()) {
-				return;
-			}
+			checkCancellation();
 			Feeds feeds = mSubscriptions.get(sub);
 
 			if (feeds == null) {
@@ -357,9 +354,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 			pw.debug("Start download and parse full articles of " + sub);
 			for (FeedItem feedItem : feeds) {
-				if (isCancelled()) {
-					return;
-				}
+				checkCancellation();
 				try {
 					final SelectArticleWorkflow wkflow = new SelectArticleWorkflow(mContext, feedItem, mArticleTimeToLive, true, null);
 
@@ -377,7 +372,9 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 						mArticlesLoader.execute(wkflow);
 					}
 				}
-				catch (Exception e) {
+				catch (CancellationException e) {
+					throw e;
+				} catch (Exception e) {
 					pw.warn("Failed updating article", e);
 					mNotices.add("Failed updating article "+feedItem+": "+e);
 				}
@@ -417,9 +414,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	}
 
 	private void buildArticlesQuery() {
-		if (isCancelled()) {
-			return;
-		}
+		checkCancellation();
 		if (mSelectArticleQueryBuilder == null) {
 			pw.resetStopwatch();
 

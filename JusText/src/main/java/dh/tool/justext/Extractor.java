@@ -6,6 +6,7 @@ import dh.tool.common.PerfWatcher;
 import dh.tool.common.StrUtils;
 import dh.tool.jsoup.NodeHelper;
 import dh.tool.thread.ICancellation;
+import dh.tool.thread.ThreadUtils;
 import org.jsoup.nodes.*;
 import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
@@ -14,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.concurrent.CancellationException;
 
 public class Extractor {
 	private static final Logger log = LoggerFactory.getLogger(Extractor.class);
@@ -53,7 +53,8 @@ public class Extractor {
 	 * throws CancellationException
 	 */
 	private void process(Document document, boolean colorize) {
-		checkCancellation();
+		ThreadUtils.checkCancellation(cancellation);
+		
 		Stopwatch sw = Stopwatch.createStarted();
 		pw = new PerfWatcher(log, document.baseUri());
 
@@ -80,13 +81,13 @@ public class Extractor {
 		}
 
 		if (conf.preCleanUselessContent()) {
-			checkCancellation();
+			ThreadUtils.checkCancellation(cancellation);
 			cleanUselessContent(document);
 			pw.t("cleanUselessContent");
 		}
 
 
-		checkCancellation();
+		ThreadUtils.checkCancellation(cancellation);
 		LinkedList<Paragraph> paragraphs;
 		if (conf.processOnlyBody()) {
 			Node n = document.body();
@@ -100,7 +101,7 @@ public class Extractor {
 
 		new QualityComputation(paragraphs).process();
 
-		checkCancellation();
+		ThreadUtils.checkCancellation(cancellation);
 
 		if (colorize) {
 			for (Paragraph p : paragraphs) {
@@ -119,7 +120,7 @@ public class Extractor {
 			}
 			pw.t("Remove BAD paragraphs");
 
-			checkCancellation();
+			ThreadUtils.checkCancellation(cancellation);
 
 			//clean empty tags
 			if (conf.postCleanBoilerplateTags()) {
@@ -131,12 +132,6 @@ public class Extractor {
 		}
 
 		pw.dg("Finished");
-	}
-
-	private void checkCancellation() {
-		if (cancellation!=null && cancellation.isCancelled()) {
-			throw new CancellationException();
-		}
 	}
 
 	/**
@@ -249,18 +244,18 @@ public class Extractor {
 		}
 
 		public void process() {
-			checkCancellation();
+			ThreadUtils.checkCancellation(cancellation);
 
 			//performs context-free classification
 			for (Paragraph p : paragraphs) {
-				checkCancellation();
+				ThreadUtils.checkCancellation(cancellation);
 				p.initRawInfo();
 			}
 			pw.t("Compute free-context quality");
 
 			//pre-process heading
 
-			checkCancellation();
+			ThreadUtils.checkCancellation(cancellation);
 
 			if (conf.contentAlwaysHasTitle()) {
 				preProcessHeading2();
@@ -281,7 +276,7 @@ public class Extractor {
 
 			int left;
 			for (int i=0; i<paragraphs.size();) {
-				checkCancellation();
+				ThreadUtils.checkCancellation(cancellation);
 				if (paragraphs.get(i).isNearOrShort()) {
 					left = i-1;
 					while (paragraphs.get(i).isNearOrShort() && i<paragraphs.size()) {
@@ -313,7 +308,7 @@ public class Extractor {
 			if (conf.removeTitle()) {
 				//find first good heading
 				for (int i=0; i<paragraphs.size(); i++) {
-					checkCancellation();
+					ThreadUtils.checkCancellation(cancellation);
 
 					Paragraph p = paragraphs.get(i);
 					if (p.isH1orH2() && p.getQuality()== Paragraph.Quality.GOOD) {
@@ -334,7 +329,7 @@ public class Extractor {
 		 * Remove all identical images and paragraphs. They are always boiler plates
 		 */
 		public void removeRedundancyParagraphs() {
-			checkCancellation();
+			ThreadUtils.checkCancellation(cancellation);
 			pw.resetStopwatch();
 			for (int i=0; i<paragraphs.size()-1; i++) {
 				Paragraph p1 = paragraphs.get(i);
@@ -442,7 +437,7 @@ public class Extractor {
 		 * We will use this paragraph as Title, so promote it to GOOD.
 		 */
 		public Paragraph findTitle() {
-			checkCancellation();
+			ThreadUtils.checkCancellation(cancellation);
 
 			for (Paragraph p : paragraphs) {
 				if (p.isH1orH2() && p.getQuality() == Paragraph.Quality.GOOD) {
@@ -472,7 +467,7 @@ public class Extractor {
 		}
 
 		public void postProcessHeading() {
-			checkCancellation();
+			ThreadUtils.checkCancellation(cancellation);
 
 			if (!conf.processHeadings()) {
 				return;
@@ -511,7 +506,7 @@ public class Extractor {
 		 */
 		public void removeTrailHeading() {
 			if (conf.processHeadings() && conf.contentAlwaysHasTitle()) {
-				checkCancellation();
+				ThreadUtils.checkCancellation(cancellation);
 				pw.resetStopwatch();
 				Iterator<Paragraph> it = paragraphs.descendingIterator();
 				//Start from bottom to top, remove heading which trail the articles
@@ -543,7 +538,7 @@ public class Extractor {
 		 * NEAR_GOOD to GOOD
 		 */
 		private void fillHoles() {
-			checkCancellation();
+			ThreadUtils.checkCancellation(cancellation);
 
 			if (conf.nearGoodDensityRequiredToFillHoles() > 1) {
 				return;
@@ -554,7 +549,7 @@ public class Extractor {
 			for (int i = 0; i<n-1; i++) {
 				Paragraph p1 = paragraphs.get(i);
 				if (p1.getQuality()== Paragraph.Quality.GOOD) {
-					checkCancellation();
+					ThreadUtils.checkCancellation(cancellation);
 
 					//find the nearest GOOD paragraph p2, and measure the distant between p1 and p2
 					int holeSurface = 0; //distant between 2 GOOD paragraphs p1 and p2
@@ -578,6 +573,7 @@ public class Extractor {
 							if (nearGoodDensity > conf.nearGoodDensityRequiredToFillHoles()) {
 								//the holes is big enough to fill
 								for (int k = i + 1; k < j; k++) {
+									ThreadUtils.checkCancellation(cancellation);
 									Paragraph p = paragraphs.get(k);
 									if (p.getContextFreeQuality() == Paragraph.Quality.NEAR_GOOD) {
 										p.setQuality(Paragraph.Quality.GOOD,
@@ -596,9 +592,10 @@ public class Extractor {
 		}
 
 		private void processEdges(Iterator<Paragraph> it) {
-			checkCancellation();
+			//ThreadUtils.checkCancellation(cancellation);
 			Paragraph p;
 			while (it.hasNext() && (p = it.next()).isNearOrShort()) {
+				ThreadUtils.checkCancellation(cancellation);
 				if (conf.strictOnEdgeContent()) {
 					p.setQuality(Paragraph.Quality.BAD, "ProcessEdge"); // strict way: content from edge are often boilerplate
 				} else {
@@ -677,12 +674,6 @@ public class Extractor {
 				return true;
 			}
 			return false;
-		}
-
-		private void checkCancellation() {
-			if (cancellation!=null && cancellation.isCancelled()) {
-				throw new CancellationException();
-			}
 		}
 	}
 }

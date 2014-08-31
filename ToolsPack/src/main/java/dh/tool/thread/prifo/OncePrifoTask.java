@@ -1,12 +1,11 @@
 package dh.tool.thread.prifo;
 
-import dh.tool.common.PerfWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -30,9 +29,7 @@ public abstract class OncePrifoTask extends PrifoTask {
 	@Override
 	public void run() {
 		try {
-			if (isCancelled()) {
-				return;
-			}
+			checkCancellation();
 			final ReentrantLock lock = this.lock;
 			lock.lock();
 			running = true;
@@ -53,6 +50,9 @@ public abstract class OncePrifoTask extends PrifoTask {
 				running = false;
 				lock.unlock();
 			}
+		}
+		catch (CancellationException ex) {
+			log.debug("Cancel " + ex.getMessage() + " " + toString());
 		}
 		catch (Exception ex) {
 			log.error("Un-catch error", ex);

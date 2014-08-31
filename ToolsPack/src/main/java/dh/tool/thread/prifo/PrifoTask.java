@@ -1,19 +1,17 @@
 package dh.tool.thread.prifo;
 
-import dh.tool.common.PerfWatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import dh.tool.thread.ICancellation;
+
+import java.util.concurrent.CancellationException;
 
 /**
- * A {@link PrifoTask} must implement {@link #run()} which constantly check for {@link #isCancelled()}
+ * A {@link PrifoTask} must implement {@link #run()} which constantly call {@link #checkCancellation}
  * so that the task can properly terminate as soon as the {@link #cancel()} is called.
  * <p></p>
- * Overriding the {@link #cancel()} method must call super.cancel(), (do it to cancel other sub tasks or to
+ * Overriding the {@link #cancel()} method MUST to call super.cancel(), (do it to cancel other sub tasks or to
  * free up other resources).
  * <p></p>
  *
- * A {@link PrifoTask} must also implement missionId. Two task of the same missionId are twin
- * if we add task in the queue which already contains the twin so the task will not be added, but the priority of the twin
  * will be increased. See {@link PrifoQueue#offer(IPrifosable)}
  *
  * Created by hiep on 12/06/2014.
@@ -46,16 +44,23 @@ public abstract class PrifoTask implements IPrifosable {
 	public boolean isFocused() {
 		return this.focused;
 	}
-
 	@Override
 	public boolean isCancelled() {
 		return cancelled || Thread.interrupted();
 	}
-
 	public void cancel() {
 		cancelled = true;
 	}
-
+	public void checkCancellation() {
+		if (isCancelled()) {
+			throw new CancellationException();
+		}
+	}
+	public void checkCancellation(String message) {
+		if (isCancelled()) {
+			throw new CancellationException(message);
+		}
+	}
 //	@Override
 //	public int compareTo(Object another) {
 //		if (another==null) {

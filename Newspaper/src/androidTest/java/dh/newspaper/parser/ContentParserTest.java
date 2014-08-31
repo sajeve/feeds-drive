@@ -10,6 +10,7 @@ import dh.newspaper.MainActivity;
 import dh.newspaper.test.TestUtils;
 import dh.newspaper.tools.NetworkUtils;
 import dh.tool.thread.ICancellation;
+import dh.tool.thread.ThreadUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActivity> {
@@ -72,10 +74,7 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 			byte[] buffer = new byte[1024];
 			int len;
 			while ((len = input.read(buffer)) > -1) {
-				if (cancelListener!=null && cancelListener.isCancelled()) {
-					Log.v(TAG, "Download canceled ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
-					return null;
-				}
+				ThreadUtils.checkCancellation(cancelListener, "Download canceled ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 				baos.write(buffer, 0, len);
 			}
 			baos.flush();

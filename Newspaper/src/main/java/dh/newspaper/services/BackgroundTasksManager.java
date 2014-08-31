@@ -37,6 +37,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -326,12 +327,7 @@ public class BackgroundTasksManager implements Closeable {
 					Log.w(TAG, ex);
 				}
 				finally {
-					try {
-						daoMaster.getDatabase().close();
-					}
-					catch (Exception ex) {
-						Log.wtf(TAG, "Cannot close database", ex);
-					}
+					daoMaster.getDatabase().close();
 				}
 			}
 
@@ -390,6 +386,7 @@ public class BackgroundTasksManager implements Closeable {
 	}
 
 	public void cancelAllDownloading() {
+		mainPrifoExecutor.cancelAll();
 		{
 			PrifoTask t = getActiveSelectTagWorkflow();
 			if (t != null){
@@ -408,7 +405,6 @@ public class BackgroundTasksManager implements Closeable {
 				t.cancel();
 			}
 		}
-		mainPrifoExecutor.cancelAll();
 	}
 
 	@Override

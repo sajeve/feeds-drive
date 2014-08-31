@@ -25,6 +25,7 @@ import org.jsoup.parser.Parser;
 
 import javax.inject.Inject;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 
 /**
 * Created by hiep on 28/07/2014.
@@ -148,17 +149,14 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 			else {
 				sendError("Feeds source is not valid"); //TODO: translate
 			}
+		} catch (CancellationException e) {
+			throw e;
 		}catch (Exception ex) {
 			sendError("Failed saving subscription: " + ex); //TODO: translate
 			Log.w(TAG, ex);
 		}
 		finally {
-			try {
-				daoMaster.getDatabase().close();
-			}
-			catch (Exception ex) {
-				Log.wtf(TAG, "Cannot close database", ex);
-			}
+			daoMaster.getDatabase().close();
 		}
 	}
 

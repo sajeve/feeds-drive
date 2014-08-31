@@ -13,6 +13,7 @@ import dh.tool.common.StrUtils;
 import dh.tool.justext.Configuration;
 import dh.tool.justext.Extractor;
 import dh.tool.thread.ICancellation;
+import dh.tool.thread.ThreadUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -277,7 +278,7 @@ public class ContentParser {
 	}
 
 	public Feeds parseFeeds(Document doc, ICancellation cancelListener) throws FeedParserException {
-		if (cancelListener!=null && cancelListener.isCancelled()) return null;
+		ThreadUtils.checkCancellation(cancelListener);
 
 		FeedFormat feedFormat;
 
@@ -292,7 +293,7 @@ public class ContentParser {
 			itemCount = itemsElem==null ? 0 : itemsElem.size();
 		}
 
-		if (cancelListener!=null && cancelListener.isCancelled()) return null;
+		ThreadUtils.checkCancellation(cancelListener);
 
 		if (itemCount==0) {
 			throw new FeedParserException(doc.baseUri(), "No feed item found: '"+ StrUtils.glimpse(doc.text())+"'");
@@ -307,7 +308,7 @@ public class ContentParser {
 					parseFeedsPublishedDate(feedFormat, doc)
 				);
 		for (int i = 0; i < itemCount; i++) {
-			if (cancelListener!=null && cancelListener.isCancelled()) return null;
+			ThreadUtils.checkCancellation(cancelListener);
 
 			Element elem = itemsElem.get(i);
 			try {
@@ -330,6 +331,7 @@ public class ContentParser {
 
 		return resu;
 	}
+
 	//</editor-fold>
 
 	//<editor-fold desc="Rss Parse Item details">

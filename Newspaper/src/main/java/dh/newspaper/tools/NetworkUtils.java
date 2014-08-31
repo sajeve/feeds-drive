@@ -13,6 +13,7 @@ import com.squareup.okhttp.OkHttpClient;
 import dh.newspaper.Constants;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.ICancellation;
+import dh.tool.thread.ThreadUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -31,6 +32,7 @@ import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,10 +66,7 @@ public class NetworkUtils {
 		HttpGet request = new HttpGet(address);
 		byte[] rawData = null;
 		try {
-			if (cancelListener!=null && cancelListener.isCancelled()) {
-				Log.v(TAG, "Downloaded canceled AndroidHttpClient ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
-			}
-
+			ThreadUtils.checkCancellation(cancelListener, "Downloaded canceled AndroidHttpClient ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 			HttpResponse response = ahClient.execute(request);
 			HttpEntity entity = response.getEntity();
 
@@ -97,10 +96,7 @@ public class NetworkUtils {
 		HttpConnectionParams.setSocketBufferSize(httpClient.getParams(), 8192);
 
 		HttpGet request = new HttpGet(address);
-
-		if (cancelListener!=null && cancelListener.isCancelled()) {
-			Log.v(TAG, "Download HG cancelled  ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
-		}
+		ThreadUtils.checkCancellation(cancelListener, "Download HG cancelled  ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 
 		HttpResponse response = httpClient.execute(request);
 		HttpEntity entity = response.getEntity();
@@ -132,9 +128,7 @@ public class NetworkUtils {
 
 				String line;
 				while ((line = r.readLine()) != null) {
-					if (cancelListener!=null && cancelListener.isCancelled()) {
-						return null;
-					}
+					ThreadUtils.checkCancellation(cancelListener);
 					content.append(line);
 				}
 				return content.toString();
@@ -169,10 +163,7 @@ public class NetworkUtils {
 				byte[] buffer = new byte[1024];
 				int len;
 				while ((len = input.read(buffer)) > -1) {
-					if (cancelListener!=null && cancelListener.isCancelled()) {
-						Log.v(TAG, "Download HC canceled ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
-						return null;
-					}
+					ThreadUtils.checkCancellation(cancelListener, "Download HC canceled ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
 					baos.write(buffer, 0, len);
 				}
 				baos.flush();

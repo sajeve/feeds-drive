@@ -125,18 +125,14 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 					.unique();
 			pw.t("Found Parent subscription " + mParentSubscription);
 
-			if (isCancelled()) {
-				return;
-			}
+			checkCancellation();
 
 			if (mArticle == null) {
 				//find mArticle from database
 				mArticle = daoSessionReadonly.getArticleDao().queryBuilder()
 						.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
 				pw.t("Found Article in cache " + mArticle);
-				if (isCancelled()) {
-					return;
-				}
+				checkCancellation();
 
 				if (mCallback!=null) {
 					mCallback.onFinishedCheckCache(this, getArticle());
@@ -155,16 +151,16 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 				try {
 					daoSessionReadonly.getArticleDao().refresh(mArticle);
 					pw.t("Refreshed cached Article from database " + mArticle);
-					if (isCancelled()) {
-						return;
-					}
+					checkCancellation();
 
-					if (mCallback!=null) {
+					if (mCallback != null) {
 						mCallback.onFinishedCheckCache(this, getArticle());
 						pw.t("Callback onFinishedCheckCache()");
 					}
 
 					checkArticleExpirationThenUpdate();
+				} catch (CancellationException e) {
+					throw e;
 				} catch (Exception ex) {
 					Log.w(TAG, ex);
 					mParseNotice.append(" Error while refresh cached article: " + ex.toString());
@@ -174,11 +170,11 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 			getArticleContentDocument(); //parse the article content with jsoup if it is not parsed yet
 		} finally {
-			daoMaster.getDatabase().close();
 			if (mCallback!=null) {
 				mCallback.done(this, getArticle(), isCancelled());
 				pw.t("callback done");
 			}
+			daoMaster.getDatabase().close();
 			try {
 				long duration = (new Duration(new DateTime(getStartTime()), DateTime.now())).getMillis();
 				pw.ig("SelectArticleWorkflow completed " + duration + " ms" + (mSuccessDownloadAndExtraction ? " (dl and extract)" : ""));
@@ -195,9 +191,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	 */
 	private void insertNewToCache() {
 		downloadAndExtractArticleContent();
-		if (isCancelled()) {
-			return;
-		}
+		checkCancellation();
 		//region choose articleContent
 
 		/*
@@ -265,28 +259,22 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			pw.e("Failed to insert article to database", ex);
 		}
 		finally {
-			try {
-				daoMaster.getDatabase().close();
-			}
-			catch (Exception ex) {
-				pw.e("Cannot close database", ex);
-			}
+			daoMaster.getDatabase().close();
 		}
 		pw.d("Insert new "+mArticle);
 
 		//load image or in offline mode, replace image source by cache URL
 		loadArticleImages();
 
-		if (mCallback!=null && !isCancelled()) {
+		checkCancellation();
+		if (mCallback!=null) {
 			mCallback.onFinishedUpdateCache(this, getArticle(), true);
-			pw.t("Callback onFinishedUpdateCache()");
 		}
+		pw.t("Callback onFinishedUpdateCache()");
 	}
 
 	private void checkArticleExpirationThenUpdate() {
-		if (isCancelled()) {
-			return;
-		}
+		checkCancellation();
 		boolean articleIsExpiry = mArticleTimeToLive==null || mArticle.getLastDownloadSuccess()==null || new Duration(new DateTime(mArticle.getLastDownloadSuccess()), DateTime.now()).isLongerThan(mArticleTimeToLive);
 
 		if (articleIsExpiry) {
@@ -300,7 +288,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	private void updateArticleContent() {
 		downloadAndExtractArticleContent();
 
-		if (isCancelled()) return;
+		checkCancellation();
 
 		//region choose content
 
@@ -347,19 +335,15 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			pw.e("Failed to update article in database", ex);
 		}
 		finally {
-			try {
-				daoMaster.getDatabase().close();
-			}
-			catch (Exception ex) {
-				pw.e("Cannot close database", ex);
-			}
+			daoMaster.getDatabase().close();
 		}
 		pw.d("Update article content " + mArticle);
 
 		//load image or in offline mode, replace image source by cache URL
 		loadArticleImages(); //content changed, re-compute image
 
-		if (mCallback!=null && !isCancelled()) {
+		checkCancellation();
+		if (mCallback!=null) {
 			mCallback.onFinishedUpdateCache(this, getArticle(), false);
 			pw.t("Callback onFinishedUpdateCache()");
 		}
@@ -373,7 +357,8 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	 * before save the article to the database. (Article image URL in the database must be the real one)
 	 */
 	private void loadArticleImages() {
-		if (isCancelled() || getArticleContentDocument()==null) return;
+		checkCancellation();
+		if (getArticleContentDocument()==null) return;
 
 		Elements elems = getArticleContentDocument().select("img");
 		if (elems == null || elems.isEmpty()) {
@@ -388,9 +373,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 				ImageLoader.getInstance().loadImage(e.attr("abs:src"), new ImageLoadingListener() {
 					@Override
 					public void onLoadingStarted(String imageUri, View view) {
-						if (isCancelled()) {
-							throw new CancellationException();
-						}
+						checkCancellation();
 					}
 
 					@Override
@@ -412,7 +395,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 			String avatar = elems.get((elems.size() - 1) / 2).attr("abs:src");
 			mArticle.setImageUrl(avatar);
-			pw.d("Set avatar "+avatar);
+			pw.d("Set avatar " + avatar);
 		}
 		else {
 			/**
@@ -464,9 +447,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			return;
 		}
 
-		if (isCancelled()) {
-			return;
-		}
+		checkCancellation();
 
 		try {
 			pw.resetStopwatch();
@@ -482,18 +463,21 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 			extractContent(inputStream);
 			mSuccessDownloadAndExtraction = true;
+		} catch (CancellationException e) {
+			throw e;
 		} catch (IOException e) {
-			mParseNotice.append(" IOException: "+e.toString());
+			mParseNotice.append(" IOException: " + e.toString());
 			pw.w("IOException", e);
 		} catch (Exception e) {
 			mParseNotice.append(" Exception: "+e.toString());
 			pw.w("Exception", e);
 		}
 
-		if (mCallback!=null && !isCancelled()) {
+		checkCancellation();
+		if (mCallback!=null) {
 			mCallback.onFinishedDownloadContent(this, getArticle());
-			pw.t("Callback onFinishedDownloadContent()");
 		}
+		pw.t("Callback onFinishedDownloadContent()");
 	}
 
 	/**
@@ -518,7 +502,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 		}*/
 		mDoc = mContentParser.extractContent(inputStream, encoding, mFeedItem.getUri(), mParseNotice, this);
 
-		if (isCancelled()) return;
+		checkCancellation();
 
 		mArticleContentDownloaded = mDoc.outerHtml();
 		Element docBody = mDoc.body();
@@ -631,12 +615,6 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			return null;
 		}
 		return mArticle.getPublishedDate();
-	}
-
-	@Override
-	public void cancel() {
-		super.cancel();
-		pw.debug("Cancelled");
 	}
 
 	public static interface SelectArticleCallback {

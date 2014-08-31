@@ -4,6 +4,10 @@ import dh.tool.thread.ICancellation;
 
 /**
  * A task must implement this interface to use in {@link PrifoBlockingQueue}
+ * two {@link IPrifosable} tasks with the same {@link #getMissionId()} are twin
+ * if we add task in the queue which already contains the twin so the later task will not be added with a higher priority
+ * and its twin will be remove from the database
+ *
  * Created by hiep on 12/06/2014.
  */
 public interface IPrifosable extends Runnable, ICancellation {
