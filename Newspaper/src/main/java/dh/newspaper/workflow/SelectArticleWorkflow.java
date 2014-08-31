@@ -53,7 +53,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	private static final String TAG = SelectArticleWorkflow.class.getName();
 	private static final Logger log = LoggerFactory.getLogger(SelectArticleWorkflow.class);
 
-	@Inject DaoSession daoSessionReadonly;
+	//@Inject DaoSession daoSessionReadonly;
 	@Inject ContentParser mContentParser;
 	//@Inject MessageDigest mMessageDigest;
 	@Inject RefData refData;
@@ -113,7 +113,12 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	@Override
 	public void perform() {
 		pw.i("Start SelectArticleWorkflow");
+
+		DaoMaster daoMaster = refData.createReadOnlyDaoMaster();
+
 		try {
+			DaoSession daoSessionReadonly = daoMaster.newSession();
+
 			mParentSubscription = daoSessionReadonly.getSubscriptionDao().queryBuilder()
 					.whereOr(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()),
 							SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()+"/"))
@@ -168,8 +173,8 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			}
 
 			getArticleContentDocument(); //parse the article content with jsoup if it is not parsed yet
-
 		} finally {
+			daoMaster.getDatabase().close();
 			if (mCallback!=null) {
 				mCallback.done(this, getArticle(), isCancelled());
 				pw.t("callback done");
@@ -626,6 +631,12 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			return null;
 		}
 		return mArticle.getPublishedDate();
+	}
+
+	@Override
+	public void cancel() {
+		super.cancel();
+		pw.debug("Cancelled");
 	}
 
 	public static interface SelectArticleCallback {

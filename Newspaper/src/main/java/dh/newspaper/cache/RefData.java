@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class RefData {
 	private static final String TAG = RefData.class.getName();
-	private final DaoSession mDaoSession;
 	//private List<PathToContent> mPathToContents;
 	private TreeSet<String> mActiveTags;
 	private TreeSet<String> mTags;
@@ -52,8 +51,7 @@ public class RefData {
 	private List<Subscription> subscriptions;
 	private SharedPreferences mSharedPreferences;
 
-	public RefData(Context context, DaoSession daoSession, DatabaseHelper databaseHelper, SharedPreferences sharedPreferences) {
-		mDaoSession = daoSession;
+	public RefData(Context context, DatabaseHelper databaseHelper, SharedPreferences sharedPreferences) {
 		mContext = context;
 		mSharedPreferences = sharedPreferences;
 		this.databaseHelper = databaseHelper;
@@ -112,7 +110,15 @@ public class RefData {
 	private void loadSubscriptions() {
 		checkAccessDiskOnMainThread();
 
-		subscriptions = mDaoSession.getSubscriptionDao().loadAll();
+		SQLiteDatabase db = databaseHelper.getReadableDatabase();
+		try {
+			DaoSession daoSession = (new DaoMaster(db)).newSession();
+			subscriptions = daoSession.getSubscriptionDao().loadAll();
+		}
+		finally {
+			db.close();
+		}
+
 		activeSubscriptions = new ArrayList<Subscription>();
 		for (Subscription sub : subscriptions) {
 			if (sub.getEnable()) {
@@ -174,10 +180,15 @@ public class RefData {
 	}
 
 	public String getCachePath() {
-		if (Constants.DEBUG) {
+		return getCachePath(mContext);
+	}
+	public static String getCachePath(Context context) {
+		if (Constants.USE_DEBUG_DATABASE) {
 			return Constants.DEBUG_DATABASE_PATH;
 		}
-		return mContext.getExternalCacheDir().getAbsolutePath();
+		else {
+			return context.getExternalCacheDir().getAbsolutePath(); /* /storage/emulated/0/Android/data/dh.newspaper/cache */
+		}
 	}
 
 	/*public File getCacheDir() {

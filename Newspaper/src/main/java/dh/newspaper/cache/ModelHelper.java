@@ -190,7 +190,7 @@
 //		return article;
 //	}
 //	public Article get(FeedItem feedItem, SelectSingleArticleCallback callback) {
-//		return get(feedItem, Constants.ARTICLE_TTL, callback);
+//		return get(feedItem, Constants.ARTICLE_TTL_MIN, callback);
 //	}
 //
 //	public PathToContent findFirstMatchingPathToContent(String articleUrl) {
