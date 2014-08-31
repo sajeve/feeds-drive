@@ -24,12 +24,9 @@ import dh.newspaper.model.json.SearchFeedsResult;
 import dh.newspaper.tools.NetworkUtils;
 import dh.newspaper.workflow.SaveSubscriptionWorkflow;
 import dh.newspaper.workflow.SearchFeedsWorkflow;
-import dh.tool.thread.prifo.OncePrifoTask;
-import dh.tool.thread.prifo.PrifoExecutor;
-import dh.tool.thread.prifo.PrifoExecutorFactory;
+import dh.tool.thread.prifo.*;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
-import dh.tool.thread.prifo.PrifoTask;
 
 import javax.inject.Inject;
 import java.io.Closeable;
@@ -98,7 +95,7 @@ public class BackgroundTasksManager implements Closeable {
 			@Override
 			protected void onPostExecute(Boolean result) {
 				mRefData.initImageLoader();
-				if (!Constants.DEBUG) {
+				if (Constants.LOAD_FIRST_TAG_ON_START) {
 					//load the first tag
 					if (mRefData.getActiveTags().size() > 0) {
 						loadTag(mRefData.getActiveTags().first());
@@ -383,6 +380,28 @@ public class BackgroundTasksManager implements Closeable {
 		mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main");
 		mainPrifoExecutor.execute(task);*/
 		mainPrifoExecutor.executeUnique(task);
+	}
+
+	public void cancelAllDownloading() {
+		mainPrifoExecutor.cancelAll();
+		{
+			PrifoTask t = getActiveSelectTagWorkflow();
+			if (t != null){
+				t.cancel();
+			}
+		}
+		{
+			PrifoTask t = getActiveSelectArticleWorkflow();
+			if (t != null){
+				t.cancel();
+			}
+		}
+		{
+			PrifoTask t = getActiveSearchFeedsWorkflow();
+			if (t != null){
+				t.cancel();
+			}
+		}
 	}
 
 	@Override

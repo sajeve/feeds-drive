@@ -22,6 +22,8 @@
     <string name="subscribe">Subscribe</string>
     <string name="share">Share</string>
     <string name="offline">Offline</string>
+	<string name="download_all">Download All</string>
+	<string name="cancel_current_download">Cancel downloading</string>
 	<string name="show_original_page">Web view</string>
     <string name="url">URL</string>
     <string name="category">Category</string>

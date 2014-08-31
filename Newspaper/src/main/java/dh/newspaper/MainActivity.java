@@ -14,6 +14,9 @@ import android.view.MenuItem;
 import android.view.View;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.base.Injector;
+import dh.newspaper.cache.RefData;
+import dh.newspaper.services.AlarmReceiver;
+import dh.newspaper.services.BackgroundTasksManager;
 import dh.newspaper.services.MainMenuHandler;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.ManageSubscriptionActivity;
@@ -46,6 +49,9 @@ public class MainActivity extends Activity {
 	@Inject SharedPreferences mSharedPreferences;
 
 	@Inject MainMenuHandler mMainMenuHandler;
+
+	@Inject RefData mRefData;
+	@Inject BackgroundTasksManager mBackgroundTasksManager;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -171,6 +177,17 @@ public class MainActivity extends Activity {
 			case R.id.action_manage_subscription:
 				this.startActivity(new Intent(this, ManageSubscriptionActivity.class));
 				return true;
+			case R.id.action_downloadAll: {
+				long interval = mRefData.getPreferenceServiceInterval();
+				AlarmReceiver.setupAlarm(getApplicationContext(), Constants.SERVICE_START_AT, interval);
+				return true;
+			}
+			case R.id.action_cancel_download: {
+				long interval = mRefData.getPreferenceServiceInterval();
+				AlarmReceiver.setupAlarm(getApplicationContext(), interval, interval);
+				mBackgroundTasksManager.cancelAllDownloading();
+				return true;
+			}
 		}
 
 		return super.onOptionsItemSelected(item);

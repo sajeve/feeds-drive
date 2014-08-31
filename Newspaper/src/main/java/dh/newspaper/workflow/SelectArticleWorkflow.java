@@ -33,6 +33,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
 
@@ -173,7 +174,14 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 				mCallback.done(this, getArticle(), isCancelled());
 				pw.t("callback done");
 			}
-			pw.ig("SelectArticleWorkflow complete");
+			try {
+				long duration = (new Duration(new DateTime(getStartTime()), DateTime.now())).getMillis();
+				pw.ig("SelectArticleWorkflow completed " + duration + " ms" + (mSuccessDownloadAndExtraction ? " (dl and extract)" : ""));
+			}
+			catch (Exception ex) {
+				Log.wtf(TAG, ex);
+				pw.ig("SelectArticleWorkflow completed" + (mSuccessDownloadAndExtraction ? " (dl and extract)" : ""));
+			}
 		}
 	}
 

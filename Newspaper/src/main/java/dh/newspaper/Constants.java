@@ -13,6 +13,7 @@ import java.util.Calendar;
  */
 public class Constants {
 	public static final boolean DEBUG = false;
+	public static final boolean LOAD_FIRST_TAG_ON_START = false;
 	public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
 	public static final String DEBUG_DATABASE_PATH = "/mnt/shared/bridge";
 	public static final String DATABASE_NAME = "newspaper";
@@ -62,7 +63,7 @@ public class Constants {
 
 	//public static final boolean ENABLE_ALARM = true;
 	//public static final long SERVICE_INTERVAL = DEBUG ? 5*60*1000 : 2*AlarmManager.INTERVAL_HOUR; //AlarmManager.INTERVAL_DAY
-	public static final long SERVICE_START_AT = 5000; //updateTime.getTimeInMillis(),
+	public static final long SERVICE_START_AT = 2000; //updateTime.getTimeInMillis(),
 
 	public static final String PREF_OFFLINE_KEY = "Offline";
 	public static final boolean PREF_OFFLINE_DEFAULT = false;

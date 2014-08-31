@@ -19,15 +19,29 @@ import dh.newspaper.cache.RefData;
 public class AlarmReceiver extends BroadcastReceiver {
 	private static final String TAG = AlarmReceiver.class.getName();
 
-	public static void setupAlarm(Context context, long startAt, long interval) {
-		Intent downloader = new Intent(context, AlarmReceiver.class);
-		PendingIntent recurringDownload = PendingIntent.getBroadcast(context,
-				0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
-		AlarmManager alarms = (AlarmManager)context.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+//	public static void cancelAlarm(Context context) {
+//		PendingIntent recurringDownload = getDownloadIntent(context);
+//		AlarmManager alarms = getAlarmManager(context);
+//
+//		//cancel pending task
+//		try {
+//			alarms.cancel(recurringDownload);
+//		}
+//		catch (Exception ex) {
+//			Log.w(TAG, ex);
+//		}
+//	}
 
-		//cancel pending task
+	public static void setupAlarm(Context context, long startAt, long interval) {
+		PendingIntent recurringDownload = getDownloadIntent(context);
+		AlarmManager alarms = getAlarmManager(context);
 		try {
+			//cancel pending task
 			alarms.cancel(recurringDownload);
+
+			//stop service
+			Intent downloadService = new Intent(context, FeedsDownloaderService.class);
+			context.stopService(downloadService);
 		}
 		catch (Exception ex) {
 			Log.w(TAG, ex);
@@ -39,6 +53,16 @@ public class AlarmReceiver extends BroadcastReceiver {
 				recurringDownload);
 
 		Log.i("ALARM", String.format("setupAlarm(%d, %d)", startAt, interval));
+	}
+
+	private static PendingIntent getDownloadIntent(Context context) {
+		Intent downloader = new Intent(context, AlarmReceiver.class);
+		PendingIntent recurringDownload = PendingIntent.getBroadcast(context,
+				0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
+		return recurringDownload;
+	}
+	private static AlarmManager getAlarmManager(Context context) {
+		return (AlarmManager)context.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
 	}
 
 	public static void setAlarmEnable(Context context, boolean enable) {
