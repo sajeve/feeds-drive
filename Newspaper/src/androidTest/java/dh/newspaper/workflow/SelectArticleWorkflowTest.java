@@ -40,7 +40,7 @@ public class SelectArticleWorkflowTest extends ActivityInstrumentationTestCase2<
 		FeedItem feedItem = feeds.get(0);
 
 		//assertEquals("http://www.huffingtonpost.com/kiran-ahuja/reflecting-on-50-years-of_b_5553462.html", feedItem.getUri());
-		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), feedItem, Constants.ARTICLE_TTL, true, null);
+		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), feedItem, Constants.ARTICLE_TTL_MIN, true, null);
 		saw.run();
 		assertTrue(!Strings.isNullOrEmpty(feedItem.getTextPlainDescription()));
 	}
@@ -52,7 +52,7 @@ public class SelectArticleWorkflowTest extends ActivityInstrumentationTestCase2<
 
 		//assertEquals("http://www.huffingtonpost.com/kiran-ahuja/reflecting-on-50-years-of_b_5553462.html", feedItem.getUri());
 		Log.i("TEST", "Start test "+feedItem.getUri());
-		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), feedItem, Constants.ARTICLE_TTL, false, null);
+		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), feedItem, Constants.ARTICLE_TTL_MIN, false, null);
 		saw.run();
 		assertTrue(!Strings.isNullOrEmpty(feedItem.getTextPlainDescription()));
 	}
@@ -71,7 +71,7 @@ public class SelectArticleWorkflowTest extends ActivityInstrumentationTestCase2<
 //		LazyList<Subscription> subscriptions = subscriptionByTagQuery.listLazy();
 
 
-		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), article, Constants.ARTICLE_TTL, true, null);
+		SelectArticleWorkflow saw = new SelectArticleWorkflow(this.getActivity(), article, Constants.ARTICLE_TTL_MIN, true, null);
 		saw.run();
 	}
 

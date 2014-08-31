@@ -64,34 +64,34 @@ public class AppContextModule {
 		return mDbHelper;
 	}
 
-	@Provides @Singleton
-	public SQLiteDatabase provideDatabase() {
-		if (mDatabase == null) {
-			mDatabase = provideDatabaseHelper().getReadableDatabase();
-		}
-		return mDatabase;
-	}
+//	@Provides @Singleton
+//	public SQLiteDatabase provideDatabase() {
+//		if (mDatabase == null) {
+//			mDatabase = provideDatabaseHelper().getReadableDatabase();
+//		}
+//		return mDatabase;
+//	}
 
-	@Provides @Singleton
-	public DaoMaster provideDaoMaster() {
-		if (mDaoMaster == null) {
-			mDaoMaster = new DaoMaster(provideDatabase());
-		}
-		return mDaoMaster;
-	}
+//	@Provides @Singleton
+//	public DaoMaster provideDaoMaster() {
+//		if (mDaoMaster == null) {
+//			mDaoMaster = new DaoMaster(provideDatabase());
+//		}
+//		return mDaoMaster;
+//	}
 
-	@Provides @Singleton
-	public DaoSession provideDaoSession() {
-		if (mDaoSession == null) {
-			mDaoSession = provideDaoMaster().newSession();
-		}
-		return mDaoSession;
-	}
+//	@Provides @Singleton
+//	public DaoSession provideDaoSession() {
+//		if (mDaoSession == null) {
+//			mDaoSession = provideDaoMaster().newSession();
+//		}
+//		return mDaoSession;
+//	}
 
 	@Provides @Singleton
 	public RefData provideRefData() {
 		if (mRefData == null) {
-			mRefData = new RefData(mAppContext, provideDaoSession(), provideDatabaseHelper(), providePreferences());
+			mRefData = new RefData(mAppContext, provideDatabaseHelper(), providePreferences());
 		}
 		return mRefData;
 	}

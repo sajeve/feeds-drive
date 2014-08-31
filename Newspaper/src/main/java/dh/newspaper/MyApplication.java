@@ -83,7 +83,7 @@ public class MyApplication extends InjectingApplication {
 
 	@Override
 	public File getCacheDir() {
-		if (Constants.DEBUG) {
+		if (Constants.USE_DEBUG_DATABASE) {
 			return new File(Constants.DEBUG_DATABASE_PATH);
 		}
 		return getExternalCacheDir();

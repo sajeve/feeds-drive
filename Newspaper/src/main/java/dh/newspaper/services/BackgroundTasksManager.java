@@ -2,6 +2,7 @@ package dh.newspaper.services;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -16,6 +17,7 @@ import dh.newspaper.event.RefreshArticleEvent;
 import dh.newspaper.event.RefreshFeedsListEvent;
 import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.event.SaveSubscriptionEvent;
+import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
@@ -59,6 +61,7 @@ public class BackgroundTasksManager implements Closeable {
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mSharedPreferences;
 	@Inject ConnectivityManager mConnectivityManager;
+	@Inject DatabaseHelper mDatabaseHelper;
 
 	private Handler mMainThreadHandler;
 
@@ -81,6 +84,10 @@ public class BackgroundTasksManager implements Closeable {
 		mInitThread = new AsyncTask<Object, Object, Boolean>() {
 			@Override
 			protected Boolean doInBackground(Object[] params) {
+				//install database
+				SQLiteDatabase pingConnection = mDatabaseHelper.getWritableDatabase();
+				pingConnection.close();
+
 				EventBus.getDefault().post(new RefreshTagsListEvent(Constants.SUBJECT_TAGS_START_LOADING));
 				try {
 					mRefData.getLruDiscCache(); //setupLruDiscCache
@@ -162,7 +169,7 @@ public class BackgroundTasksManager implements Closeable {
 
 					mRefData.updateArticleLoaderPoolSize(mArticlesLoader);
 
-					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL, Constants.ARTICLE_TTL, isOnline(), Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
+					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL_MIN, Constants.ARTICLE_TTL_MIN, isOnline(), Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
 						@Override
 						public void onFinishedLoadFromCache(SelectTagWorkflow sender, List<Article> articles, int count) {
 							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag()));
@@ -228,7 +235,7 @@ public class BackgroundTasksManager implements Closeable {
 						mSelectArticleWorkflow.cancel();
 					}*/
 
-					mSelectArticleWorkflow = new SelectArticleWorkflow(mContext, article, Constants.ARTICLE_TTL, isOnline(), new SelectArticleWorkflow.SelectArticleCallback() {
+					mSelectArticleWorkflow = new SelectArticleWorkflow(mContext, article, Constants.ARTICLE_TTL_MIN, isOnline(), new SelectArticleWorkflow.SelectArticleCallback() {
 						@Override
 						public void onFinishedCheckCache(SelectArticleWorkflow sender, Article article) {
 							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl());
@@ -383,7 +390,6 @@ public class BackgroundTasksManager implements Closeable {
 	}
 
 	public void cancelAllDownloading() {
-		mainPrifoExecutor.cancelAll();
 		{
 			PrifoTask t = getActiveSelectTagWorkflow();
 			if (t != null){
@@ -402,6 +408,7 @@ public class BackgroundTasksManager implements Closeable {
 				t.cancel();
 			}
 		}
+		mainPrifoExecutor.cancelAll();
 	}
 
 	@Override

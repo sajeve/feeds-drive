@@ -46,7 +46,6 @@ public class FeedsDownloaderService extends Service {
 	@Inject ConnectivityManager mConnectivityManager;
 	private PrifoExecutor mArticlesLoader;
 	private PrifoExecutor mSelectTagLoader;
-	private Duration articlesTTL;
 
 	@Override
 	public void onCreate() {
@@ -90,9 +89,6 @@ public class FeedsDownloaderService extends Service {
 				return Service.START_FLAG_REDELIVERY;
 			}
 		}
-
-		//compute article TTL base on the service interval
-		articlesTTL = new Duration(mRefData.getPreferenceServiceInterval());
 
 		mRefData.updateArticleLoaderPoolSize(mArticlesLoader);
 
@@ -140,11 +136,14 @@ public class FeedsDownloaderService extends Service {
 					mRefData.initImageLoader();
 					displayNotificationOnMainThread("Start download articles", "Start download all articles from " + mRefData.getActiveTags().size() + " tags");
 
+					//compute article TTL base on the service interval
+					Duration articlesTTL = new Duration(mRefData.getPreferenceServiceInterval());
+
 					selectTagWorkflowList = new ArrayList<SelectTagWorkflow>();
 
 					for (String tag : mRefData.getActiveTags()) {
 						SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(getApplicationContext(), tag,
-								Constants.SUBSCRIPTION_TTL, articlesTTL, true, Constants.ARTICLES_PER_PAGE,
+								Constants.SUBSCRIPTION_TTL_MIN, articlesTTL, true, Constants.ARTICLES_PER_PAGE,
 								mArticlesLoader, null);
 						selectTagWorkflowList.add(selectTagWorkflow);
 						mSelectTagLoader.execute(selectTagWorkflow);
@@ -352,7 +351,19 @@ public class FeedsDownloaderService extends Service {
 		}
 	}
 
-//	public void downloadAllTest() {
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		if (selectTagWorkflowList!=null) {
+			for (SelectTagWorkflow wf : selectTagWorkflowList) {
+				wf.cancel();
+			}
+		}
+		mArticlesLoader.cancelAll();
+		mSelectTagLoader.cancelAll();
+	}
+
+	//	public void downloadAllTest() {
 //		new AsyncTask<Object, Object, Boolean>() {
 //			@Override
 //			protected Boolean doInBackground(Object[] params) {

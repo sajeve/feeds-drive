@@ -3,7 +3,6 @@ package dh.newspaper.workflow;
 import android.content.Context;
 import android.os.Looper;
 import android.util.Log;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import de.greenrobot.dao.query.QueryBuilder;
 import de.greenrobot.dao.query.WhereCondition;
@@ -11,6 +10,7 @@ import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.adapter.IArticleCollection;
 import dh.newspaper.cache.RefData;
+import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.*;
@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -50,6 +49,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	//@Inject MessageDigest mMessageDigest;
 	//@Inject RefData refData;
 
+	DaoSession mDaoSessionReadonly;
 	private final String mTag;
 	private final Duration mSubscriptionsTimeToLive;
 	private final Duration mArticleTimeToLive;
@@ -117,7 +117,10 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	@Override
 	public void perform() {
 		pw.i("Start SelectTagWorkflow");
+		DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
 		try {
+			mDaoSessionReadonly = daoMaster.newSession();
+
 			loadFirstPageArticlesFromCache();
 			if (mCallback != null && !isCancelled()) {
 				pw.resetStopwatch();
@@ -145,12 +148,21 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			}
 		}
 		finally {
+			daoMaster.getDatabase().close();
 			if (mCallback!=null) {
 				pw.resetStopwatch();
 				mCallback.done(this, mArticles, mCountArticles, mNotices, isCancelled());
 				//pw.d("Callback done()");
 			}
-			pw.ig("SelectTagWorkflow complete");
+
+			try {
+				long duration = (new Duration(new DateTime(getStartTime()), DateTime.now())).getMillis();
+				pw.ig("SelectTagWorkflow completed " + duration + " ms");
+			}
+			catch (Exception ex) {
+				Log.wtf(TAG, ex);
+				pw.ig("SelectTagWorkflow completed");
+			}
 		}
 	}
 
@@ -391,12 +403,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				daoSession.getSubscriptionDao().update(sub);
 			}
 			finally {
-				try {
-					daoMaster.getDatabase().close();
-				}
-				catch (Exception ex) {
-					pw.e("Cannot close database", ex);
-				}
+				daoMaster.getDatabase().close();
 			}
 			pw.d("Update " + sub + " in database");
 		}
@@ -422,8 +429,6 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		}
 	}
 
-	@Inject DaoSession mDaoSession;
-
 	/**
 	 * Query to find all article related to a subscription list. Use to find all article of a given Tag
 	 */
@@ -432,7 +437,8 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			return null;
 		}
 
-		QueryBuilder<Article> queryBuilder = mDaoSession.getArticleDao().queryBuilder();
+		QueryBuilder<Article> queryBuilder = mDaoSessionReadonly.getArticleDao().queryBuilder();
+
 		int subCount = subscriptions.length;
 		if (subCount == 1) {
 			queryBuilder.where(ArticleDao.Properties.ParentUrl.eq(subscriptions[0].getFeedsUrl()));
@@ -510,7 +516,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				saw.cancel();
 			}
 		}
-		pw.debug("Cancelled workflow");
+		pw.debug("Cancelled");
 	}
 
 	@Override
