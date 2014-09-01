@@ -47,7 +47,6 @@ public class FeedsDownloaderService extends Service {
 	private static final SimpleDateFormat TimeFormat = new SimpleDateFormat("H:mm");
 	private static final int WaitLastTaskFinishDuration = 10000;
 
-
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mPreferences;
 	@Inject ConnectivityManager mConnectivityManager;
@@ -400,7 +399,9 @@ public class FeedsDownloaderService extends Service {
 		if (mSelectTagLoader!=null) {
 			mSelectTagLoader.cancelAll();
 		}
-		ImageLoader.getInstance().stop();
+		if (ImageLoader.getInstance()!=null) {
+			ImageLoader.getInstance().stop();
+		}
 	}
 
 	//	public void downloadAllTest() {
