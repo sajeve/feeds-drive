@@ -307,6 +307,9 @@ public class RefData {
 		int threadsPoolSize = getPreferenceNumberOfThread();
 		return PrifoExecutorFactory.newPrifoExecutor(name, threadsPoolSize);
 	}
+	public static PrifoExecutor createMainExecutor() {
+		return PrifoExecutorFactory.newPrifoExecutor("Main", 1);
+	}
 
 	/**
 	 * setup pool size base on preferences

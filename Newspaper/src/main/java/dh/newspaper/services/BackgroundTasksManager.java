@@ -57,7 +57,7 @@ public class BackgroundTasksManager implements Closeable {
 	//private ExecutorService mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(2, Integer.MAX_VALUE);
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
-	private PrifoExecutor mMainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main", 2);
+	private PrifoExecutor mMainPrifoExecutor;
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mSharedPreferences;
@@ -71,6 +71,7 @@ public class BackgroundTasksManager implements Closeable {
 		mContext = context;
 		mMainThreadHandler = new Handler();
 		mArticlesLoader = mRefData.createArticleLoader("ArticleLoader");
+		mMainPrifoExecutor = RefData.createMainExecutor();
 	}
 
 	private boolean isInitWorkflowRun = false;
@@ -378,15 +379,26 @@ public class BackgroundTasksManager implements Closeable {
 	 * Use to execute only unique task, which should be done on GUI thread
 	 */
 	private void executeUniqueOnMainExecutor(PrifoTask task) {
-/*		mMainPrifoExecutor.cancelAll();
-		mMainPrifoExecutor.shutdown();
-		mMainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main");
-		mMainPrifoExecutor.execute(task);*/
-		mMainPrifoExecutor.executeUnique(task);
+		cancelMainExecutor();
+		mMainPrifoExecutor.execute(task);
+
+		//mMainPrifoExecutor.executeUnique(task);
+	}
+
+	/**
+	 * shutdown the mainExecutor and replace it by other thread pool
+	 */
+	private void cancelMainExecutor() {
+		if (mMainPrifoExecutor!=null) {
+			mMainPrifoExecutor.shutdownNow();
+			mMainPrifoExecutor.cancelAll();
+		}
+		mMainPrifoExecutor = RefData.createMainExecutor();
 	}
 
 	public void cancelAllDownloading() {
-		mMainPrifoExecutor.cancelAll();
+		//mMainPrifoExecutor.cancelAll();
+		cancelMainExecutor();
 		mArticlesLoader.cancelAll();
 		{
 			PrifoTask t = getActiveSelectTagWorkflow();
