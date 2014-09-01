@@ -20,6 +20,7 @@ import java.util.List;
  */
 public class DateUtils {
 	private static final String TAG = DateUtils.class.getName();
+	public static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 
 	/**
 	 * Warning: make sure that all items are not null

@@ -177,11 +177,15 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			daoMaster.getDatabase().close();
 			try {
 				long duration = (new Duration(new DateTime(getStartTime()), DateTime.now())).getMillis();
-				pw.ig("SelectArticleWorkflow completed " + duration + " ms" + (mSuccessDownloadAndExtraction ? " (dl and extract)" : ""));
+				pw.ig("SelectArticleWorkflow completed " + duration + " ms"
+						+ (mSuccessDownloadAndExtraction ? " (dl and extract) " : " ")
+						+ getPublishedDateString());
 			}
 			catch (Exception ex) {
 				Log.wtf(TAG, ex);
-				pw.ig("SelectArticleWorkflow completed" + (mSuccessDownloadAndExtraction ? " (dl and extract)" : ""));
+				pw.ig("SelectArticleWorkflow completed"
+						+ (mSuccessDownloadAndExtraction ? " (dl and extract) " : " ")
+						+ getPublishedDateString());
 			}
 		}
 	}
@@ -509,7 +513,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 		mArticleTextPlainDownloaded = docBody == null ? null : docBody.text();
 
 		if (Strings.isNullOrEmpty(mArticleTextPlainDownloaded)) {
-			pw.t("Extract content done. Empty content: "+mParseNotice);
+			pw.t("Extract content done. Empty content: " + mParseNotice);
 			mParseNotice.append(" Justext returns empty content.");
 		}
 		else {
@@ -615,6 +619,20 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			return null;
 		}
 		return mArticle.getPublishedDate();
+	}
+
+	private String getPublishedDateString() {
+		if (mArticle == null) {
+			return null;
+		}
+		else {
+			if (mArticle.getPublishedDate() != null) {
+				return DateUtils.SDF.format(getPublishedDate());
+			}
+			else {
+				return "Unknown published date ("+mArticle.getPublishedDateString()+")";
+			}
+		}
 	}
 
 	public static interface SelectArticleCallback {
