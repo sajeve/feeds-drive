@@ -17,6 +17,7 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.services.AlarmReceiver;
 import dh.newspaper.services.BackgroundTasksManager;
+import dh.newspaper.services.FeedsDownloaderService;
 import dh.newspaper.services.MainMenuHandler;
 import dh.newspaper.view.FeedsFragment;
 import dh.newspaper.view.ManageSubscriptionActivity;
@@ -178,13 +179,22 @@ public class MainActivity extends Activity {
 				this.startActivity(new Intent(this, ManageSubscriptionActivity.class));
 				return true;
 			case R.id.action_downloadAll: {
-				long interval = mRefData.getPreferenceServiceInterval();
-				AlarmReceiver.setupAlarm(getApplicationContext(), Constants.SERVICE_START_AT, interval);
+				/*long interval = mRefData.getPreferenceServiceInterval();
+				AlarmReceiver.setupAlarm(getApplicationContext(), Constants.SERVICE_START_AT, interval);*/
+				//force start service
+				Intent downloadIntent = new Intent(this, FeedsDownloaderService.class);
+				downloadIntent.putExtra(FeedsDownloaderService.CHECK_SERVICE_ENABLE, false);
+				downloadIntent.putExtra(FeedsDownloaderService.CHECK_CHARGING_CONDITION, false);
+				this.startService(downloadIntent);
 				return true;
 			}
 			case R.id.action_cancel_download: {
-				long interval = mRefData.getPreferenceServiceInterval();
-				AlarmReceiver.setupAlarm(getApplicationContext(), interval, interval);
+				//force cancel service
+				Intent downloadIntent = new Intent(this, FeedsDownloaderService.class);
+				downloadIntent.putExtra(FeedsDownloaderService.CANCEL_SERVICE, true);
+				this.startService(downloadIntent);
+
+				//cancel current background activity
 				mBackgroundTasksManager.cancelAllDownloading();
 				return true;
 			}

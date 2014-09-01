@@ -117,9 +117,11 @@ public class PrifoQueue<E extends IPrifosable> extends AbstractQueue<E> {
 	 */
 	@Override
 	public boolean offer(E e) {
+		/*
 		if (e.isCancelled()) {
-			return false; //task is cancelled, no need to add it to the queue
-		}
+			task is cancelled, we will still add it to the queue to replace the twin, so that the twin will be cancelled
+			//return false;
+		}*/
 
 		if (e.isFocused()) {
 			/*

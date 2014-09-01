@@ -303,9 +303,9 @@ public class RefData {
 	/**
 	 * create executor with pool size base on preferences
 	 */
-	public PrifoExecutor createArticleLoader() {
+	public PrifoExecutor createArticleLoader(String name) {
 		int threadsPoolSize = getPreferenceNumberOfThread();
-		return PrifoExecutorFactory.newPrifoExecutor("ArticleLoader", threadsPoolSize);
+		return PrifoExecutorFactory.newPrifoExecutor(name, threadsPoolSize);
 	}
 
 	/**

@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.webkit.URLUtil;
 import com.google.common.base.Strings;
+import com.nostra13.universalimageloader.core.ImageLoader;
 import de.greenrobot.event.EventBus;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
@@ -37,7 +38,6 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -57,7 +57,7 @@ public class BackgroundTasksManager implements Closeable {
 	//private ExecutorService mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor(2, Integer.MAX_VALUE);
 
 	private SelectArticleWorkflow mSelectArticleWorkflow;
-	private PrifoExecutor mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main", 2);
+	private PrifoExecutor mMainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main", 2);
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mSharedPreferences;
@@ -70,7 +70,7 @@ public class BackgroundTasksManager implements Closeable {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		mContext = context;
 		mMainThreadHandler = new Handler();
-		mArticlesLoader = mRefData.createArticleLoader();
+		mArticlesLoader = mRefData.createArticleLoader("ArticleLoader");
 	}
 
 	private boolean isInitWorkflowRun = false;
@@ -378,15 +378,16 @@ public class BackgroundTasksManager implements Closeable {
 	 * Use to execute only unique task, which should be done on GUI thread
 	 */
 	private void executeUniqueOnMainExecutor(PrifoTask task) {
-/*		mainPrifoExecutor.cancelAll();
-		mainPrifoExecutor.shutdown();
-		mainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main");
-		mainPrifoExecutor.execute(task);*/
-		mainPrifoExecutor.executeUnique(task);
+/*		mMainPrifoExecutor.cancelAll();
+		mMainPrifoExecutor.shutdown();
+		mMainPrifoExecutor = PrifoExecutorFactory.newPrifoExecutor("Main");
+		mMainPrifoExecutor.execute(task);*/
+		mMainPrifoExecutor.executeUnique(task);
 	}
 
 	public void cancelAllDownloading() {
-		mainPrifoExecutor.cancelAll();
+		mMainPrifoExecutor.cancelAll();
+		mArticlesLoader.cancelAll();
 		{
 			PrifoTask t = getActiveSelectTagWorkflow();
 			if (t != null){
@@ -405,6 +406,7 @@ public class BackgroundTasksManager implements Closeable {
 				t.cancel();
 			}
 		}
+		ImageLoader.getInstance().stop();
 	}
 
 	@Override

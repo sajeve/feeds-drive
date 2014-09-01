@@ -54,7 +54,7 @@ public class SelectTagWorkflowTest extends ActivityInstrumentationTestCase2<Main
 
 	private void runSelectTagWorkflow(int numberOfThread) throws InterruptedException {
 
-		PrifoExecutor articlesLoader = PrifoExecutorFactory.newPrifoExecutor("articlesLoader", 1);
+		PrifoExecutor articlesLoader = PrifoExecutorFactory.newPrifoExecutor("ArticlesLoaderTest", 1);
 		articlesLoader.setCorePoolSize(numberOfThread);
 
 		SelectTagWorkflow stw = new SelectTagWorkflow(this.getActivity(), "technology",

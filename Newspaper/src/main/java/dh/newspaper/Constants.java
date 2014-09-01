@@ -13,7 +13,7 @@ import java.util.Calendar;
  */
 public class Constants {
 	public static final boolean DEBUG = true;
-	public static final boolean USE_DEBUG_DATABASE = false;
+	public static final boolean USE_DEBUG_DATABASE = true;
 	public static final boolean LOAD_FIRST_TAG_ON_START = false;
 
 	public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";

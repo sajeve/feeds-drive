@@ -50,7 +50,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	//@Inject MessageDigest mMessageDigest;
 	//@Inject RefData refData;
 
-	DaoSession mDaoSessionReadonly;
+	//DaoSession mDaoSessionReadonly;
 	private final String mTag;
 	private final Duration mSubscriptionsTimeToLive;
 	private final Duration mArticleTimeToLive;
@@ -71,7 +71,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	private int mCountArticles;
 
 	private HashMap<Subscription, Feeds> mSubscriptions;
-	private QueryBuilder<Article> mSelectArticleQueryBuilder;
+	//private QueryBuilder<Article> mSelectArticleQueryBuilder;
 
 	/**
 	 * use only if {@link dh.newspaper.workflow.SelectTagWorkflow#mArticlesLoader} is null,
@@ -118,9 +118,9 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	@Override
 	public void perform() {
 		pw.i("Start SelectTagWorkflow");
-		DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
+		//DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
 		try {
-			mDaoSessionReadonly = daoMaster.newSession();
+			//mDaoSessionReadonly = daoMaster.newSession();
 
 			loadFirstPageArticlesFromCache();
 
@@ -162,7 +162,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				pw.t("Callback done()");
 			}
 
-			daoMaster.getDatabase().close();
+			//daoMaster.getDatabase().close();
 
 			try {
 				long duration = (new Duration(new DateTime(getStartTime()), DateTime.now())).getMillis();
@@ -195,19 +195,24 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 			pw.d("Found " + mSubscriptions.size() + " active subscriptions");
 		}
-
-		buildArticlesQuery();
 		updateCountArticles();
 		loadPage(0);
 	}
 
 	private boolean updateCountArticles() {
-		if (isCancelled() || mSelectArticleQueryBuilder==null) {
-			return false;
-		}
+		checkCancellation();
+
 		pw.resetStopwatch();
 		int oldCount = mCountArticles;
-		mCountArticles = (int)mSelectArticleQueryBuilder.count();
+		DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
+		try {
+			DaoSession daoSession = daoMaster.newSession();
+			QueryBuilder<Article> queryBuilder = buildArticlesQuery(daoSession);
+			mCountArticles = (int)queryBuilder.count();
+		}
+		finally {
+			daoMaster.getDatabase().close();
+		}
 		pw.d("Count total articles = "+mCountArticles);
 
 		return oldCount!=mCountArticles;
@@ -219,16 +224,10 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	 * @param offset
 	 * @return
 	 */
-	public boolean loadPage(int offset) {
-		checkCancellation();
-
+	private boolean loadPage(int offset) {
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
-			if (mSelectArticleQueryBuilder == null) {
-				return false;
-			}
-
 			if (offset > mCountArticles-mPageSize) {
 				offset = mCountArticles-mPageSize;
 			}
@@ -241,7 +240,16 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			pw.resetStopwatch();
 
 			checkAccessDiskOnMainThread();
-			mArticles = mSelectArticleQueryBuilder.offset(mOffset).limit(mPageSize).list();
+
+			DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
+			try {
+				DaoSession daoSession = daoMaster.newSession();
+				QueryBuilder<Article> queryBuilder = buildArticlesQuery(daoSession);
+				mArticles = queryBuilder.offset(mOffset).limit(mPageSize).list();
+			}
+			finally {
+				daoMaster.getDatabase().close();
+			}
 
 			pw.t("loadPage(" + offset + ")");
 
@@ -315,8 +323,6 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 						mCurrentLoadArticleWorkflow.run();
 
 						pw.t("Download full content of " + feedItem);
-					} catch (CancellationException e) {
-						throw e;
 					} catch (Exception e) {
 						pw.warn("Failed updating article", e);
 						mNotices.add("Failed updating article excerpt " + feedItem + ": " + e);
@@ -337,6 +343,8 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		}
 
 		updateCountArticles();
+
+		checkCancellation();
 		loadPage(mOffset);
 	}
 
@@ -367,13 +375,10 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 						pw.t("Upsert excerpt "+feedItem);
 					}
 					else {
-						pw.trace("Add to article loader queue "+feedItem);
+						//pw.trace("Add to article loader queue "+feedItem);
 						mPendingLoadArticleWorkflow.add(wkflow);
 						mArticlesLoader.execute(wkflow);
 					}
-				}
-				catch (CancellationException e) {
-					throw e;
 				} catch (Exception e) {
 					pw.warn("Failed updating article", e);
 					mNotices.add("Failed updating article "+feedItem+": "+e);
@@ -413,26 +418,19 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		return  new Duration(new DateTime(sub.getLastUpdate()), DateTime.now()).isLongerThan(mSubscriptionsTimeToLive);
 	}
 
-	private void buildArticlesQuery() {
-		checkCancellation();
-		if (mSelectArticleQueryBuilder == null) {
-			pw.resetStopwatch();
-
-			mSelectArticleQueryBuilder = buildArticlesQuery(mSubscriptions.keySet().toArray(new Subscription[mSubscriptions.size()]));
-
-			pw.d("Build article query from " + mSubscriptions.size() + " subscriptions");
-		}
+	private QueryBuilder<Article> buildArticlesQuery(DaoSession daoSession) {
+		return buildArticlesQuery(daoSession, mSubscriptions.keySet().toArray(new Subscription[mSubscriptions.size()]));
 	}
 
 	/**
 	 * Query to find all article related to a subscription list. Use to find all article of a given Tag
 	 */
-	public QueryBuilder<Article> buildArticlesQuery(Subscription[] subscriptions) {
+	public QueryBuilder<Article> buildArticlesQuery(DaoSession daoSession, Subscription[] subscriptions) {
 		if (subscriptions == null || subscriptions.length==0) {
 			return null;
 		}
 
-		QueryBuilder<Article> queryBuilder = mDaoSessionReadonly.getArticleDao().queryBuilder();
+		QueryBuilder<Article> queryBuilder = daoSession.getArticleDao().queryBuilder();
 
 		int subCount = subscriptions.length;
 		if (subCount == 1) {
@@ -510,51 +508,62 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			for (SelectArticleWorkflow saw : mPendingLoadArticleWorkflow) {
 				saw.cancel();
 			}
+			pw.d("Cancel "+mPendingLoadArticleWorkflow.size() + " pending Article Workflow");
 		}
-		pw.debug("Cancelled");
 	}
 
 	@Override
 	public boolean isInMemoryCache(int position) {
-		if (position==0) {
-			return true; //articleZero is always in memory
+		try {
+			if (position==0) {
+				return true; //articleZero is always in memory
+			}
+			if (mArticles == null) {
+				return false;
+			}
+			return mOffset <= position && position <= mOffset+ mPageSize - 1;
 		}
-		if (mArticles == null) {
-			return false;
+		catch (CancellationException ex) {
+			throw new IllegalStateException("Call checkCancellation() does not make sense in IArticleCollection", ex);
 		}
-		return mOffset <= position && position <= mOffset+ mPageSize - 1;
 	}
 
 	/**
 	 * get article at any position, move to the window to the position.
 	 * except the position 0 is special, getArticle(0) is called all the time, so it should return immediately the
 	 * article zero and do not move the window.
+	 *
+	 * As a {@link dh.newspaper.adapter.IArticleCollection} We must not check cancellation
 	 */
 	@Override
 	public Article getArticle(int position) {
-		if (mArticles == null || mArticles.size()==0) {
-			return null;
-		}
-		if (position == 0) {
-			if (mArticleZero==null) {
-				mArticleZero = mArticles.get(0);
+		try {
+			if (mArticles == null || mArticles.size() == 0) {
+				return null;
 			}
-			return mArticleZero;
-		}
+			if (position == 0) {
+				if (mArticleZero == null) {
+					mArticleZero = mArticles.get(0);
+				}
+				return mArticleZero;
+			}
 
-		if (isInMemoryCache(position)) {
-			return mArticles.get(position-mOffset);
-		}
-		else {
-			if (loadPage(position - mPageSize / 2)) {
-				return mArticles.get(position-mOffset);
+			if (isInMemoryCache(position)) {
+				return mArticles.get(position - mOffset);
+			} else {
+				if (loadPage(position - mPageSize / 2)) {
+					return mArticles.get(position - mOffset);
 				/*if (position-mOffset<mArticles.size())
 					return mArticles.get(position-mOffset);
 				else {
 					Log.w(TAG, "Too far position "+position);
 				}*/
+				}
+				return null;
 			}
-			return null;
+		}
+		catch (CancellationException ex) {
+			throw new IllegalStateException("Call checkCancellation() does not make sense in IArticleCollection", ex);
 		}
 	}
 
@@ -568,7 +577,12 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 	@Override
 	public int getTotalSize() {
-		return mCountArticles;
+		try {
+			return mCountArticles;
+		}
+		catch (CancellationException ex) {
+			throw new IllegalStateException("Call checkCancellation() does not make sense in IArticleCollection", ex);
+		}
 	}
 
 	public List<String> getNotices() {

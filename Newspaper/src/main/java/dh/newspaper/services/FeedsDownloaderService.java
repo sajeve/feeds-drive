@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import com.nostra13.universalimageloader.core.ImageLoader;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.R;
@@ -38,8 +39,14 @@ import java.util.List;
  */
 public class FeedsDownloaderService extends Service {
 	private static final String TAG = FeedsDownloaderService.class.getName();
+	public static final String CANCEL_SERVICE = "CancelService";
+	public static final String CHECK_SERVICE_ENABLE = "CheckServiceEnable";
+	public static final String CHECK_CHARGING_CONDITION = "CheckChargingCondition";
+	public static final String CHECK_NETWORK_CONDITION = "CheckNetworkCondition";
+
 	private static final SimpleDateFormat TimeFormat = new SimpleDateFormat("H:mm");
 	private static final int WaitLastTaskFinishDuration = 10000;
+
 
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mPreferences;
@@ -52,8 +59,8 @@ public class FeedsDownloaderService extends Service {
 		((Injector)getApplication()).getObjectGraph().inject(this);
 		Log.i(TAG, "onCreate Service");
 
-		mArticlesLoader = mRefData.createArticleLoader();
-		mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor("TagLoader", 1);
+		mArticlesLoader = mRefData.createArticleLoader("ServiceArticleLoader");
+		mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor("ServiceTagLoader", 1);
 	}
 
 	@Override
@@ -61,30 +68,48 @@ public class FeedsDownloaderService extends Service {
 		//testService(startId);
 		Log.i(TAG, "onStartCommand " + (intent==null ? "" : intent.getAction()) + " startId=" + startId);
 
-		//check service enabled
-		if (!mRefData.getPreferenceServiceEnabled()) {
-			Log.i(TAG, "Service is disabled");
+		boolean cancelService  = intent.getBooleanExtra(CANCEL_SERVICE, false);
+		if (cancelService) {
+			cancelAll();
 			if (Constants.DEBUG) {
-				displayNotification("Articles receiving is not happen", "Service is disabled");
+				displayNotification("Cancel all", "Cancel all invoked");
 			}
 			return Service.START_FLAG_REDELIVERY;
 		}
 
-		//check connectivity
-		if (!NetworkUtils.networkConditionMatched(mConnectivityManager, mPreferences)) {
-			Log.i(TAG, "Network not available");
-			if (Constants.DEBUG) {
-				displayNotification("Articles receiving is not happen", "Network is not available");
+		//check service enabled
+		boolean checkServiceEnable = intent.getBooleanExtra(CHECK_SERVICE_ENABLE, true);
+		if (checkServiceEnable) {
+			if (!mRefData.getPreferenceServiceEnabled()) {
+				Log.i(TAG, "Service is disabled");
+				if (Constants.DEBUG) {
+					displayNotification("Articles receiving is not happen", "Service is disabled");
+				}
+				return Service.START_FLAG_REDELIVERY;
 			}
-			return Service.START_FLAG_REDELIVERY;
 		}
 
 		//check charging condition
-		if (mRefData.getPreferenceOnlyRunServiceIfCharging()) {
-			if (!mRefData.isBatteryCharging()) {
-				Log.i(TAG, "Device is not charging");
+		boolean checkChargingCondition = intent.getBooleanExtra(CHECK_CHARGING_CONDITION, true);
+		if (checkChargingCondition) {
+			if (mRefData.getPreferenceOnlyRunServiceIfCharging()) {
+				if (!mRefData.isBatteryCharging()) {
+					Log.i(TAG, "Device is not charging");
+					if (Constants.DEBUG) {
+						displayNotification("Articles receiving is not happen", "Device is not charging");
+					}
+					return Service.START_FLAG_REDELIVERY;
+				}
+			}
+		}
+
+		//check connectivity
+		boolean checkNetworkCondition = intent.getBooleanExtra(CHECK_NETWORK_CONDITION, true);
+		if (checkNetworkCondition) {
+			if (!NetworkUtils.networkConditionMatched(mConnectivityManager, mPreferences)) {
+				Log.i(TAG, "Network not available");
 				if (Constants.DEBUG) {
-					displayNotification("Articles receiving is not happen", "Device is not charging");
+					displayNotification("Articles receiving is not happen", "Network is not available");
 				}
 				return Service.START_FLAG_REDELIVERY;
 			}
@@ -93,6 +118,7 @@ public class FeedsDownloaderService extends Service {
 		mRefData.updateArticleLoaderPoolSize(mArticlesLoader);
 
 		//main action
+		cancelAll(); //cancel old task
 		downloadAll();
 
 		return Service.START_FLAG_REDELIVERY;
@@ -190,12 +216,12 @@ public class FeedsDownloaderService extends Service {
 
 						Calendar startTime = null;
 						Calendar endTime = null;
+						int stillRunning = 0;
 						for (SelectTagWorkflow wf : selectTagWorkflowList) {
 							Calendar s = wf.getStartTime();
 							Calendar e = wf.getEndTime();
 							if (s == null || e == null) {
-								Log.i(TAG, "Tag queue empty, but a workflow is still processing: "+wf);
-								return; //not finish all the workflow
+								stillRunning++;
 							}
 							if (startTime == null || startTime.after(s)) {
 								startTime = s;
@@ -203,6 +229,11 @@ public class FeedsDownloaderService extends Service {
 							if (endTime == null || endTime.before(e)) {
 								endTime = e;
 							}
+						}
+
+						if (stillRunning>0) {
+							Log.i(TAG, "Tag queue empty, but "+stillRunning+" workflow are still processing");
+							return; //not finish all the workflow
 						}
 
 						Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
@@ -243,7 +274,6 @@ public class FeedsDownloaderService extends Service {
 							Calendar s = wf.getStartTime();
 							Calendar e = wf.getEndTimeAll();
 							if (s == null || e == null) { //workflow was in progress
-								Log.i(TAG, "Tag queue empty, but a workflow is still processing: "+wf);
 								wfLeft++;
 							}
 							else { //workflow is complete
@@ -260,7 +290,6 @@ public class FeedsDownloaderService extends Service {
 								}
 							}
 						}
-
 						if (wfLeft == 0) {
 							Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
 							displayNotification("Download all articles finished", String.format("Downloaded %d articles at %s in %d sec",
@@ -269,9 +298,12 @@ public class FeedsDownloaderService extends Service {
 									duration.getStandardSeconds()
 							));
 						}
-						else if (countDownloadedArticles > 0) {
-							displayNotification("Download articles in progress",
-									String.format("%d articles downloaded. %d/%d tags left to download", countDownloadedArticles, wfLeft, selectTagWorkflowList.size()));
+						else {
+							Log.i(TAG, "Article queue empty, but "+wfLeft+" workflow are still processing");
+							if (countDownloadedArticles > 0) {
+								displayNotification("Download articles in progress",
+										String.format("%d articles downloaded. %d/%d tags left to download", countDownloadedArticles, wfLeft, selectTagWorkflowList.size()));
+							}
 						}
 					}
 					catch (Exception ex) {
@@ -332,7 +364,6 @@ public class FeedsDownloaderService extends Service {
 							PendingIntent.FLAG_UPDATE_CURRENT
 					);
 
-
 			NotificationCompat.Builder mBuilder =
 					new NotificationCompat.Builder(this)
 							.setSmallIcon(R.drawable.ic_launcher)
@@ -354,13 +385,22 @@ public class FeedsDownloaderService extends Service {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+		cancelAll();
+	}
+
+	private void cancelAll() {
 		if (selectTagWorkflowList!=null) {
 			for (SelectTagWorkflow wf : selectTagWorkflowList) {
 				wf.cancel();
 			}
 		}
-		mArticlesLoader.cancelAll();
-		mSelectTagLoader.cancelAll();
+		if (mArticlesLoader!=null) {
+			mArticlesLoader.cancelAll();
+		}
+		if (mSelectTagLoader!=null) {
+			mSelectTagLoader.cancelAll();
+		}
+		ImageLoader.getInstance().stop();
 	}
 
 	//	public void downloadAllTest() {

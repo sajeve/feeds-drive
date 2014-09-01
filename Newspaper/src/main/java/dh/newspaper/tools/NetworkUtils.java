@@ -28,6 +28,7 @@ import org.apache.http.util.EntityUtils;
 
 import javax.inject.Inject;
 import java.io.*;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
@@ -40,8 +41,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class NetworkUtils {
 	private static final String TAG = NetworkUtils.class.getName();
-	public static final String MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; U; Android 4.0.3; ko-kr; LG-L160L Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
-	public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36";
+	//public static final String MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; U; Android 4.0.3; ko-kr; LG-L160L Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
+	public static final String MOBILE_USER_AGENT = "Mozilla/5.0 (Android; Mobile; rv:26.0) Gecko/20100101 Firefox/26.0";
+
+	//public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36";
+	public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0";
+	//public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Android; Tablet; rv:26.0) Gecko/20100101 Firefox/26.0";
+	//public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0";
+
 	private static final int SOCKET_OPERATION_TIMEOUT = 60 * 1000;
 	private static final OkHttpClient okHttpClient = new OkHttpClient();
 
@@ -150,40 +157,45 @@ public class NetworkUtils {
 	public static byte[] downloadContentHttpConnection(String address, String userAgent, ICancellation cancelListener) throws IOException {
 		Stopwatch sw = Stopwatch.createStarted();
 
-		HttpURLConnection httpConnection = okHttpClient.open(new URL(address));
-		httpConnection.addRequestProperty("User-Agent", userAgent);
-		int responseCode = httpConnection.getResponseCode();
+		try {
 
-		if (200<=responseCode && responseCode<300) {
-			InputStream input = httpConnection.getInputStream();
-			ByteArrayOutputStream baos = null;
-			try {
-				//download all the page to other InputStream
-				baos = new ByteArrayOutputStream();
-				byte[] buffer = new byte[1024];
-				int len;
-				while ((len = input.read(buffer)) > -1) {
-					ThreadUtils.checkCancellation(cancelListener, "Download HC canceled ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
-					baos.write(buffer, 0, len);
-				}
-				baos.flush();
+			HttpURLConnection httpConnection = okHttpClient.open(new URL(address));
+			httpConnection.addRequestProperty("User-Agent", userAgent);
+			int responseCode = httpConnection.getResponseCode();
 
-				byte[] content = baos.toByteArray();
-				baos.close();
-				Log.v(TAG, "Download HC end "+content.length+" bytes ("+sw.elapsed(TimeUnit.MILLISECONDS)+" ms) "+address);
-				return content;
-			}
-			finally {
-				if (input != null) {
-					input.close();
-				}
-				if (baos!=null) {
+			if (200 <= responseCode && responseCode < 300) {
+				InputStream input = httpConnection.getInputStream();
+				ByteArrayOutputStream baos = null;
+				try {
+					//download all the page to other InputStream
+					baos = new ByteArrayOutputStream();
+					byte[] buffer = new byte[1024];
+					int len;
+					while ((len = input.read(buffer)) > -1) {
+						ThreadUtils.checkCancellation(cancelListener, "Download HC canceled (" + sw.elapsed(TimeUnit.MILLISECONDS) + " ms) " + address);
+						baos.write(buffer, 0, len);
+					}
+					baos.flush();
+
+					byte[] content = baos.toByteArray();
 					baos.close();
+					Log.v(TAG, "Download HC end " + content.length + " bytes (" + sw.elapsed(TimeUnit.MILLISECONDS) + " ms) " + address);
+					return content;
+				} finally {
+					if (input != null) {
+						input.close();
+					}
+					if (baos != null) {
+						baos.close();
+					}
 				}
+			} else {
+				throw new IllegalStateException("Failed to connect to " + address + ": " + httpConnection.getResponseMessage() + " (" + responseCode + ")");
 			}
 		}
-		else {
-			throw new IllegalStateException("Failed to connect to " + address + ": " + httpConnection.getResponseMessage() + " (" + responseCode + ")");
+		catch (ConnectException e) {
+			Log.w(TAG, "Download HC error (" + sw.elapsed(TimeUnit.MILLISECONDS) + " ms) " + address + " : "+e);
+			throw e;
 		}
 	}
 

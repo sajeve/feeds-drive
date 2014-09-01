@@ -74,9 +74,7 @@ public class PrifoExecutor extends ThreadPoolExecutor {
 				count++;
 			}
 		}
-		if (count>0) {
-			Log.info(count + " tasks is cancelled by cancelAll - " + getName());
-		}
+		Log.info(String.format("CancelAll %d / %d - %s", count, this.getQueue().size(), getName()));
 	}
 
 	public String getName() {
