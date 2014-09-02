@@ -78,7 +78,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	 * to run {@link dh.newspaper.workflow.SelectArticleWorkflow} on the same thread as this workflow.
 	 */
 	private SelectArticleWorkflow mCurrentLoadArticleWorkflow;
-	private List<SelectArticleWorkflow> mPendingLoadArticleWorkflow = new ArrayList<SelectArticleWorkflow>();
+	//private List<SelectArticleWorkflow> mPendingLoadArticleWorkflow = new ArrayList<SelectArticleWorkflow>();
 
 	private List<String> mNotices = new ArrayList<String>();
 
@@ -317,12 +317,8 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 				for (FeedItem feedItem : feeds) {
 					checkCancellation();
 					try {
-						pw.resetStopwatch();
-
 						mCurrentLoadArticleWorkflow = new SelectArticleWorkflow(mContext, feedItem, mArticleTimeToLive, false, null);
 						mCurrentLoadArticleWorkflow.run();
-
-						pw.t("Download full content of " + feedItem);
 					} catch (Exception e) {
 						pw.warn("Failed updating article", e);
 						mNotices.add("Failed updating article excerpt " + feedItem + ": " + e);
@@ -348,10 +344,12 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		loadPage(mOffset);
 	}
 
+	int countArticles = 0;
+
 	private void downloadArticles() {
 		checkCancellation();
 
-		for(Subscription sub : mSubscriptions.keySet()) {
+		for(final Subscription sub : mSubscriptions.keySet()) {
 			checkCancellation();
 			Feeds feeds = mSubscriptions.get(sub);
 
@@ -376,14 +374,23 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 					}
 					else {
 						//pw.trace("Add to article loader queue "+feedItem);
-						mPendingLoadArticleWorkflow.add(wkflow);
-						mArticlesLoader.execute(wkflow);
+						//mPendingLoadArticleWorkflow.add(wkflow);
+						if (!mArticlesLoader.isShutdown()) {
+							//mArticlesLoader.getName()
+							mArticlesLoader.execute(wkflow);
+						}
+						else {
+							pw.w(mArticlesLoader.getName() + " is shutdown. Cannot execute "+wkflow);
+						}
 					}
 				} catch (Exception e) {
 					pw.warn("Failed updating article", e);
 					mNotices.add("Failed updating article "+feedItem+": "+e);
 				}
 			}
+
+			countArticles+=feeds.size();
+
 			pw.debug("Finished download full articles of " + sub);
 
 			pw.resetStopwatch();
@@ -399,14 +406,14 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			}
 			sub.setLastUpdate(DateTime.now().toDate());
 
-			DaoMaster daoMaster = mRefData.createWritableDaoMaster();
-			try {
-				DaoSession daoSession = daoMaster.newSession();
-				daoSession.getSubscriptionDao().update(sub);
-			}
-			finally {
-				daoMaster.getDatabase().close();
-			}
+
+			mDatabaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+				@Override
+				public void doWrite(DaoSession daoSession) {
+					daoSession.getSubscriptionDao().update(sub);
+				}
+			});
+
 			pw.d("Update " + sub + " in database");
 		}
 	}
@@ -483,6 +490,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 
 	@Inject RefData mRefData;
+	@Inject DatabaseHelper mDatabaseHelper;
 
 	/**
 	 * Find subscriptions by tag from subscriptions list cached in memory
@@ -498,7 +506,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		return resu;
 	}
 
-	@Override
+	/*@Override
 	public void cancel() {
 		super.cancel();
 		if (mCurrentLoadArticleWorkflow != null) {
@@ -510,7 +518,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			}
 			pw.d("Cancel "+mPendingLoadArticleWorkflow.size() + " pending Article Workflow");
 		}
-	}
+	}*/
 
 	@Override
 	public boolean isInMemoryCache(int position) {
@@ -620,48 +628,49 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 //	}
 
 	public int countArticlesToDownload() {
-		if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
-//			if (Constants.DEBUG) {
-//				throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
-//			}
-//			else {
-//				return -1;
-//			}
-			return -1;
-		}
-		return mPendingLoadArticleWorkflow.size();
+//		if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
+////			if (Constants.DEBUG) {
+////				throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
+////			}
+////			else {
+////				return -1;
+////			}
+//			return -1;
+//		}
+//		return mPendingLoadArticleWorkflow.size();
+		return countArticles;
 	}
 
-	/**
-	 * return end time of the last download article workflow task
-	 */
-	public Calendar getEndTimeAll() {
-		if (mArticlesLoader == null || !mOnlineMode) { //sync mode or offline mode
-			return getEndTime();
-		}
-		else {
-			if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
-				/*if (Constants.DEBUG) {
-					throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
-				}
-				else {
-					return null;
-				}*/
-				return null;
-			}
-
-			Calendar lastEndTime = null;
-			for (SelectArticleWorkflow wk : mPendingLoadArticleWorkflow) {
-				if (wk.getEndTime() == null) {
-					return null;
-				}
-				if (lastEndTime == null || lastEndTime.before(wk.getEndTime())) {
-					lastEndTime = wk.getEndTime();
-				}
-			}
-			return lastEndTime;
-		}
-	}
+//	/**
+//	 * return end time of the last download article workflow task
+//	 */
+//	public Calendar getEndTimeAll() {
+//		if (mArticlesLoader == null || !mOnlineMode) { //sync mode or offline mode
+//			return getEndTime();
+//		}
+//		else {
+//			if (mPendingLoadArticleWorkflow==null || mPendingLoadArticleWorkflow.size()==0) {
+//				/*if (Constants.DEBUG) {
+//					throw new IllegalStateException("Too early, this method can only be called after downloadArticles()");
+//				}
+//				else {
+//					return null;
+//				}*/
+//				return null;
+//			}
+//
+//			Calendar lastEndTime = null;
+//			for (SelectArticleWorkflow wk : mPendingLoadArticleWorkflow) {
+//				if (wk.getEndTime() == null) {
+//					return null;
+//				}
+//				if (lastEndTime == null || lastEndTime.before(wk.getEndTime())) {
+//					lastEndTime = wk.getEndTime();
+//				}
+//			}
+//			return lastEndTime;
+//		}
+//	}
 
 	@Override
 	public String toString() {

@@ -50,16 +50,18 @@ public class FeedsDownloaderService extends Service {
 	@Inject RefData mRefData;
 	@Inject SharedPreferences mPreferences;
 	@Inject ConnectivityManager mConnectivityManager;
-	private PrifoExecutor mArticlesLoader;
-	private PrifoExecutor mSelectTagLoader;
+	@Inject BackgroundTasksManager mBackgroundTasksManager;
+
+//	private PrifoExecutor mArticlesLoader;
+//	private PrifoExecutor mSelectTagLoader;
 
 	@Override
 	public void onCreate() {
 		((Injector)getApplication()).getObjectGraph().inject(this);
 		Log.i(TAG, "onCreate Service");
 
-		mArticlesLoader = mRefData.createArticleLoader("ServiceArticleLoader");
-		mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor("ServiceTagLoader", 1);
+//		mArticlesLoader = mRefData.createArticlesLoader("ServiceArticleLoader");
+//		mSelectTagLoader = PrifoExecutorFactory.newPrifoExecutor("ServiceTagLoader", 1);
 	}
 
 	@Override
@@ -114,11 +116,12 @@ public class FeedsDownloaderService extends Service {
 			}
 		}
 
-		mRefData.updateArticleLoaderPoolSize(mArticlesLoader);
+		//mRefData.updateArticleLoaderPoolSize(mArticlesLoader);
 
 		//main action
-		cancelAll(); //cancel old task
-		downloadAll();
+		//cancelAll(); //cancel old task
+		displayNotification("Start service", "Start download all");
+		mBackgroundTasksManager.runServiceDownloadAll();
 
 		return Service.START_FLAG_REDELIVERY;
 	}
@@ -133,187 +136,187 @@ public class FeedsDownloaderService extends Service {
 		Toast.makeText(this, "Service is called: "+startId, Toast.LENGTH_SHORT).show();
 	}*/
 
-	List<SelectTagWorkflow> selectTagWorkflowList;
-
-	public void downloadAll() {
-		new AsyncTask<Object, Object, Boolean>() {
-			@Override
-			protected Boolean doInBackground(Object[] params) {
-				try {
-					mRefData.getLruDiscCache(); //setupLruDiscCache
-					mRefData.loadSubscriptionAndTags();
-					return true;
-				}
-				catch (Exception ex) {
-					Log.w(TAG, ex);
-					displayNotification("Failed download articles", ex.toString());
-					return false;
-				}
-			}
-
-			@Override
-			protected void onPostExecute(Boolean result) {
-				try {
-					if (!result) {
-						Log.w(TAG, "stop process service");
-						return;
-					}
-					mRefData.initImageLoader();
-					displayNotificationOnMainThread("Start download articles", "Start download all articles from " + mRefData.getActiveTags().size() + " tags");
-
-					//compute article TTL base on the service interval
-					Duration articlesTTL = new Duration(mRefData.getPreferenceServiceInterval());
-
-					selectTagWorkflowList = new ArrayList<SelectTagWorkflow>();
-
-					for (String tag : mRefData.getActiveTags()) {
-						SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(getApplicationContext(), tag,
-								Constants.SUBSCRIPTION_TTL_MIN, articlesTTL, true, Constants.ARTICLES_PER_PAGE,
-								mArticlesLoader, null);
-						selectTagWorkflowList.add(selectTagWorkflow);
-						mSelectTagLoader.execute(selectTagWorkflow);
-					}
-
-					mSelectTagLoader.setQueueEmptyCallback(tagQueueEmptyCallback);
-					mArticlesLoader.setQueueEmptyCallback(articleQueueEmptyCallback);
-				}
-				catch (Exception ex) {
-					Log.w(TAG, ex);
-				}
-			}
-		}.execute();
-
-//		Executors.newSingleThreadExecutor(PriorityThreadFactory.MIN).execute(new Runnable() {
+//	List<SelectTagWorkflow> selectTagWorkflowList;
+//
+//	public void downloadAll() {
+//		new AsyncTask<Object, Object, Boolean>() {
 //			@Override
-//			public void run() {
+//			protected Boolean doInBackground(Object[] params) {
 //				try {
-//					mArticlesLoader.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+//					mRefData.getLruDiscCache(); //setupLruDiscCache
+//					mRefData.loadSubscriptionAndTags();
+//					return true;
+//				}
+//				catch (Exception ex) {
+//					Log.w(TAG, ex);
+//					displayNotification("Failed download articles", ex.toString());
+//					return false;
+//				}
+//			}
+//
+//			@Override
+//			protected void onPostExecute(Boolean result) {
+//				try {
+//					if (!result) {
+//						Log.w(TAG, "stop process service");
+//						return;
+//					}
+//					mRefData.initImageLoader();
+//					displayNotificationOnMainThread("Start download articles", "Start download all articles from " + mRefData.getActiveTags().size() + " tags");
+//
+//					//compute article TTL base on the service interval
+//					Duration articlesTTL = new Duration(mRefData.getPreferenceServiceInterval());
+//
+//					selectTagWorkflowList = new ArrayList<SelectTagWorkflow>();
+//
+//					for (String tag : mRefData.getActiveTags()) {
+//						SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(getApplicationContext(), tag,
+//								Constants.SUBSCRIPTION_TTL_MIN, articlesTTL, true, Constants.ARTICLES_PER_PAGE,
+//								mArticlesLoader, null);
+//						selectTagWorkflowList.add(selectTagWorkflow);
+//						mSelectTagLoader.execute(selectTagWorkflow);
+//					}
+//
+//					mSelectTagLoader.setQueueEmptyCallback(tagQueueEmptyCallback);
+//					mArticlesLoader.setQueueEmptyCallback(articleQueueEmptyCallback);
 //				}
 //				catch (Exception ex) {
 //					Log.w(TAG, ex);
 //				}
 //			}
-//		});
-	}
-
-
-	private final IQueueEmptyCallback tagQueueEmptyCallback = new IQueueEmptyCallback() {
-		@Override
-		public void onQueueEmpty(String queueName) {
-			//the queue is empty, but the last item is still processing
-			//we will wait 10s and hope that the last one will be finished
-			// then check if all the pending task was complete
-			Handler mainThread = new Handler(Looper.getMainLooper());
-			mainThread.postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						if (selectTagWorkflowList == null || selectTagWorkflowList.size() == 0) {
-							Log.w(TAG, "IllegalStateException: Tag queue empty, but the task list is null");
-							return;
-						}
-
-						Calendar startTime = null;
-						Calendar endTime = null;
-						int stillRunning = 0;
-						for (SelectTagWorkflow wf : selectTagWorkflowList) {
-							Calendar s = wf.getStartTime();
-							Calendar e = wf.getEndTime();
-							if (s == null || e == null) {
-								stillRunning++;
-							}
-							if (startTime == null || startTime.after(s)) {
-								startTime = s;
-							}
-							if (endTime == null || endTime.before(e)) {
-								endTime = e;
-							}
-						}
-
-						if (stillRunning>0) {
-							Log.i(TAG, "Tag queue empty, but "+stillRunning+" workflow are still processing");
-							return; //not finish all the workflow
-						}
-
-						Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
-						displayNotification("Download tags finished", String.format("Downloaded %d tags at %s in %d sec",
-								selectTagWorkflowList.size(),
-								TimeFormat.format(startTime.getTime()),
-								duration.getStandardSeconds()
-								));
-					}
-					catch (Exception ex) {
-						Log.w(TAG, ex);
-					}
-				}
-			}, WaitLastTaskFinishDuration);
-		}
-	};
-	private final IQueueEmptyCallback articleQueueEmptyCallback = new IQueueEmptyCallback() {
-		@Override
-		public void onQueueEmpty(String queueName) {
-			//the queue is empty, but the last item is still processing
-			//we will wait 10s and hope that the last one will be finished
-			// then check if all the pending task was complete
-			Handler mainThread = new Handler(Looper.getMainLooper());
-			mainThread.postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						if (selectTagWorkflowList == null || selectTagWorkflowList.size() == 0) {
-							Log.w(TAG, "IllegalStateException: Article queue empty, but the task list is null");
-							return;
-						}
-
-						Calendar startTime = null;
-						Calendar endTime = null;
-						int countDownloadedArticles = 0;
-						int wfLeft = 0;
-						for (SelectTagWorkflow wf : selectTagWorkflowList) {
-							Calendar s = wf.getStartTime();
-							Calendar e = wf.getEndTimeAll();
-							if (s == null || e == null) { //workflow was in progress
-								wfLeft++;
-							}
-							else { //workflow is complete
-								if (startTime == null || startTime.after(s)) {
-									startTime = s;
-								}
-								if (endTime == null || endTime.before(e)) {
-									endTime = e;
-								}
-
-								int d = wf.countArticlesToDownload();
-								if (d > 0) {
-									countDownloadedArticles += d;
-								}
-							}
-						}
-						if (wfLeft == 0) {
-							Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
-							displayNotification("Download all articles finished", String.format("Downloaded %d articles at %s in %d sec",
-									countDownloadedArticles,
-									TimeFormat.format(startTime.getTime()),
-									duration.getStandardSeconds()
-							));
-						}
-						else {
-							Log.i(TAG, "Article queue empty, but "+wfLeft+" workflow are still processing");
-							if (countDownloadedArticles > 0) {
-								displayNotification("Download articles in progress",
-										String.format("%d articles downloaded. %d/%d tags left to download", countDownloadedArticles, wfLeft, selectTagWorkflowList.size()));
-							}
-						}
-					}
-					catch (Exception ex) {
-						Log.w(TAG, ex);
-					}
-				}
-			}, WaitLastTaskFinishDuration);
-
-			//displayNotification("Download articles", "Articles queue is empty");
-		}
-	};
+//		}.execute();
+//
+////		Executors.newSingleThreadExecutor(PriorityThreadFactory.MIN).execute(new Runnable() {
+////			@Override
+////			public void run() {
+////				try {
+////					mArticlesLoader.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+////				}
+////				catch (Exception ex) {
+////					Log.w(TAG, ex);
+////				}
+////			}
+////		});
+//	}
+//
+//
+//	private final IQueueEmptyCallback tagQueueEmptyCallback = new IQueueEmptyCallback() {
+//		@Override
+//		public void onQueueEmpty(String queueName) {
+//			//the queue is empty, but the last item is still processing
+//			//we will wait 10s and hope that the last one will be finished
+//			// then check if all the pending task was complete
+//			Handler mainThread = new Handler(Looper.getMainLooper());
+//			mainThread.postDelayed(new Runnable() {
+//				@Override
+//				public void run() {
+//					try {
+//						if (selectTagWorkflowList == null || selectTagWorkflowList.size() == 0) {
+//							Log.w(TAG, "IllegalStateException: Tag queue empty, but the task list is null");
+//							return;
+//						}
+//
+//						Calendar startTime = null;
+//						Calendar endTime = null;
+//						int stillRunning = 0;
+//						for (SelectTagWorkflow wf : selectTagWorkflowList) {
+//							Calendar s = wf.getStartTime();
+//							Calendar e = wf.getEndTime();
+//							if (s == null || e == null) {
+//								stillRunning++;
+//							}
+//							if (startTime == null || startTime.after(s)) {
+//								startTime = s;
+//							}
+//							if (endTime == null || endTime.before(e)) {
+//								endTime = e;
+//							}
+//						}
+//
+//						if (stillRunning>0) {
+//							Log.i(TAG, "Tag queue empty, but "+stillRunning+" workflow are still processing");
+//							return; //not finish all the workflow
+//						}
+//
+//						Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
+//						displayNotification("Download tags finished", String.format("Downloaded %d tags at %s in %d sec",
+//								selectTagWorkflowList.size(),
+//								TimeFormat.format(startTime.getTime()),
+//								duration.getStandardSeconds()
+//								));
+//					}
+//					catch (Exception ex) {
+//						Log.w(TAG, ex);
+//					}
+//				}
+//			}, WaitLastTaskFinishDuration);
+//		}
+//	};
+//	private final IQueueEmptyCallback articleQueueEmptyCallback = new IQueueEmptyCallback() {
+//		@Override
+//		public void onQueueEmpty(String queueName) {
+//			//the queue is empty, but the last item is still processing
+//			//we will wait 10s and hope that the last one will be finished
+//			// then check if all the pending task was complete
+//			Handler mainThread = new Handler(Looper.getMainLooper());
+//			mainThread.postDelayed(new Runnable() {
+//				@Override
+//				public void run() {
+//					try {
+//						if (selectTagWorkflowList == null || selectTagWorkflowList.size() == 0) {
+//							Log.w(TAG, "IllegalStateException: Article queue empty, but the task list is null");
+//							return;
+//						}
+//
+//						Calendar startTime = null;
+//						Calendar endTime = null;
+//						int countDownloadedArticles = 0;
+//						int wfLeft = 0;
+//						for (SelectTagWorkflow wf : selectTagWorkflowList) {
+//							Calendar s = wf.getStartTime();
+//							Calendar e = wf.getEndTimeAll();
+//							if (s == null || e == null) { //workflow was in progress
+//								wfLeft++;
+//							}
+//							else { //workflow is complete
+//								if (startTime == null || startTime.after(s)) {
+//									startTime = s;
+//								}
+//								if (endTime == null || endTime.before(e)) {
+//									endTime = e;
+//								}
+//
+//								int d = wf.countArticlesToDownload();
+//								if (d > 0) {
+//									countDownloadedArticles += d;
+//								}
+//							}
+//						}
+//						if (wfLeft == 0) {
+//							Duration duration = new Duration(new DateTime(startTime), new DateTime(endTime));
+//							displayNotification("Download all articles finished", String.format("Downloaded %d articles at %s in %d sec",
+//									countDownloadedArticles,
+//									TimeFormat.format(startTime.getTime()),
+//									duration.getStandardSeconds()
+//							));
+//						}
+//						else {
+//							Log.i(TAG, "Article queue empty, but "+wfLeft+" workflow are still processing");
+//							if (countDownloadedArticles > 0) {
+//								displayNotification("Download articles in progress",
+//										String.format("%d articles downloaded. %d/%d tags left to download", countDownloadedArticles, wfLeft, selectTagWorkflowList.size()));
+//							}
+//						}
+//					}
+//					catch (Exception ex) {
+//						Log.w(TAG, ex);
+//					}
+//				}
+//			}, WaitLastTaskFinishDuration);
+//
+//			//displayNotification("Download articles", "Articles queue is empty");
+//		}
+//	};
 
 	public void displayNotification(final String title, final String text) {
 		try {
@@ -388,17 +391,18 @@ public class FeedsDownloaderService extends Service {
 	}
 
 	private void cancelAll() {
-		if (selectTagWorkflowList!=null) {
-			for (SelectTagWorkflow wf : selectTagWorkflowList) {
-				wf.cancel();
-			}
-		}
-		if (mArticlesLoader!=null) {
-			mArticlesLoader.cancelAll();
-		}
-		if (mSelectTagLoader!=null) {
-			mSelectTagLoader.cancelAll();
-		}
+//		if (selectTagWorkflowList!=null) {
+//			for (SelectTagWorkflow wf : selectTagWorkflowList) {
+//				wf.cancel();
+//			}
+//		}
+//		if (mArticlesLoader!=null) {
+//			mArticlesLoader.cancelAll();
+//		}
+//		if (mSelectTagLoader!=null) {
+//			mSelectTagLoader.cancelAll();
+//		}
+		mBackgroundTasksManager.cancelServiceDownloadAll();
 		if (ImageLoader.getInstance()!=null) {
 			ImageLoader.getInstance().stop();
 		}

@@ -23,6 +23,7 @@ import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
+import dh.newspaper.tools.NetworkUtils;
 import dh.tool.common.StrUtils;
 import dh.tool.thread.prifo.PrifoExecutor;
 import dh.tool.thread.prifo.PrifoExecutorFactory;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Referential data, Always cache in memory
@@ -253,17 +255,10 @@ public class RefData {
 	public static boolean getPreferenceServiceEnabled(SharedPreferences sp) {
 		return sp.getBoolean(Constants.PREF_SERVICE_ENABLED_KEY, Constants.PREF_SERVICE_ENABLED_DEFAULT);
 	}
+
 	public long getPreferenceServiceInterval() {
 		return getPreferenceServiceInterval(mSharedPreferences);
 	}
-	public int getPreferenceNumberOfThread() {
-		return getPreferenceNumberOfThread(mSharedPreferences);
-	}
-	public long getPreferenceImageCacheSize() {
-		return getPreferenceImageCacheSize(mSharedPreferences);
-	}
-
-
 	public static long getPreferenceServiceInterval(SharedPreferences sp) {
 		try {
 			return Long.parseLong(sp.getString(Constants.PREF_INTERVALS_KEY, Constants.PREF_INTERVALS_DEFAULT));
@@ -273,13 +268,11 @@ public class RefData {
 			return 7200000L;
 		}
 	}
-	public boolean getPreferenceOnlyRunServiceIfCharging() {
-		return getPreferenceOnlyRunServiceIfCharging(mSharedPreferences);
+
+	public int getPreferenceNumberOfThread() {
+		return getPreferenceNumberOfThread(mSharedPreferences);
 	}
-	public static boolean getPreferenceOnlyRunServiceIfCharging(SharedPreferences sp) {
-		return sp.getBoolean(Constants.PREF_CHARGE_CONDITION_KEY, Constants.PREF_CHARGE_CONDITION_DEFAULT);
-	}
-	public int getPreferenceNumberOfThread(SharedPreferences sp) {
+	public static int getPreferenceNumberOfThread(SharedPreferences sp) {
 		try {
 			return Integer.parseInt(sp.getString(Constants.PREF_DOWNLOADING_THREAD_KEY, Constants.PREF_DOWNLOADING_THREAD_DEFAULT));
 		}
@@ -287,6 +280,10 @@ public class RefData {
 			Log.w(TAG, ex);
 			return 2;
 		}
+	}
+
+	public long getPreferenceImageCacheSize() {
+		return getPreferenceImageCacheSize(mSharedPreferences);
 	}
 	public static long getPreferenceImageCacheSize(SharedPreferences sp) {
 		try {
@@ -298,12 +295,26 @@ public class RefData {
 		}
 	}
 
+	public boolean getPreferenceOnlyRunServiceIfCharging() {
+		return getPreferenceOnlyRunServiceIfCharging(mSharedPreferences);
+	}
+	public static boolean getPreferenceOnlyRunServiceIfCharging(SharedPreferences sp) {
+		return sp.getBoolean(Constants.PREF_CHARGE_CONDITION_KEY, Constants.PREF_CHARGE_CONDITION_DEFAULT);
+	}
+
+	public boolean getPreferenceOnlineMode() {
+		return getPreferenceOnlineMode(mSharedPreferences);
+	}
+	public static boolean getPreferenceOnlineMode(SharedPreferences sp) {
+		return sp.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT);
+	}
+
 	//endregion
 
 	/**
 	 * create executor with pool size base on preferences
 	 */
-	public PrifoExecutor createArticleLoader(String name) {
+	public PrifoExecutor createArticlesLoader(String name) {
 		int threadsPoolSize = getPreferenceNumberOfThread();
 		return PrifoExecutorFactory.newPrifoExecutor(name, threadsPoolSize);
 	}
@@ -316,9 +327,14 @@ public class RefData {
 	 * @param articlesLoader
 	 */
 	public void updateArticleLoaderPoolSize(PrifoExecutor articlesLoader) {
+		if (articlesLoader==null) {
+			return;
+		}
 		int threadsPoolSize = getPreferenceNumberOfThread();
 		articlesLoader.setCorePoolSize(threadsPoolSize);
 	}
+
+
 
 	public boolean isBatteryCharging() {
 		Intent batteryStatus = mContext.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -332,8 +348,8 @@ public class RefData {
 	public DaoMaster createReadOnlyDaoMaster() {
 		return new DaoMaster(databaseHelper.createReadOnlyDatabase());
 	}
-	public DaoMaster createWritableDaoMaster() {
-		return new DaoMaster(databaseHelper.createWritableDatabase());
-	}
+//	public DaoMaster createWritableDaoMaster() {
+//		return new DaoMaster(databaseHelper.createWritableDatabase());
+//	}
 
 }

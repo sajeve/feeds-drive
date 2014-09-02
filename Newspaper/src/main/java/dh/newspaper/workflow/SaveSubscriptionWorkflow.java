@@ -8,6 +8,7 @@ import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SaveSubscriptionEvent;
+import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
@@ -37,7 +38,7 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 	//private final Context context;
 	private SaveSubscriptionEvent saveSubscriptionState;
 	@Inject ContentParser contentParser;
-	//@Inject DaoSession daoSession;
+	@Inject DatabaseHelper databaseHelper;
 	@Inject RefData refData;
 
 	public SaveSubscriptionWorkflow(Context context, SearchFeedsResult.ResponseData.Entry feedsSource, Set<String> tags) {
@@ -74,10 +75,7 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 	//private DaoSession daoSession;
 
 	public void perform() {
-		DaoMaster daoMaster = refData.createWritableDaoMaster();
 		try {
-			DaoSession daoSession = daoMaster.newSession();
-
 			String feedsSourceUrl = StrUtils.removeTrailingSlash(feedsSource.getUrl());
 
 			if (feedsSource.getValidity() == SearchFeedsResult.FeedsSourceValidity.UNKNOWN) {
@@ -113,7 +111,7 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 					tagsValue = TagUtils.getTechnicalTags(tags);
 				}
 
-				Subscription existedSubscription = feedsSource.getSubscription();
+				final Subscription existedSubscription = feedsSource.getSubscription();
 				if (existedSubscription!=null) {
 					if (TextUtils.isEmpty(tagsValue)) {
 						existedSubscription.setEnable(false);
@@ -123,7 +121,13 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 					}
 					existedSubscription.setTags(tagsValue);
 					existedSubscription.setLastUpdate(DateTime.now().toDate());
-					daoSession.getSubscriptionDao().update(existedSubscription);
+
+					databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+						@Override
+						public void doWrite(DaoSession daoSession) {
+							daoSession.getSubscriptionDao().update(existedSubscription);
+						}
+					});
 				}
 				else {
 					String description = feedsSource.getContentSnippet();
@@ -137,8 +141,15 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 					if (TextUtils.isEmpty(tagsValue)) {
 						throw new IllegalStateException("tags value cannot empty here");
 					}
-					daoSession.insert(new Subscription(null, feedsSourceUrl, tagsValue,
-							description, language, true, null, pubDate, DateTime.now().toDate()));
+
+					final Subscription subNew = new Subscription(null, feedsSourceUrl, tagsValue,
+							description, language, true, null, pubDate, DateTime.now().toDate());
+					databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+						@Override
+						public void doWrite(DaoSession daoSession) {
+							daoSession.insert(subNew);
+						}
+					});
 				}
 
 				sendProgressMessage("updating cache..."); //TODO: translate
@@ -154,9 +165,6 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 		}catch (Exception ex) {
 			sendError("Failed saving subscription: " + ex); //TODO: translate
 			Log.w(TAG, ex);
-		}
-		finally {
-			daoMaster.getDatabase().close();
 		}
 	}
 
