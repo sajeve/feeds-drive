@@ -30,6 +30,7 @@ import dh.newspaper.workflow.SearchFeedsWorkflow;
 import dh.tool.thread.prifo.*;
 import dh.newspaper.workflow.SelectArticleWorkflow;
 import dh.newspaper.workflow.SelectTagWorkflow;
+import org.joda.time.Duration;
 
 import javax.inject.Inject;
 import java.io.Closeable;
@@ -70,7 +71,7 @@ public class BackgroundTasksManager implements Closeable {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
 		mContext = context;
 		mMainThreadHandler = new Handler();
-		mArticlesLoader = mRefData.createArticleLoader("ArticleLoader");
+		mArticlesLoader = mRefData.createArticlesLoader("ArticleLoader");
 		mMainPrifoExecutor = RefData.createMainExecutor();
 	}
 
@@ -121,7 +122,7 @@ public class BackgroundTasksManager implements Closeable {
 	 */
 	public void loadTagsList() {
 		if (mTagsListLoader != null) {
-			mTagsListLoader.shutdownNow();
+			mTagsListLoader.shutdown();
 		}
 
 		mTagsListLoader = Executors.newSingleThreadExecutor();
@@ -275,10 +276,41 @@ public class BackgroundTasksManager implements Closeable {
 		mMainThreadHandler.postDelayed(lastLoadArticleCall, Constants.EVENT_DELAYED);
 	}
 
+	private PrifoExecutor mServiceTagsLoader;
+	private PrifoExecutor mServiceArticlesLoader;
+	public void cancelServiceDownloadAll() {
+		if (mServiceTagsLoader !=null) {
+			mServiceTagsLoader.shutdown();
+			mServiceTagsLoader.cancelAll();
+		}
+		if (mServiceArticlesLoader !=null) {
+			mServiceArticlesLoader.shutdown();
+			mServiceArticlesLoader.cancelAll();
+		}
+	}
+	private void initServiceLoaders() {
+		cancelServiceDownloadAll();
+		mServiceTagsLoader = PrifoExecutorFactory.newPrifoExecutor("ServiceTagsLoader");
+		mServiceArticlesLoader = mRefData.createArticlesLoader("ServiceArticlesLoader");
+	}
+	public void runServiceDownloadAll() {
+		//cancel old tasks
+		initServiceLoaders();
+		Duration serviceInterval = new Duration(mRefData.getPreferenceServiceInterval());
+
+		//selectTagWorkflowList = new ArrayList<SelectTagWorkflow>();
+		for (String tag : mRefData.getActiveTags()) {
+			SelectTagWorkflow selectTagWorkflow = new SelectTagWorkflow(mContext, tag,
+					Constants.SUBSCRIPTION_TTL_MIN, serviceInterval, true, Constants.ARTICLES_PER_PAGE,
+					mServiceArticlesLoader, null);
+			mServiceTagsLoader.execute(selectTagWorkflow);
+		}
+	}
 
 	private boolean isOnline() {
-		return !mSharedPreferences.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT)
-				&& NetworkUtils.networkConditionMatched(mConnectivityManager, mSharedPreferences);
+		return
+			RefData.getPreferenceOnlineMode(mSharedPreferences)
+			&& NetworkUtils.networkConditionMatched(mConnectivityManager, mSharedPreferences);
 	}
 
 	private SearchFeedsWorkflow activeSearchFeedsWorkflow;
@@ -315,20 +347,22 @@ public class BackgroundTasksManager implements Closeable {
 		currentSaveDeleteSubscriptionTask = new OncePrifoTask() {
 			@Override
 			public void perform() {
-				DaoMaster daoMaster = mRefData.createWritableDaoMaster();
 				try {
-					DaoSession daoSession = daoMaster.newSession();
 					sendProgressMessage("Deleting subscription.."); //TODO: translate
-					daoSession.getSubscriptionDao().delete(sub);
+
+					mDatabaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+						@Override
+						public void doWrite(DaoSession daoSession) {
+							daoSession.getSubscriptionDao().delete(sub);
+						}
+					});
+
 					sendProgressMessage("Reloading cache.."); //TODO: translate
 					mRefData.loadSubscriptionAndTags();
 					sendDone();
 				}catch (Exception ex) {
 					sendError("Failed deleting subscription: " + ex); //TODO: translate
 					Log.w(TAG, ex);
-				}
-				finally {
-					daoMaster.getDatabase().close();
 				}
 			}
 
@@ -390,7 +424,7 @@ public class BackgroundTasksManager implements Closeable {
 	 */
 	private void cancelMainExecutor() {
 		if (mMainPrifoExecutor!=null) {
-			mMainPrifoExecutor.shutdownNow();
+			mMainPrifoExecutor.shutdown();
 			mMainPrifoExecutor.cancelAll();
 		}
 		mMainPrifoExecutor = RefData.createMainExecutor();
@@ -398,6 +432,7 @@ public class BackgroundTasksManager implements Closeable {
 
 	public void cancelAllDownloading() {
 		//mMainPrifoExecutor.cancelAll();
+		cancelServiceDownloadAll();
 		cancelMainExecutor();
 		mArticlesLoader.cancelAll();
 		{
@@ -430,7 +465,7 @@ public class BackgroundTasksManager implements Closeable {
 			mSelectTagLoader.shutdownNow();
 		}*/
 		if (mArticlesLoader != null) {
-			mArticlesLoader.shutdownNow();
+			mArticlesLoader.shutdown();
 		}
 		if (mInitThread != null) {
 			mInitThread.cancel(false);

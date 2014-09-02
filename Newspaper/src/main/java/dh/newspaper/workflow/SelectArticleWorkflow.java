@@ -12,6 +12,7 @@ import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import dh.newspaper.Constants;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
+import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.generated.*;
 import dh.newspaper.parser.ContentParser;
@@ -57,6 +58,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	@Inject ContentParser mContentParser;
 	//@Inject MessageDigest mMessageDigest;
 	@Inject RefData refData;
+	@Inject	DatabaseHelper databaseHelper;
 
 	private final Duration mArticleTimeToLive;
 	private final boolean mOnlineMode;
@@ -252,19 +254,17 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 				mSuccessDownloadAndExtraction ? DateTime.now().toDate() : null //last update success
 		);
 
-
-
-		DaoMaster daoMaster = refData.createWritableDaoMaster();
 		try {
-			DaoSession daoSession = daoMaster.newSession();
-			daoSession.getArticleDao().insert(mArticle);
+			databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+				@Override
+				public void doWrite(DaoSession daoSession) {
+					daoSession.getArticleDao().insert(mArticle);
+				}
+			});
+		} catch (Exception ex) {
+			pw.e("Failed to insert article to database " + (mSuccessDownloadAndExtraction ? " (very bad)" : ""), ex);
 		}
-		catch (Exception ex) {
-			pw.e("Failed to insert article to database", ex);
-		}
-		finally {
-			daoMaster.getDatabase().close();
-		}
+
 		pw.d("Insert new "+mArticle);
 
 		//load image or in offline mode, replace image source by cache URL
@@ -330,17 +330,13 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 		pw.resetStopwatch();
 
-		DaoMaster daoMaster = refData.createWritableDaoMaster();
-		try {
-			DaoSession daoSession = daoMaster.newSession();
-			daoSession.getArticleDao().update(mArticle);
-		}
-		catch (Exception ex) {
-			pw.e("Failed to update article in database", ex);
-		}
-		finally {
-			daoMaster.getDatabase().close();
-		}
+		databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+			@Override
+			public void doWrite(DaoSession daoSession) {
+				daoSession.getArticleDao().update(mArticle);
+			}
+		});
+
 		pw.d("Update article content " + mArticle);
 
 		//load image or in offline mode, replace image source by cache URL
@@ -597,20 +593,35 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 		}
 	}
 
+	/**
+	 * return negative to give more priority to this than another
+	 */
 	@Override
 	public int compareTo(Object another) {
-		//return thisPublishDate - anotherPublishDate
+		//give more priority to task which has not downloadSuccess
+		Date anotherLastDownloadSuccess = ((SelectArticleWorkflow)another).getLastDownloadSuccess();
+		Date lastDownloadSuccess = getLastDownloadSuccess();
+
+		if (lastDownloadSuccess == null && anotherLastDownloadSuccess != null) {
+			return -1000; //favor this because another is downloaded
+		}
+		if (lastDownloadSuccess != null &&  anotherLastDownloadSuccess == null) {
+			return  1000; //favor another because this is downloaded
+		}
+
+		//give priority to the newest published article
 		Date anotherPublishedDate = ((SelectArticleWorkflow)another).getPublishedDate();
 		Date publishedDate = getPublishedDate();
 		if (publishedDate==null && anotherPublishedDate==null) {
 			return 0;
 		}
-		if (anotherPublishedDate == null) {
-			return -1;
-		}
 		if (publishedDate == null) {
-			return 1;
+			return 1; //favor another which has anotherPublishedDate != null
 		}
+		if (anotherPublishedDate == null) {
+			return -1; //favor this which has publishedDate != null
+		}
+		//"2014-9-15".compareTo("2014-9-16")<0  -> favor this = "2014-9-16"
 		return anotherPublishedDate.compareTo(publishedDate);
 	}
 
@@ -619,6 +630,13 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			return null;
 		}
 		return mArticle.getPublishedDate();
+	}
+
+	public Date getLastDownloadSuccess() {
+		if (mArticle == null) {
+			return null;
+		}
+		return mArticle.getLastDownloadSuccess();
 	}
 
 	private String getPublishedDateString() {

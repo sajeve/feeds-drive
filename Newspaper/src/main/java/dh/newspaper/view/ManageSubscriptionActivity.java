@@ -20,6 +20,7 @@ import dh.newspaper.adapter.SubscriptionListAdapter;
 import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SaveSubscriptionEvent;
+import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
@@ -34,7 +35,7 @@ public class ManageSubscriptionActivity extends ListActivity {
 	private static final String TAG = ManageSubscriptionActivity.class.getName();
 
 	@Inject RefData refData;
-	//@Inject DaoSession daoSession;
+	@Inject DatabaseHelper databaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,25 +69,23 @@ public class ManageSubscriptionActivity extends ListActivity {
 	private BgCheckbox.ICheckedAction toggleSubscription = new BgCheckbox.ICheckedAction() {
 		@Override
 		public boolean performActionInBackground(boolean isChecked, Object senderTag) {
-			DaoMaster daoMaster = refData.createWritableDaoMaster();
 			try {
-				DaoSession daoSession = daoMaster.newSession();
-				Subscription sub = (Subscription)senderTag;
+				final Subscription sub = (Subscription)senderTag;
 				sub.setEnable(isChecked);
-				daoSession.getSubscriptionDao().update(sub);
+
+				databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+					@Override
+					public void doWrite(DaoSession daoSession) {
+						daoSession.getSubscriptionDao().update(sub);
+					}
+				});
+
 				return true;
 			} catch (Exception ex) {
 				Log.w(TAG, ex);
 				return false;
 			}
-			finally {
-				try {
-					daoMaster.getDatabase().close();
-				}
-				catch (Exception ex) {
-					Log.wtf(TAG, "Cannot close database", ex);
-				}
-			}
+
 		}
 
 		@Override

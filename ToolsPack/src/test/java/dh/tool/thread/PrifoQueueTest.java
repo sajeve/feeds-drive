@@ -81,6 +81,7 @@ public class PrifoQueueTest {
 
 	@Test
 	public void testCompareTo() {
+		Assert.assertTrue(DateUtils.createDate(2014,12,25).compareTo(DateUtils.createDate(2014,12,26))<0);
 		Assert.assertTrue("a".compareTo("b") < 0);
 	}
 
