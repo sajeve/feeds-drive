@@ -143,5 +143,6 @@ public class PerfWatcher {
 	}
 	public void resetGlobalStopwatch() {
 		globalStopwatch.reset().start();
+		stopwatch.reset().start();
 	}
 }

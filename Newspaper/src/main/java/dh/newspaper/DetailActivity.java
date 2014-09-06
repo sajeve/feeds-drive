@@ -10,6 +10,7 @@ import de.greenrobot.event.EventBus;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 import dh.newspaper.base.Injector;
+import dh.newspaper.cache.RefData;
 import dh.newspaper.event.RawEvent;
 import dh.newspaper.model.generated.Article;
 import dh.newspaper.services.BackgroundTasksManager;
@@ -112,7 +113,7 @@ public class DetailActivity extends Activity {
 
 		//restore menu state
 		MenuItem offlineItem = menu.findItem(R.id.action_offline);
-		offlineItem.setChecked(mSharedPreferences.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT));
+		offlineItem.setChecked(!RefData.getPreferenceOnlineMode(mSharedPreferences));
 
 		return true;
 	}

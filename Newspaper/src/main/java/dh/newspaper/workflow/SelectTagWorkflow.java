@@ -65,22 +65,22 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 	/**
 	 * page cache
 	 */
-	private List<Article> mArticles;
-	private int mOffset;
-	private int mPageSize;
-	private int mCountArticles;
+	private volatile List<Article> mArticles;
+	private volatile int mOffset;
+	private volatile int mPageSize;
+	private volatile int mCountArticles;
 
-	private HashMap<Subscription, Feeds> mSubscriptions;
+	private volatile HashMap<Subscription, Feeds> mSubscriptions;
 	//private QueryBuilder<Article> mSelectArticleQueryBuilder;
 
 	/**
 	 * use only if {@link dh.newspaper.workflow.SelectTagWorkflow#mArticlesLoader} is null,
 	 * to run {@link dh.newspaper.workflow.SelectArticleWorkflow} on the same thread as this workflow.
 	 */
-	private SelectArticleWorkflow mCurrentLoadArticleWorkflow;
+	private volatile SelectArticleWorkflow mCurrentLoadArticleWorkflow;
 	//private List<SelectArticleWorkflow> mPendingLoadArticleWorkflow = new ArrayList<SelectArticleWorkflow>();
 
-	private List<String> mNotices = new ArrayList<String>();
+	private volatile List<String> mNotices = new ArrayList<String>();
 
 	//private Stopwatch mStopwatchQueue;
 	private final boolean mOnlineMode;

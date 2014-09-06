@@ -55,28 +55,28 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	private static final Logger log = LoggerFactory.getLogger(SelectArticleWorkflow.class);
 
 	//@Inject DaoSession daoSessionReadonly;
-	@Inject ContentParser mContentParser;
+	@Inject volatile ContentParser mContentParser;
 	//@Inject MessageDigest mMessageDigest;
-	@Inject RefData refData;
-	@Inject	DatabaseHelper databaseHelper;
+	@Inject volatile RefData refData;
+	@Inject	volatile DatabaseHelper databaseHelper;
 
 	private final Duration mArticleTimeToLive;
 	private final boolean mOnlineMode;
 	//private final boolean mDownloadOriginal;
 	private final SelectArticleCallback mCallback;
 
-	private Article mArticle;
-	private FeedItem mFeedItem;
+	private volatile Article mArticle;
+	private volatile FeedItem mFeedItem;
 
-	private Document mDoc;
-	private String mArticleContentDownloaded;
-	private String mArticleTextPlainDownloaded;
-	private boolean mSuccessDownloadAndExtraction = false;
+	private volatile Document mDoc;
+	private volatile String mArticleContentDownloaded;
+	private volatile String mArticleTextPlainDownloaded;
+	private volatile boolean mSuccessDownloadAndExtraction = false;
 
-	private String mArticleLanguage;
+	private volatile String mArticleLanguage;
 	//private PathToContent mPathToContent;
-	private StringBuilder mParseNotice = new StringBuilder();
-	private Subscription mParentSubscription;
+	private volatile StringBuilder mParseNotice = new StringBuilder();
+	private volatile Subscription mParentSubscription;
 
 	//private Stopwatch mStopwatch;
 	private PerfWatcher pw;
@@ -115,6 +115,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	@Override
 	public void perform() {
 		pw.i("Start SelectArticleWorkflow");
+		pw.resetGlobalStopwatch();
 
 		DaoMaster daoMaster = refData.createReadOnlyDaoMaster();
 
@@ -177,20 +178,13 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 				pw.t("callback done");
 			}
 			daoMaster.getDatabase().close();
-			try {
-				long duration = (new Duration(new DateTime(getStartTime()), DateTime.now())).getMillis();
-				pw.ig("SelectArticleWorkflow completed " + duration + " ms"
-						+ (mSuccessDownloadAndExtraction ? " (dl and extract) " : " ")
-						+ getPublishedDateString());
-			}
-			catch (Exception ex) {
-				Log.wtf(TAG, ex);
-				pw.ig("SelectArticleWorkflow completed"
-						+ (mSuccessDownloadAndExtraction ? " (dl and extract) " : " ")
-						+ getPublishedDateString());
+			if (mSuccessDownloadAndExtraction) {
+				pw.ig("SelectArticleWorkflow completed " + toString());
 			}
 		}
 	}
+
+
 
 	/**
 	 * mArticle=null
@@ -285,7 +279,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			updateArticleContent();
 		}
 		else {
-			pw.trace("Article is not yet expiry ttl=" + mArticleTimeToLive + ". No need to re-download.");
+			pw.d("Article is not yet expiry ttl=" + mArticleTimeToLive + ". No need to re-download.");
 		}
 	}
 
@@ -366,7 +360,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			return;
 		}
 
-		pw.d("Found "+elems.size()+ " images");
+		pw.d("Found " + elems.size() + " images");
 
 		if (mOnlineMode) {
 			for (Element e : elems) {
@@ -409,7 +403,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 						e.attr("style", "border:2px solid green;");
 					}
 				}
-				pw.t("Change images border to recognise cached images");
+				pw.d("Change images border to recognise cached images");
 			}
 		}
 	}
@@ -434,7 +428,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 		pw.resetStopwatch();
 		mDoc = Jsoup.parse(mArticle.getContent());
-		pw.d("Jsoup parse" + StrUtils.glimpse(mArticle.getContent()));
+		pw.t("Jsoup parse" + StrUtils.glimpse(mArticle.getContent()));
 		return mDoc;
 	}
 
@@ -451,14 +445,8 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 		try {
 			pw.resetStopwatch();
-
 			//download content
-
 			InputStream inputStream = NetworkUtils.getStreamFromUrl(mFeedItem.getUri(), NetworkUtils.DESKTOP_USER_AGENT, this);
-			if (inputStream == null) {
-				pw.trace("Download article content Cancelled");
-				return;
-			}
 			pw.d("Content downloaded");
 
 			extractContent(inputStream);
@@ -509,11 +497,11 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 		mArticleTextPlainDownloaded = docBody == null ? null : docBody.text();
 
 		if (Strings.isNullOrEmpty(mArticleTextPlainDownloaded)) {
-			pw.t("Extract content done. Empty content: " + mParseNotice);
+			pw.d("Extract content done. Empty content: " + mParseNotice);
 			mParseNotice.append(" Justext returns empty content.");
 		}
 		else {
-			pw.t("Extract content done " + StrUtils.glimpse(mArticleContentDownloaded));
+			pw.d("Extract content done " + StrUtils.glimpse(mArticleContentDownloaded));
 		}
 	}
 
@@ -576,7 +564,17 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 	@Override
 	public String toString() {
-		return String.format("[SelectArticleWorkflow: %s  successDownload = %s]", getFeedItem().getUri(), Boolean.toString(mSuccessDownloadAndExtraction));
+		StringBuilder sb = new StringBuilder("[SelectArticleWorkflow: "+ getFeedItem().getUri());
+		Date published = getPublishedDate();
+		if (published!=null) {
+			sb.append(" published = "+DateUtils.SDF.format(published));
+		}
+		Date lastDownloadSuccess = getLastDownloadSuccess();
+		if (lastDownloadSuccess!=null) {
+			sb.append(" lastDownloaded = "+DateUtils.SDF.format(published));
+		}
+		sb.append("]");
+		return sb.toString();
 	}
 
 	@Override

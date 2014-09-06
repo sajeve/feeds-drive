@@ -145,7 +145,7 @@ public class MainActivity extends Activity {
 
 		//restore menu state
 		MenuItem offlineItem = menu.findItem(R.id.action_offline);
-		offlineItem.setChecked(mSharedPreferences.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT));
+		offlineItem.setChecked(!mRefData.getPreferenceOnlineMode());
 
 		restoreActionBar();
 		return true;

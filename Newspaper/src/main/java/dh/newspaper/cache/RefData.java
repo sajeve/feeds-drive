@@ -306,7 +306,7 @@ public class RefData {
 		return getPreferenceOnlineMode(mSharedPreferences);
 	}
 	public static boolean getPreferenceOnlineMode(SharedPreferences sp) {
-		return sp.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT);
+		return !sp.getBoolean(Constants.PREF_OFFLINE_KEY, Constants.PREF_OFFLINE_DEFAULT);
 	}
 
 	//endregion
