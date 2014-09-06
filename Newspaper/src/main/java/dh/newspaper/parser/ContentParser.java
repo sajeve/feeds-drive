@@ -65,10 +65,10 @@ public class ContentParser {
 	public ContentParser() {
 	}
 
-	public Document extractContent(InputStream input, String charSet, String baseURI, StringBuilder notice, ICancellation cancellation) throws IOException {
+	public Document extractContent(String input, String baseURI, StringBuilder notice, ICancellation cancellation) throws IOException {
 		PerfWatcher pf = new PerfWatcher(logger, "extraction "+baseURI);
 
-		Document doc = Jsoup.parse(input, charSet, baseURI);
+		Document doc = Jsoup.parse(input, baseURI);
 		pf.d("Jsoup parse");
 
 		try {

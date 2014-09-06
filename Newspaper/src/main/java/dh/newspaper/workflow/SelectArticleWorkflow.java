@@ -442,14 +442,27 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 		}
 
 		checkCancellation();
-
 		try {
 			pw.resetStopwatch();
 			//download content
 			InputStream inputStream = NetworkUtils.getStreamFromUrl(mFeedItem.getUri(), NetworkUtils.DESKTOP_USER_AGENT, this);
+
+			String encoding = Constants.DEFAULT_ARTICLE_ENCODING;
+			if (mParentSubscription != null && !Strings.isNullOrEmpty(mParentSubscription.getEncoding())) {
+				encoding = mParentSubscription.getEncoding();
+			}
+
+			String fullContent = StrUtils.toString(inputStream, StrUtils.getCharset(encoding));
+
 			pw.d("Content downloaded");
 
-			extractContent(inputStream);
+			checkCancellation();
+			if (mCallback!=null) {
+				mCallback.onFinishedDownloadContent(this, getArticle(), fullContent);
+			}
+			pw.t("Callback onFinishedDownloadContent()");
+
+			extractContent(fullContent);
 			mSuccessDownloadAndExtraction = true;
 		} catch (CancellationException e) {
 			throw e;
@@ -460,12 +473,6 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			mParseNotice.append(" Exception: "+e.toString());
 			pw.w("Exception", e);
 		}
-
-		checkCancellation();
-		if (mCallback!=null) {
-			mCallback.onFinishedDownloadContent(this, getArticle());
-		}
-		pw.t("Callback onFinishedDownloadContent()");
 	}
 
 	/**
@@ -474,12 +481,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	 * {@link #mArticleTextPlainDownloaded}
 	 * {@link #mDoc}
 	 */
-	private void extractContent(InputStream inputStream) throws IOException {
-		String encoding = Constants.DEFAULT_ENCODING;
-		if (mParentSubscription != null && !Strings.isNullOrEmpty(mParentSubscription.getEncoding())) {
-			encoding = mParentSubscription.getEncoding();
-		}
-
+	private void extractContent(String html) throws IOException {
 		pw.resetStopwatch();
 
 		/*if (mDownloadOriginal) {
@@ -488,7 +490,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 		else {
 			mDoc = mContentParser.extractContent(inputStream, encoding, mFeedItem.getUri(), mParseNotice, this);
 		}*/
-		mDoc = mContentParser.extractContent(inputStream, encoding, mFeedItem.getUri(), mParseNotice, this);
+		mDoc = mContentParser.extractContent(html, mFeedItem.getUri(), mParseNotice, this);
 
 		checkCancellation();
 
@@ -653,7 +655,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 	public static interface SelectArticleCallback {
 		public void onFinishedCheckCache(SelectArticleWorkflow sender, Article article);
-		public void onFinishedDownloadContent(SelectArticleWorkflow sender, Article article);
+		public void onFinishedDownloadContent(SelectArticleWorkflow sender, Article article, String fullContent);
 		public void onFinishedUpdateCache(SelectArticleWorkflow sender, Article article, boolean isInsertNew);
 		public void done(SelectArticleWorkflow sender, Article article, boolean isCancelled);
 	}

@@ -168,7 +168,7 @@ public class ArticleFragment extends Fragment {
 				Log.d(TAG, "Received "+event);
 
 				mSwipeRefreshLayout.setRefreshing(true);
-				setGui(event.getSender());
+				setGui(event.getSender(), null);
 
 				return;
 			}
@@ -183,7 +183,7 @@ public class ArticleFragment extends Fragment {
 				Log.d(TAG, "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
 				swRae.reset().start();
 
-				setGui(event.getSender());
+				setGui(event.getSender(), event.ArticleContent);
 				return;
 			}
 			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_DONE_LOADING)) {
@@ -226,10 +226,10 @@ public class ArticleFragment extends Fragment {
 		}
 		else {
 			//refresh GUI base on current state
-			setGui(selectArticleWorkflow);
+			setGui(selectArticleWorkflow, null);
 		}
 	}
-	private void setGui(SelectArticleWorkflow data) {
+	private void setGui(SelectArticleWorkflow data, String displayContent) {
 		if (data == null) {
 			Log.w(TAG, "data is null");
 			if (Constants.DEBUG) {
@@ -251,7 +251,22 @@ public class ArticleFragment extends Fragment {
 		mTxtDataSource.setText(Html.fromHtml(getBasicInfo(mArticle)));
 
 		String encoding=data.getParentSubscription() == null ? null : data.getParentSubscription().getEncoding();
-		mWebView.loadDataWithBaseURL(mArticle.getArticleUrl(), mArticle.getContent(), "text/html", encoding, mArticle.getParentUrl());
+
+		String contentToDisplay;
+		if (!Strings.isNullOrEmpty(displayContent) && mArticle.getLastDownloadSuccess()==null) {
+			//the article is never downloaded before, display the full content before display the simplified content
+			contentToDisplay = displayContent;
+		}
+		else {
+			contentToDisplay = mArticle.getContent();
+		}
+
+
+		mWebView.loadDataWithBaseURL(
+				mArticle.getArticleUrl(),
+				contentToDisplay,
+				"text/html", encoding,
+				mArticle.getParentUrl());
 
 		if (!Strings.isNullOrEmpty(mArticle.getParseNotice())) {
 			mTxtNotice.setText(mArticle.getParseNotice() + " - " + mArticle.getArticleUrl());

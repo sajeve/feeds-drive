@@ -242,23 +242,25 @@ public class BackgroundTasksManager implements Closeable {
 						@Override
 						public void onFinishedCheckCache(SelectArticleWorkflow sender, Article article) {
 							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl());
-							Log.d(TAG, "Post "+event);
+							Log.v(TAG, "Post "+event);
 							EventBus.getDefault().post(event);
 						}
 						@Override
-						public void onFinishedDownloadContent(SelectArticleWorkflow sender, Article article) {
-
+						public void onFinishedDownloadContent(SelectArticleWorkflow sender, Article article, String fullContent) {
+							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl(), fullContent);
+							Log.v(TAG, "Post "+event);
+							EventBus.getDefault().post(event);
 						}
 						@Override
 						public void onFinishedUpdateCache(SelectArticleWorkflow sender, Article article, boolean isInsertNew) {
 							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_REFRESH, sender.getArticleUrl());
-							Log.d(TAG, "Post "+event);
+							Log.v(TAG, "Post "+event);
 							EventBus.getDefault().post(event);
 						}
 						@Override
 						public void done(SelectArticleWorkflow sender, Article article, boolean isCancelled) {
 							RefreshArticleEvent event = new RefreshArticleEvent(sender, Constants.SUBJECT_ARTICLE_DONE_LOADING, sender.getArticleUrl());
-							Log.d(TAG, "Post "+event);
+							Log.v(TAG, "Post "+event);
 							EventBus.getDefault().post(event);
 						}
 					});
@@ -296,7 +298,8 @@ public class BackgroundTasksManager implements Closeable {
 	public void runServiceDownloadAll() {
 		//cancel old tasks
 		initServiceLoaders();
-		Duration serviceInterval = new Duration(mRefData.getPreferenceServiceInterval());
+		//Duration serviceInterval = new Duration(mRefData.getPreferenceServiceInterval());
+		Duration serviceInterval = new Duration(Long.MAX_VALUE); //never download article already downloaded
 
 		//selectTagWorkflowList = new ArrayList<SelectTagWorkflow>();
 		for (String tag : mRefData.getActiveTags()) {
