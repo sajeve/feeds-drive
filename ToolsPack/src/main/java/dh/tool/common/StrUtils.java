@@ -1,10 +1,17 @@
 package dh.tool.common;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import com.google.common.io.CharStreams;
+import com.google.common.io.InputSupplier;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 
 /**
@@ -146,6 +153,42 @@ public class StrUtils {
 		return hostName;
 	}
 
+	public static String toString(final InputStream input, Charset encoding) throws IOException {
+		InputSupplier<InputStream> inputSupplier = new InputSupplier<InputStream>() {
+			@Override
+			public InputStream getInput() throws IOException {
+				return input;
+			}
+		};
+		InputSupplier<InputStreamReader> readerSupplier =
+				CharStreams.newReaderSupplier(inputSupplier, encoding);
+
+		return CharStreams.toString(readerSupplier);
+	}
+
+	public static Charset getCharset(String charset) {
+		if (!Strings.isNullOrEmpty(charset)) {
+			if (charset.equalsIgnoreCase("UTF_8") || charset.equalsIgnoreCase("UTF8") || charset.equalsIgnoreCase("UTF-8")) {
+				return Charsets.UTF_8;
+			}
+			if (charset.equalsIgnoreCase("ISO_8859_1") || charset.equalsIgnoreCase("ISO-8859-1") || charset.equalsIgnoreCase("ISO-8859")) {
+				return Charsets.ISO_8859_1;
+			}
+			if (charset.equalsIgnoreCase("UTF_16") || charset.equalsIgnoreCase("UTF16") || charset.equalsIgnoreCase("UTF-16")) {
+				return Charsets.UTF_16;
+			}
+			if (charset.equalsIgnoreCase("US_ASCII") || charset.equalsIgnoreCase("ASCII")) {
+				return Charsets.US_ASCII;
+			}
+			if (charset.equalsIgnoreCase("UTF_16BE") || charset.equalsIgnoreCase("UTF-16-BE") || charset.equalsIgnoreCase("UTF16BE")  || charset.equalsIgnoreCase("UTF_16_BE")) {
+				return Charsets.UTF_16BE;
+			}
+			if (charset.equalsIgnoreCase("UTF_16LE") || charset.equalsIgnoreCase("UTF-16-LE") || charset.equalsIgnoreCase("UTF16LE") || charset.equalsIgnoreCase("UTF_16_LE")) {
+				return Charsets.UTF_16LE;
+			}
+		}
+		return Charset.defaultCharset();
+	}
 
 	public static String removeTrailingSlash(String str) {
 		return str.replaceFirst("/*$", "");
