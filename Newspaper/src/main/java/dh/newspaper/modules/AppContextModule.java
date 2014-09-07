@@ -35,14 +35,14 @@ import javax.inject.Singleton;
 )
 public class AppContextModule {
 
-	private Context mAppContext;
+	private final Context mAppContext;
 	//private RequestQueue mRequestQueue;
-	private DatabaseHelper mDbHelper;
-	private SQLiteDatabase mDatabase;
+	private volatile DatabaseHelper mDbHelper;
+	/*private SQLiteDatabase mDatabase;
 	private DaoMaster mDaoMaster;
-	private DaoSession mDaoSession;
-	private RefData mRefData;
-	private BackgroundTasksManager mBackgroundTasksManager;
+	private DaoSession mDaoSession;*/
+	private volatile RefData mRefData;
+	private volatile BackgroundTasksManager mBackgroundTasksManager;
 
 	public AppContextModule(Context mAppContext) {
 		this.mAppContext = mAppContext;

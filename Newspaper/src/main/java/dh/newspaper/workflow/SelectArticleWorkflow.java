@@ -3,6 +3,7 @@ package dh.newspaper.workflow;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import com.google.common.base.Strings;
@@ -34,7 +35,6 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
 
@@ -72,6 +72,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	private volatile String mArticleContentDownloaded;
 	private volatile String mArticleTextPlainDownloaded;
 	private volatile boolean mSuccessDownloadAndExtraction = false;
+	private volatile String mArticleContentWithCachedImages;
 
 	private volatile String mArticleLanguage;
 	//private PathToContent mPathToContent;
@@ -79,20 +80,16 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	private volatile Subscription mParentSubscription;
 
 	//private Stopwatch mStopwatch;
-	private PerfWatcher pw;
-
-	private SelectArticleWorkflow(Context context, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
-		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
-		mArticleTimeToLive = articleTimeToLive;
-		mCallback = callback;
-		mOnlineMode = online;
-	}
+	private final PerfWatcher pw;
 
 	/**
 	 * Create workflow from a {@link dh.newspaper.model.FeedItem}
 	 */
 	public SelectArticleWorkflow(Context context, FeedItem feedItem, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
-		this(context, articleTimeToLive, online, callback);
+		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
+		mArticleTimeToLive = articleTimeToLive;
+		mCallback = callback;
+		mOnlineMode = online;
 		mFeedItem = feedItem;
 		pw = new PerfWatcher(log, feedItem.getUri());
 	}
@@ -101,10 +98,10 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	 * Create workflow from an existing {@link dh.newspaper.model.generated.Article}
 	 */
 	public SelectArticleWorkflow(Context context, Article article, Duration articleTimeToLive, boolean online, SelectArticleCallback callback) {
-		this(context, articleTimeToLive, online, callback);
+		this(context,
+				new FeedItem(article.getParentUrl(), article.getTitle(), article.getPublishedDateString(), article.getExcerpt(), article.getArticleUrl(), article.getLanguage(), article.getAuthor()),
+				articleTimeToLive, online, callback);
 		mArticle = article;
-		mFeedItem = new FeedItem(article.getParentUrl(), article.getTitle(), article.getPublishedDateString(), article.getExcerpt(), article.getArticleUrl(), article.getLanguage(), article.getAuthor());
-		pw = new PerfWatcher(log, article.getArticleUrl());
 	}
 
 	//private DaoSession daoSessionReadonly;
@@ -117,23 +114,31 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 		pw.i("Start SelectArticleWorkflow");
 		pw.resetGlobalStopwatch();
 
-		DaoMaster daoMaster = refData.createReadOnlyDaoMaster();
-
 		try {
-			DaoSession daoSessionReadonly = daoMaster.newSession();
+			databaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
+				@Override
+				public void doOperate(DaoSession daoSession) {
+					mParentSubscription = daoSession.getSubscriptionDao().queryBuilder()
+							.whereOr(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()),
+									SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()+"/"))
+							.unique();
+				}
+			});
 
-			mParentSubscription = daoSessionReadonly.getSubscriptionDao().queryBuilder()
-					.whereOr(SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()),
-							SubscriptionDao.Properties.FeedsUrl.eq(mFeedItem.getParentUrl()+"/"))
-					.unique();
 			pw.t("Found Parent subscription " + mParentSubscription);
 
 			checkCancellation();
 
 			if (mArticle == null) {
 				//find mArticle from database
-				mArticle = daoSessionReadonly.getArticleDao().queryBuilder()
-						.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
+				databaseHelper.operate(new DatabaseHelper.DatabaseOperation(){
+					@Override
+					public void doOperate(DaoSession daoSession) {
+						mArticle = daoSession.getArticleDao().queryBuilder()
+								.where(ArticleDao.Properties.ArticleUrl.eq(mFeedItem.getUri())).unique();
+					}
+				});
+
 				pw.t("Found Article in cache " + mArticle);
 				checkCancellation();
 
@@ -152,7 +157,13 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			}
 			else { //mArticle is not null, refresh it from database
 				try {
-					daoSessionReadonly.getArticleDao().refresh(mArticle);
+					databaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
+						@Override
+						public void doOperate(DaoSession daoSession) {
+							daoSession.getArticleDao().refresh(mArticle);
+						}
+					});
+
 					pw.t("Refreshed cached Article from database " + mArticle);
 					checkCancellation();
 
@@ -177,7 +188,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 				mCallback.done(this, getArticle(), isCancelled());
 				pw.t("callback done");
 			}
-			daoMaster.getDatabase().close();
+			//daoMaster.getDatabase().close();
 			if (mSuccessDownloadAndExtraction) {
 				pw.ig("SelectArticleWorkflow completed " + toString());
 			}
@@ -249,9 +260,9 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 		);
 
 		try {
-			databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+			databaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
 				@Override
-				public void doWrite(DaoSession daoSession) {
+				public void doOperate(DaoSession daoSession) {
 					daoSession.getArticleDao().insert(mArticle);
 				}
 			});
@@ -324,9 +335,9 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 		pw.resetStopwatch();
 
-		databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+		databaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
 			@Override
-			public void doWrite(DaoSession daoSession) {
+			public void doOperate(DaoSession daoSession) {
 				daoSession.getArticleDao().update(mArticle);
 			}
 		});
@@ -391,21 +402,23 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			mArticle.setImageUrl(avatar);
 			pw.d("Set avatar " + avatar);
 		}
-		else {
-			/**
-			 * Mode offline: use image from cache instead
-			 */
-			if (Constants.DEBUG) {
-				for (Element e : elems) {
-					File imgFile = refData.getLruDiscCache().get(e.attr("abs:src"));
-					if (imgFile != null) {
-						e.attr("src", imgFile.getAbsolutePath());
-						e.attr("style", "border:2px solid green;");
-					}
+
+		int c=0;
+		for (Element e : elems) {
+			File imgFile = refData.getLruDiscCache().get("file:/"+e.attr("abs:src"));
+			if (imgFile != null) {
+				e.attr("src", imgFile.getAbsolutePath());
+				if (Constants.DEBUG) {
+					e.attr("style", "border:2px solid green;");
 				}
-				pw.d("Change images border to recognise cached images");
+				c++;
 			}
 		}
+		pw.d("Change images border (of " + c + " imgs) to recognise cached images");
+
+		mArticleContentWithCachedImages = getArticleContentDocument().toString();
+
+		pw.d("Compute article content with cached images");
 	}
 
 	/**
@@ -433,6 +446,17 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 	}
 
 	/**
+	 * return article content with cached images (img tag referenced to local cached images)
+	 * or the true article content
+	 */
+	public String getArticleContent() {
+		if (!TextUtils.isEmpty(mArticleContentWithCachedImages)) {
+			return mArticleContentWithCachedImages;
+		}
+		return mArticle.getContent();
+	}
+
+	/**
 	 * feed articleContent, mArticleLanguage, mParseNotice
 	 */
 	private void downloadAndExtractArticleContent() {
@@ -454,7 +478,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 			String fullContent = StrUtils.toString(inputStream, StrUtils.getCharset(encoding));
 
-			pw.d("Content downloaded");
+			pw.d("Content downloaded: "+StrUtils.glimpse(fullContent));
 
 			checkCancellation();
 			if (mCallback!=null) {

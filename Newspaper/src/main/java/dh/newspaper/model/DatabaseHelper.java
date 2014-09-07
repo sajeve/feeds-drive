@@ -14,32 +14,54 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class DatabaseHelper extends SQLiteAssetHelper
 {
-	public static final ReentrantLock WriteLock = new ReentrantLock();
+	public static final ReentrantLock DbLock = new ReentrantLock();
 
 	public DatabaseHelper(Context context) {
 		super(context, Constants.DATABASE_NAME + ".db", RefData.getCachePath(context), null, Constants.DATABASE_VERSION);
 	}
 
 	/**
-	 * all writing to database should use this method to be synchronized
+	 * all access to database must to use this method to be synchronized
 	 */
-	public void write(DatabaseWriting dbw) {
-		WriteLock.lock();
+	public void operate(DatabaseOperation dbo) {
+		DbLock.lock();
 		try {
-			DaoMaster daoMaster = new DaoMaster(createWritableDatabase());
-			try {
-				DaoSession daoSession = daoMaster.newSession();
-				dbw.doWrite(daoSession);
-			} finally {
-				daoMaster.getDatabase().close();
+			if (Constants.SINGLE_DATABASE_CONNECTION) {
+				dbo.doOperate(defaultDaoSession());
+			}
+			else {
+				DaoMaster daoMaster = new DaoMaster(createWritableDatabase());
+				try {
+					DaoSession daoSession = daoMaster.newSession();
+					dbo.doOperate(daoSession);
+				} finally {
+					daoMaster.getDatabase().close();
+				}
 			}
 		}
 		finally {
-			WriteLock.unlock();
+			DbLock.unlock();
 		}
 	}
 
-	public static interface DatabaseWriting {
-		public void doWrite(DaoSession daoSession);
+	private volatile DaoMaster mDaoMaster;
+	private volatile DaoSession mDaoSession;
+
+	public synchronized DaoMaster defaultDaoMaster() {
+		if (mDaoMaster == null) {
+			mDaoMaster = new DaoMaster(getWritableDatabase());
+		}
+		return mDaoMaster;
+	}
+
+	public synchronized DaoSession defaultDaoSession() {
+		if (mDaoSession == null) {
+			mDaoSession = defaultDaoMaster().newSession();
+		}
+		return mDaoSession;
+	}
+
+	public static interface DatabaseOperation {
+		public void doOperate(DaoSession daoSession);
 	}
 }

@@ -43,15 +43,16 @@ import java.util.concurrent.locks.ReentrantLock;
 public class RefData {
 	private static final String TAG = RefData.class.getName();
 	//private List<PathToContent> mPathToContents;
-	private TreeSet<String> mActiveTags;
-	private TreeSet<String> mTags;
-	private LruDiscCache mLruDiscCache;
+	private volatile TreeSet<String> mActiveTags;
+	private volatile TreeSet<String> mTags;
+	private volatile LruDiscCache mLruDiscCache;
 	//private boolean pathToContentsStale = false;
 	//private boolean mTagsStale = false;
-	private Context mContext;
-	private List<Subscription> activeSubscriptions;
-	private List<Subscription> subscriptions;
-	private SharedPreferences mSharedPreferences;
+	private final Context mContext;
+	private volatile List<Subscription> activeSubscriptions;
+	private volatile List<Subscription> subscriptions;
+	private final SharedPreferences mSharedPreferences;
+	private final DatabaseHelper databaseHelper;
 
 	public RefData(Context context, DatabaseHelper databaseHelper, SharedPreferences sharedPreferences) {
 		mContext = context;
@@ -112,14 +113,21 @@ public class RefData {
 	private void loadSubscriptions() {
 		checkAccessDiskOnMainThread();
 
-		SQLiteDatabase db = databaseHelper.getReadableDatabase();
+		/*SQLiteDatabase db = databaseHelper.getReadableDatabase();
 		try {
 			DaoSession daoSession = (new DaoMaster(db)).newSession();
 			subscriptions = daoSession.getSubscriptionDao().loadAll();
 		}
 		finally {
 			db.close();
-		}
+		}*/
+
+		databaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
+			@Override
+			public void doOperate(DaoSession daoSession) {
+				subscriptions = daoSession.getSubscriptionDao().loadAll();
+			}
+		});
 
 		activeSubscriptions = new ArrayList<Subscription>();
 		for (Subscription sub : subscriptions) {
@@ -334,20 +342,15 @@ public class RefData {
 		articlesLoader.setCorePoolSize(threadsPoolSize);
 	}
 
-
-
 	public boolean isBatteryCharging() {
 		Intent batteryStatus = mContext.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
 		return status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
 	}
 
-
-	private DatabaseHelper databaseHelper;
-
-	public DaoMaster createReadOnlyDaoMaster() {
-		return new DaoMaster(databaseHelper.createReadOnlyDatabase());
-	}
+//	public DaoMaster createReadOnlyDaoMaster() {
+//		return new DaoMaster(databaseHelper.createReadOnlyDatabase());
+//	}
 //	public DaoMaster createWritableDaoMaster() {
 //		return new DaoMaster(databaseHelper.createWritableDatabase());
 //	}

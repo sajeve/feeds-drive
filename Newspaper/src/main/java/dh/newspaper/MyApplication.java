@@ -126,8 +126,14 @@ public class MyApplication extends InjectingApplication {
 		dialog.show(fm, "ReportErrorDialog "+ DateTime.now());
 	}
 
+	private static volatile boolean ModuleSetup = false;
+
 	@Override
-	protected List<Object> getModules() {
+	protected synchronized List<Object> getModules() {
+		if (ModuleSetup) {
+			throw new IllegalStateException("Module is setup twice");
+		}
+		ModuleSetup = true;
 		return new ArrayList<Object>(){{
 			add(new GlobalModule());
 			add(new AppContextModule(getApplicationContext()));

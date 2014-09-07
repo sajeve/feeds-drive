@@ -1,6 +1,5 @@
 package dh.newspaper.view;
 
-import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,8 +7,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.BaseAdapter;
-import android.widget.CompoundButton;
 import de.greenrobot.event.EventBus;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
@@ -21,14 +18,12 @@ import dh.newspaper.base.Injector;
 import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.model.DatabaseHelper;
-import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.view.utils.BgCheckbox;
 import dh.tool.common.StrUtils;
 
 import javax.inject.Inject;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class ManageSubscriptionActivity extends ListActivity {
@@ -73,9 +68,9 @@ public class ManageSubscriptionActivity extends ListActivity {
 				final Subscription sub = (Subscription)senderTag;
 				sub.setEnable(isChecked);
 
-				databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+				databaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
 					@Override
-					public void doWrite(DaoSession daoSession) {
+					public void doOperate(DaoSession daoSession) {
 						daoSession.getSubscriptionDao().update(sub);
 					}
 				});

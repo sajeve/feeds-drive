@@ -14,7 +14,7 @@ public class TestUtils {
 	private static final String TAG = TestUtils.class.getName();
 
 	public static void writeToFile(String filename, String content, boolean wrapHtml) throws IOException {
-		Log.d(TAG, "Start write String to file " + filename);
+		Log.d(TAG, "Start operate String to file " + filename);
 		Stopwatch sw = Stopwatch.createStarted();
 
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filename)));
@@ -31,7 +31,7 @@ public class TestUtils {
 	}
 
 	public static void writeToFile(String filename, InputStream content, boolean wrapHtml) throws IOException {
-		Log.d(TAG, "Start write InputStream to file "+filename);
+		Log.d(TAG, "Start operate InputStream to file "+filename);
 		Stopwatch sw = Stopwatch.createStarted();
 
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(filename)));

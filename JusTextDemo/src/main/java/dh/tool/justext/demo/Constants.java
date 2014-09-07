@@ -27,7 +27,7 @@ public class Constants {
 		add("http://www.washingtonpost.com/local/obituaries/associate-tommy-ramone-last-of-the-ramones-dies/2014/07/12/315b0434-0997-11e4-ba5b-b9d8a4daba13_story.html?hpid=z4");
 		add("http://edition.cnn.com/2014/07/13/world/meast/mideast-tensions/index.html?eref=edition");
 		add("http://giaitri.vnexpress.net/photo/quoc-te/on-bich-ha-gan-50-tuoi-van-sexy-3019062.html");
-		add("");
+		add("http://laodong.com.vn/phap-luat/ong-nguyen-thanh-chan-lam-gi-khi-hung-thu-dang-gay-an-241857.bld");
 		add("");
 		add("");
 	}};

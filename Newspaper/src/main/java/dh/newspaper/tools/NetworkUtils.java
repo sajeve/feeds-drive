@@ -49,7 +49,7 @@ public class NetworkUtils {
 	//public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Android; Tablet; rv:26.0) Gecko/20100101 Firefox/26.0";
 	//public static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0";
 
-	private static final int SOCKET_OPERATION_TIMEOUT = 60 * 1000;
+	private static final int SOCKET_OPERATION_TIMEOUT = 30 * 1000;
 	private static final OkHttpClient okHttpClient = new OkHttpClient();
 
 	/**

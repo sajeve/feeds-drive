@@ -20,7 +20,6 @@ import dh.newspaper.event.RefreshTagsListEvent;
 import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.Article;
-import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
@@ -88,8 +87,10 @@ public class BackgroundTasksManager implements Closeable {
 			@Override
 			protected Boolean doInBackground(Object[] params) {
 				//install database
-				SQLiteDatabase pingConnection = mDatabaseHelper.getWritableDatabase();
-				pingConnection.close();
+				if (!Constants.SINGLE_DATABASE_CONNECTION) {
+					SQLiteDatabase pingConnection = mDatabaseHelper.getWritableDatabase();
+					pingConnection.close();
+				}
 
 				EventBus.getDefault().post(new RefreshTagsListEvent(Constants.SUBJECT_TAGS_START_LOADING));
 				try {
@@ -172,7 +173,7 @@ public class BackgroundTasksManager implements Closeable {
 
 					mRefData.updateArticleLoaderPoolSize(mArticlesLoader);
 
-					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL_MIN, Constants.ARTICLE_TTL_MIN, isOnline(), Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
+					mSelectTagWorkflow = new SelectTagWorkflow(mContext, tag, Constants.SUBSCRIPTION_TTL_MIN, Constants.INFINITE_DURATION /*Constants.ARTICLE_TTL_MIN*/, isOnline(), Constants.ARTICLES_PER_PAGE, mArticlesLoader, new SelectTagWorkflow.SelectTagCallback() {
 						@Override
 						public void onFinishedLoadFromCache(SelectTagWorkflow sender, List<Article> articles, int count) {
 							EventBus.getDefault().post(new RefreshFeedsListEvent(sender, Constants.SUBJECT_FEEDS_REFRESH, sender.getTag()));
@@ -296,6 +297,10 @@ public class BackgroundTasksManager implements Closeable {
 		mServiceArticlesLoader = mRefData.createArticlesLoader("ServiceArticlesLoader");
 	}
 	public void runServiceDownloadAll() {
+		if (mRefData.getActiveTags() == null) {
+			Log.w(TAG, "Cannot run downloading service, initialization did not finished");
+			return;
+		}
 		//cancel old tasks
 		initServiceLoaders();
 		//Duration serviceInterval = new Duration(mRefData.getPreferenceServiceInterval());
@@ -353,9 +358,9 @@ public class BackgroundTasksManager implements Closeable {
 				try {
 					sendProgressMessage("Deleting subscription.."); //TODO: translate
 
-					mDatabaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+					mDatabaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
 						@Override
-						public void doWrite(DaoSession daoSession) {
+						public void doOperate(DaoSession daoSession) {
 							daoSession.getSubscriptionDao().delete(sub);
 						}
 					});
@@ -456,7 +461,6 @@ public class BackgroundTasksManager implements Closeable {
 				t.cancel();
 			}
 		}
-		ImageLoader.getInstance().stop();
 	}
 
 	@Override
@@ -472,6 +476,12 @@ public class BackgroundTasksManager implements Closeable {
 		}
 		if (mInitThread != null) {
 			mInitThread.cancel(false);
+		}
+		if (mServiceArticlesLoader != null) {
+			mServiceArticlesLoader.shutdownNow();
+		}
+		if (mServiceTagsLoader != null) {
+			mServiceTagsLoader.shutdownNow();
 		}
 	}
 

@@ -10,7 +10,6 @@ import dh.newspaper.cache.RefData;
 import dh.newspaper.event.SaveSubscriptionEvent;
 import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.Feeds;
-import dh.newspaper.model.generated.DaoMaster;
 import dh.newspaper.model.generated.DaoSession;
 import dh.newspaper.model.generated.Subscription;
 import dh.newspaper.model.json.SearchFeedsResult;
@@ -36,10 +35,10 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 	private final SearchFeedsResult.ResponseData.Entry feedsSource;
 	private final Set<String> tags;
 	//private final Context context;
-	private SaveSubscriptionEvent saveSubscriptionState;
-	@Inject ContentParser contentParser;
-	@Inject DatabaseHelper databaseHelper;
-	@Inject RefData refData;
+	private volatile SaveSubscriptionEvent saveSubscriptionState;
+	@Inject volatile ContentParser contentParser;
+	@Inject volatile DatabaseHelper databaseHelper;
+	@Inject volatile RefData refData;
 
 	public SaveSubscriptionWorkflow(Context context, SearchFeedsResult.ResponseData.Entry feedsSource, Set<String> tags) {
 		((MyApplication)context.getApplicationContext()).getObjectGraph().inject(this);
@@ -122,9 +121,9 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 					existedSubscription.setTags(tagsValue);
 					existedSubscription.setLastUpdate(DateTime.now().toDate());
 
-					databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+					databaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
 						@Override
-						public void doWrite(DaoSession daoSession) {
+						public void doOperate(DaoSession daoSession) {
 							daoSession.getSubscriptionDao().update(existedSubscription);
 						}
 					});
@@ -144,9 +143,9 @@ public class SaveSubscriptionWorkflow extends OncePrifoTask {
 
 					final Subscription subNew = new Subscription(null, feedsSourceUrl, tagsValue,
 							description, language, true, null, pubDate, DateTime.now().toDate());
-					databaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+					databaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
 						@Override
-						public void doWrite(DaoSession daoSession) {
+						public void doOperate(DaoSession daoSession) {
 							daoSession.insert(subNew);
 						}
 					});

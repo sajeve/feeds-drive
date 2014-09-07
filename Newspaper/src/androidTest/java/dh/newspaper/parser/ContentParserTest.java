@@ -126,7 +126,7 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 //		ContentParser.removeComments(doc);
 //		doc.select("script").remove();
 //
-//		//write to file
+//		//operate to file
 //		TestUtils.writeToFile(fileName, doc.html(), false);
 //
 //		//extract content
@@ -135,7 +135,7 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 //		Log.i(TAG, content);
 //		assertFalse(Strings.isNullOrEmpty(content));
 //
-//		//write content to file
+//		//operate content to file
 //		TestUtils.writeToFile(fileName+" content.html", content, true);
 //	}
 

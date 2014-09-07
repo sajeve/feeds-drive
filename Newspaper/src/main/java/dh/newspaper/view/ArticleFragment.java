@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
-import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,8 +15,6 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import de.greenrobot.event.EventBus;
@@ -37,7 +34,6 @@ import dh.newspaper.workflow.SelectArticleWorkflow;
 
 import javax.inject.Inject;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,6 +54,7 @@ public class ArticleFragment extends Fragment {
 	private TextView mTxtTags;
 	private TextView mTxtNotice;
 	private View mPanelNotice;
+	private TextView mTxtSource;
 
 	private Article mArticle;
 
@@ -78,6 +75,7 @@ public class ArticleFragment extends Fragment {
 		mTxtTags = (TextView) mSwipeRefreshLayout.findViewById(R.id.txt_tags);
 		mTxtNotice = (TextView) mSwipeRefreshLayout.findViewById(R.id.txt_notice);
 		mPanelNotice = mSwipeRefreshLayout.findViewById(R.id.panel_notice);
+		mTxtSource = (TextView) mSwipeRefreshLayout.findViewById(R.id.txt_source);
 
 		mTxtDataSource.setMovementMethod(LinkMovementMethod.getInstance());
 		mWebView.setWebViewClient(new WebViewClient());
@@ -93,6 +91,13 @@ public class ArticleFragment extends Fragment {
 				}
 			}
 		});
+
+		if (Constants.DEBUG) {
+			mTxtSource.setVisibility(View.VISIBLE);
+		}
+		else {
+			mTxtSource.setVisibility(View.GONE);
+		}
 
 		return mSwipeRefreshLayout;
     }
@@ -183,7 +188,7 @@ public class ArticleFragment extends Fragment {
 				Log.d(TAG, "ArticleFragment REFRESH (" + swRae.elapsed(TimeUnit.MILLISECONDS) + " ms) " + event.getSender().getArticleUrl());
 				swRae.reset().start();
 
-				setGui(event.getSender(), event.ArticleContent);
+				setGui(event.getSender(), event.OverrideArticleContent);
 				return;
 			}
 			if (StrUtils.equalsString(event.getSubject(), Constants.SUBJECT_ARTICLE_DONE_LOADING)) {
@@ -229,7 +234,7 @@ public class ArticleFragment extends Fragment {
 			setGui(selectArticleWorkflow, null);
 		}
 	}
-	private void setGui(SelectArticleWorkflow data, String displayContent) {
+	private void setGui(SelectArticleWorkflow data, String contentOverride) {
 		if (data == null) {
 			Log.w(TAG, "data is null");
 			if (Constants.DEBUG) {
@@ -253,20 +258,20 @@ public class ArticleFragment extends Fragment {
 		String encoding=data.getParentSubscription() == null ? null : data.getParentSubscription().getEncoding();
 
 		String contentToDisplay;
-		if (!Strings.isNullOrEmpty(displayContent) && mArticle.getLastDownloadSuccess()==null) {
+		if (!Strings.isNullOrEmpty(contentOverride) && mArticle.getLastDownloadSuccess()==null) {
 			//the article is never downloaded before, display the full content before display the simplified content
-			contentToDisplay = displayContent;
+			contentToDisplay = contentOverride;
 		}
 		else {
-			contentToDisplay = mArticle.getContent();
+			contentToDisplay = data.getArticleContent();
 		}
-
 
 		mWebView.loadDataWithBaseURL(
 				mArticle.getArticleUrl(),
 				contentToDisplay,
 				"text/html", encoding,
 				mArticle.getParentUrl());
+		mTxtSource.setText(contentToDisplay);
 
 		if (!Strings.isNullOrEmpty(mArticle.getParseNotice())) {
 			mTxtNotice.setText(mArticle.getParseNotice() + " - " + mArticle.getArticleUrl());

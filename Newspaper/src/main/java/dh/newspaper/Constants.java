@@ -16,18 +16,19 @@ public class Constants {
 	public static final boolean DEBUG = true;
 	public static final boolean USE_DEBUG_DATABASE = false;
 	public static final boolean LOAD_FIRST_TAG_ON_START = false;
+	public static final boolean SINGLE_DATABASE_CONNECTION = true;
 
 	public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
 	public static final String DEBUG_DATABASE_PATH = "/mnt/shared/bridge";
 	public static final String DATABASE_NAME = "newspaper";
 	public static final int DATABASE_VERSION = 102;
 	public static final String CACHE_IMAGE_FOLDER = "images";
-	public static final String DEFAULT_ARTICLE_ENCODING = null;
+	public static final String DEFAULT_ARTICLE_ENCODING = "UTF-8";
 	public static final String DEFAULT_ENCODING = "UTF-8";
 	public static final int EXCERPT_LENGTH = 320;
 	public static final Duration ARTICLE_TTL_MIN = DEBUG ? new Duration(100) : new Duration(1000); //1s
 	public static final Duration SUBSCRIPTION_TTL_MIN = DEBUG ? new Duration(100) : new Duration(1000); //1s
-	//public static final Duration INFINITE_DURATION = new Duration(Long.MAX_VALUE);
+	public static final Duration INFINITE_DURATION = new Duration(Long.MAX_VALUE);
 
 	/**
 	 * number of actual articles in memory cache, it is the windows size of the list view

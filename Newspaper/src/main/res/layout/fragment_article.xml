@@ -50,7 +50,6 @@
 					android:id="@+id/webview_article"
 					android:paddingBottom="@dimen/big_padding"
 					/>
-
 			<LinearLayout
 					android:id="@+id/panel_notice"
 					android:layout_width="wrap_content"
@@ -72,8 +71,13 @@
 						style="@style/Article.Info"
 						/>
 			</LinearLayout>
-
-
+			<TextView
+					android:id="@+id/txt_source"
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+					android:visibility="gone"
+					android:textIsSelectable="true"
+					/>
 		</LinearLayout>
 	</ScrollView>
 </android.support.v4.widget.SwipeRefreshLayout>

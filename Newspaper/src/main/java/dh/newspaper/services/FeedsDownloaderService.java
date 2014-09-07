@@ -69,7 +69,7 @@ public class FeedsDownloaderService extends Service {
 		//testService(startId);
 		Log.i(TAG, "onStartCommand " + (intent==null ? "" : intent.getAction()) + " startId=" + startId);
 
-		boolean cancelService  = intent.getBooleanExtra(CANCEL_SERVICE, false);
+		boolean cancelService  = intent==null ? false : intent.getBooleanExtra(CANCEL_SERVICE, false);
 		if (cancelService) {
 			cancelAll();
 			if (Constants.DEBUG) {
@@ -79,7 +79,7 @@ public class FeedsDownloaderService extends Service {
 		}
 
 		//check service enabled
-		boolean checkServiceEnable = intent.getBooleanExtra(CHECK_SERVICE_ENABLE, true);
+		boolean checkServiceEnable = intent == null ? true : intent.getBooleanExtra(CHECK_SERVICE_ENABLE, true);
 		if (checkServiceEnable) {
 			if (!mRefData.getPreferenceServiceEnabled()) {
 				Log.i(TAG, "Service is disabled");
@@ -91,7 +91,7 @@ public class FeedsDownloaderService extends Service {
 		}
 
 		//check charging condition
-		boolean checkChargingCondition = intent.getBooleanExtra(CHECK_CHARGING_CONDITION, true);
+		boolean checkChargingCondition = intent == null ? true : intent.getBooleanExtra(CHECK_CHARGING_CONDITION, true);
 		if (checkChargingCondition) {
 			if (mRefData.getPreferenceOnlyRunServiceIfCharging()) {
 				if (!mRefData.isBatteryCharging()) {
@@ -105,7 +105,7 @@ public class FeedsDownloaderService extends Service {
 		}
 
 		//check connectivity
-		boolean checkNetworkCondition = intent.getBooleanExtra(CHECK_NETWORK_CONDITION, true);
+		boolean checkNetworkCondition = intent == null ? true : intent.getBooleanExtra(CHECK_NETWORK_CONDITION, true);
 		if (checkNetworkCondition) {
 			if (!NetworkUtils.networkConditionMatched(mConnectivityManager, mPreferences)) {
 				Log.i(TAG, "Network not available");

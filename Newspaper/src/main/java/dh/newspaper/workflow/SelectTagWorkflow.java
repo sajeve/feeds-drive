@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -204,7 +203,8 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 		pw.resetStopwatch();
 		int oldCount = mCountArticles;
-		DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
+
+		/*DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
 		try {
 			DaoSession daoSession = daoMaster.newSession();
 			QueryBuilder<Article> queryBuilder = buildArticlesQuery(daoSession);
@@ -212,7 +212,16 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 		}
 		finally {
 			daoMaster.getDatabase().close();
-		}
+		}*/
+
+		mDatabaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
+			@Override
+			public void doOperate(DaoSession daoSession) {
+				QueryBuilder<Article> queryBuilder = buildArticlesQuery(daoSession);
+				mCountArticles = (int)queryBuilder.count();
+			}
+		});
+
 		pw.d("Count total articles = "+mCountArticles);
 
 		return oldCount!=mCountArticles;
@@ -241,7 +250,7 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 
 			checkAccessDiskOnMainThread();
 
-			DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
+			/*DaoMaster daoMaster = mRefData.createReadOnlyDaoMaster();
 			try {
 				DaoSession daoSession = daoMaster.newSession();
 				QueryBuilder<Article> queryBuilder = buildArticlesQuery(daoSession);
@@ -249,7 +258,14 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			}
 			finally {
 				daoMaster.getDatabase().close();
-			}
+			}*/
+			mDatabaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
+				@Override
+				public void doOperate(DaoSession daoSession) {
+					QueryBuilder<Article> queryBuilder = buildArticlesQuery(daoSession);
+					mArticles = queryBuilder.offset(mOffset).limit(mPageSize).list();
+				}
+			});
 
 			pw.t("loadPage(" + offset + ")");
 
@@ -407,9 +423,9 @@ public class SelectTagWorkflow extends OncePrifoTask implements IArticleCollecti
 			sub.setLastUpdate(DateTime.now().toDate());
 
 
-			mDatabaseHelper.write(new DatabaseHelper.DatabaseWriting() {
+			mDatabaseHelper.operate(new DatabaseHelper.DatabaseOperation() {
 				@Override
-				public void doWrite(DaoSession daoSession) {
+				public void doOperate(DaoSession daoSession) {
 					daoSession.getSubscriptionDao().update(sub);
 				}
 			});

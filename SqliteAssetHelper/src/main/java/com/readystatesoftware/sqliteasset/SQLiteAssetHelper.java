@@ -64,7 +64,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     private final CursorFactory mFactory;
     private final int mNewVersion;
 
-    private SQLiteDatabase mDatabase = null;
+    private volatile SQLiteDatabase mDatabase = null;
     private boolean mIsInitializing = false;
 
     private String mDatabasePath;
