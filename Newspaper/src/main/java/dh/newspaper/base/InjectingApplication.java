@@ -42,7 +42,7 @@ public abstract class InjectingApplication
         extends Application
         implements Injector {
 
-    private ObjectGraph mObjectGraph;
+    private volatile ObjectGraph mObjectGraph;
 
     /**
      * Creates an object graph for this Application using the modules returned by {@link #getModules()}.
@@ -89,11 +89,11 @@ public abstract class InjectingApplication
      *
      * @return the list of modules
      */
-    protected List<Object> getModules() {
+    protected synchronized List<Object> getModules() {
         return null;
     }
 
-	private List<Object> getModulesPlusSelf() {
+	private synchronized List<Object> getModulesPlusSelf() {
 		List<Object> result = getModules();
 		if (result == null) {
 			result = new ArrayList<Object>();
