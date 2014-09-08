@@ -405,9 +405,9 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 		int c=0;
 		for (Element e : elems) {
-			File imgFile = refData.getLruDiscCache().get("file:/"+e.attr("abs:src"));
+			File imgFile = refData.getLruDiscCache().get(e.attr("abs:src"));
 			if (imgFile != null) {
-				e.attr("src", imgFile.getAbsolutePath());
+				e.attr("src", "file://"+imgFile.getAbsolutePath());
 				if (Constants.DEBUG) {
 					e.attr("style", "border:2px solid green;");
 				}
@@ -478,7 +478,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 			String fullContent = StrUtils.toString(inputStream, StrUtils.getCharset(encoding));
 
-			pw.d("Content downloaded: "+StrUtils.glimpse(fullContent));
+			pw.d("Content downloaded ("+encoding+"): "+StrUtils.glimpse(fullContent));
 
 			checkCancellation();
 			if (mCallback!=null) {

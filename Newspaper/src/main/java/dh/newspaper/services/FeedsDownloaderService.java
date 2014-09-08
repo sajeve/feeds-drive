@@ -387,7 +387,8 @@ public class FeedsDownloaderService extends Service {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		cancelAll();
+		//cancelAll();
+		displayNotification("Feeds Downloader", "Service terminated");
 	}
 
 	private void cancelAll() {

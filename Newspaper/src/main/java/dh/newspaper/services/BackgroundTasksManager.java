@@ -461,6 +461,7 @@ public class BackgroundTasksManager implements Closeable {
 				t.cancel();
 			}
 		}
+		ImageLoader.getInstance().stop();
 	}
 
 	@Override
