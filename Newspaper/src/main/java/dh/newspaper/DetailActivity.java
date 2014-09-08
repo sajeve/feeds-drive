@@ -1,6 +1,7 @@
 package dh.newspaper;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
@@ -142,22 +143,27 @@ public class DetailActivity extends Activity {
 		}
 
 		if (id == R.id.show_original) {
-			if (mBackgroundTasksManager.getActiveSelectArticleWorkflow() == null) {
-				Crouton.makeText(this, "No article selected", Style.ALERT).show(); //TODO translate
-				return true;
-			}
-
-			Article currentArticle = mBackgroundTasksManager.getActiveSelectArticleWorkflow().getArticle();
-
-			if (Constants.DEBUG) {
-				if (currentArticle == null) {
-					throw new IllegalStateException("Workflow null article");
-				}
-			}
-
 			EventBus.getDefault().post(new RawEvent(Constants.SUBJECT_ARTICLE_DISPLAY_FULL_WEBPAGE));
+			return true;
 		}
 
+		//get current article
+		Article currentArticle = null;
+		if  (mBackgroundTasksManager.getActiveSelectArticleWorkflow() != null) {
+			currentArticle = mBackgroundTasksManager.getActiveSelectArticleWorkflow().getArticle();
+		}
+		if (currentArticle != null) {
+			if (id == R.id.action_share) {
+				Intent intent = new Intent(Intent.ACTION_SEND);
+				intent.setType("text/plain");
+				intent.putExtra(Intent.EXTRA_TEXT, currentArticle.getArticleUrl());
+				startActivity(Intent.createChooser(intent, "Share"));
+				return true;
+			}
+		}
+		else {
+			Crouton.makeText(this, R.string.no_article_is_displaying, Style.ALERT);
+		}
 		return super.onOptionsItemSelected(item);
 	}
 	@Override
