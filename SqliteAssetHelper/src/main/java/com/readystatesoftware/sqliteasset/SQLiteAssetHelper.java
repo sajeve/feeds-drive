@@ -413,7 +413,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     public SQLiteDatabase createWritableDatabase(){
         //try {
             SQLiteDatabase db = SQLiteDatabase.openDatabase(mDatabasePath + "/" + mName, mFactory, SQLiteDatabase.OPEN_READWRITE);
-            Log.i(TAG, "successfully opened database " + mName);
+            Log.v(TAG, "successfully opened database " + mName);
             return db;
         /*} catch (SQLiteException e) {
             Log.w(TAG, "could not open database " + mName + " - " + e.getMessage(), e);

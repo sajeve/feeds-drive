@@ -44,21 +44,24 @@ public class DatabaseHelper extends SQLiteAssetHelper
 		}
 	}
 
-	private volatile DaoMaster mDaoMaster;
-	private volatile DaoSession mDaoSession;
+	private volatile DaoMaster mDaoMasterDefault;
+	private volatile DaoSession mDaoSessionDefault;
 
-	public synchronized DaoMaster defaultDaoMaster() {
-		if (mDaoMaster == null) {
-			mDaoMaster = new DaoMaster(getWritableDatabase());
+	private synchronized DaoMaster defaultDaoMaster() {
+		if (mDaoMasterDefault == null) {
+			mDaoMasterDefault = new DaoMaster(getWritableDatabase());
 		}
-		return mDaoMaster;
+		return mDaoMasterDefault;
 	}
 
 	public synchronized DaoSession defaultDaoSession() {
-		if (mDaoSession == null) {
-			mDaoSession = defaultDaoMaster().newSession();
+		if (!Constants.SINGLE_DATABASE_CONNECTION) {
+			throw new IllegalStateException("Use default connection is not allowed");
 		}
-		return mDaoSession;
+		if (mDaoSessionDefault == null) {
+			mDaoSessionDefault = defaultDaoMaster().newSession();
+		}
+		return mDaoSessionDefault;
 	}
 
 	public static interface DatabaseOperation {

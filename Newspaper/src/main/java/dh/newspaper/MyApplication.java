@@ -54,17 +54,17 @@ public class MyApplication extends InjectingApplication {
 		Log.i(TAG, "Application started");
 	}
 
-	@Override
-	public void onTerminate() {
-		try {
-			//EventBus.getDefault().unregister(mAppBundle);
-			mBackgroundTasksManager.close();
-		}
-		catch (Exception ex) {
-			Log.w(TAG, ex);
-		}
-		super.onTerminate();
-	}
+//	@Override
+//	public void onTerminate() {
+//		try {
+//			//EventBus.getDefault().unregister(mAppBundle);
+//			mBackgroundTasksManager.close();
+//		}
+//		catch (Exception ex) {
+//			Log.w(TAG, ex);
+//		}
+//		super.onTerminate();
+//	}
 
 	@Override
 	public File getDatabasePath(String name) {

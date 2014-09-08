@@ -484,6 +484,7 @@ public class BackgroundTasksManager implements Closeable {
 		if (mServiceTagsLoader != null) {
 			mServiceTagsLoader.shutdownNow();
 		}
+		mDatabaseHelper.close();
 	}
 
 }

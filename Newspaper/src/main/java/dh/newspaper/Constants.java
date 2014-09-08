@@ -16,7 +16,7 @@ public class Constants {
 	public static final boolean DEBUG = true;
 	public static final boolean USE_DEBUG_DATABASE = false;
 	public static final boolean LOAD_FIRST_TAG_ON_START = false;
-	public static final boolean SINGLE_DATABASE_CONNECTION = true;
+	public static final boolean SINGLE_DATABASE_CONNECTION = false; //use only one single database connection
 
 	public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
 	public static final String DEBUG_DATABASE_PATH = "/mnt/shared/bridge";
