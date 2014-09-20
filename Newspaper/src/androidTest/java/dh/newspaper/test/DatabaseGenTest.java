@@ -2,6 +2,7 @@ package dh.newspaper.test;
 
 import android.database.sqlite.SQLiteOpenHelper;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.Log;
 import de.greenrobot.dao.query.LazyList;
 import de.greenrobot.dao.query.Query;
 import de.greenrobot.dao.query.QueryBuilder;
@@ -9,10 +10,16 @@ import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
 import dh.newspaper.cache.RefData;
+import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.generated.*;
+import dh.newspaper.modules.AppContextModule;
 import dh.newspaper.parser.FeedParserException;
 import dh.newspaper.parser.SubscriptionFactory;
+import dh.newspaper.tools.DateUtils;
+import dh.tool.common.PerfWatcher;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Date;
@@ -36,9 +43,9 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 		QueryBuilder.LOG_SQL = true;
 		QueryBuilder.LOG_VALUES = true;
 
-		SQLiteOpenHelper helper = new DaoMaster.DevOpenHelper(this.getActivity(), "/mnt/shared/bridge/test/"+Constants.DATABASE_NAME+".db", null); //debug only (because drops all tables)
+		/*SQLiteOpenHelper helper = new DaoMaster.DevOpenHelper(this.getActivity(), "/mnt/shared/bridge/test/"+Constants.DATABASE_NAME+".db", null); //debug only (because drops all tables)
 		mDaoMaster = new DaoMaster(helper.getReadableDatabase());
-		assertNotNull(mDaoMaster.getDatabase());
+		assertNotNull(mDaoMaster.getDatabase());*/
 	}
 
 	@Override
@@ -48,7 +55,6 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 	}
 
 	public void testGenerateDatabase() throws IOException, FeedParserException {
-
 		Date now = DateTime.now().toDate();
 
 		mDaoMaster.dropAllTables(mDaoMaster.getDatabase(), false);
@@ -147,6 +153,48 @@ public class DatabaseGenTest extends ActivityInstrumentationTestCase2<MainActivi
 		daoSession.update(firstSubscriptionFound);
 		daoSession.getSubscriptionDao().refresh(firstSubscriptionFound);
 		assertTrue(firstSubscriptionFound.getEnable());
+	}
+
+	private static final Logger log = LoggerFactory.getLogger(DatabaseGenTest.class);
+
+	public void testFixPublishedDate() {
+		AppContextModule appContextModule = new AppContextModule(this.getActivity().getApplicationContext());
+		final DaoSession daoSession = appContextModule.provideDatabaseHelper().defaultDaoSession();
+
+		daoSession.runInTx(new Runnable() {
+			@Override
+			public void run() {
+				long count = daoSession.getArticleDao().count();
+				int fixed = 0;
+				for (int i=0; i<count; i++) {
+					Article mArticle = daoSession.getArticleDao().loadByRowId(i);
+					if (mArticle == null) {
+						continue;
+					}
+					PerfWatcher pw = new PerfWatcher(log, mArticle.getArticleUrl());
+
+					Date minDate = mArticle.getLastUpdated();
+					if (mArticle.getLastDownloadSuccess() != null && minDate.after(mArticle.getLastDownloadSuccess())) {
+						minDate = mArticle.getLastDownloadSuccess();
+					}
+					if (mArticle.getPublishedDate().after(minDate)) {
+						//Fix: the published date must be anterior to minDate.
+						DateTime publishedDate = DateUtils.parsePublishedDate(mArticle.getPublishedDateString());
+						if (publishedDate == null || publishedDate.toDate().after(minDate)) {
+							mArticle.setPublishedDate(minDate);
+							pw.i("Fix published date to minDate: " + DateUtils.SDF.format(mArticle.getPublishedDate()));
+						}
+						else {
+							mArticle.setPublishedDate(publishedDate.toDate());
+							pw.i("Fix published date: " + DateUtils.SDF.format(mArticle.getPublishedDate()));
+						}
+						daoSession.getArticleDao().update(mArticle);
+						fixed++;
+					}
+				}
+				Log.i("FixPublishedDate", fixed+"/"+count+" fixed");
+			}
+		});
 	}
 
 /*	public void testLazyLoadPerf() {

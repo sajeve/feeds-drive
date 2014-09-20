@@ -2,6 +2,7 @@ package dh.newspaper.parser;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.squareup.okhttp.OkHttpClient;
@@ -9,6 +10,7 @@ import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.test.TestUtils;
 import dh.newspaper.tools.NetworkUtils;
+import dh.tool.common.StrUtils;
 import dh.tool.thread.ICancellation;
 import dh.tool.thread.ThreadUtils;
 import org.jsoup.Jsoup;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
@@ -159,7 +162,8 @@ public class ContentParserTest extends ActivityInstrumentationTestCase2<MainActi
 //		PerfWatcher pw = new PerfWatcher(log, address);
 
 		StringBuilder notice = new StringBuilder();
-		Document doc = contentParser.extractContent(inputStream, Constants.DEFAULT_ENCODING, address, notice, null);
+		String fullContent = StrUtils.toString(inputStream, Charsets.UTF_8);
+		Document doc = contentParser.extractContent(fullContent, address, notice, null);
 
 //		pw.t("Finished verbose");
 //		pw.i("Finised extracting");

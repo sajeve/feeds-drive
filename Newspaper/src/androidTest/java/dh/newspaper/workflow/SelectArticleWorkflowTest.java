@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import dh.newspaper.Constants;
 import dh.newspaper.MainActivity;
 import dh.newspaper.MyApplication;
+import dh.newspaper.model.DatabaseHelper;
 import dh.newspaper.model.FeedItem;
 import dh.newspaper.model.Feeds;
 import dh.newspaper.model.generated.Article;
@@ -58,11 +59,16 @@ public class SelectArticleWorkflowTest extends ActivityInstrumentationTestCase2<
 	}
 
 
-	public void testSelectArticleWorkflow2() throws IOException, FeedParserException {
+	volatile Article article;
 
+	public void testSelectArticleWorkflow2() throws IOException, FeedParserException {
 		AppContextModule appContextModule = new AppContextModule(this.getActivity());
-		DaoSession daoSession = appContextModule.provideDaoSession();
-		Article article = daoSession.getArticleDao().loadByRowId(2778);
+		appContextModule.provideDatabaseHelper().operate(new DatabaseHelper.DatabaseOperation() {
+			@Override
+			public void doOperate(DaoSession daoSession) {
+				article = daoSession.getArticleDao().loadByRowId(2778);
+			}
+		});
 
 //		QueryBuilder<Subscription> subscriptionByTagQueryBuilder = daoSession.getSubscriptionDao().queryBuilder()
 //				.where(SubscriptionDao.Properties.Tags.like("%|" + tag.toUpperCase() + "|%")

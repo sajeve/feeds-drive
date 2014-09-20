@@ -4,9 +4,9 @@ import android.content.res.Resources;
 import android.util.Log;
 import com.google.common.base.Strings;
 import com.joestelmach.natty.DateGroup;
-import com.joestelmach.natty.Parser;
 import dh.newspaper.R;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.joda.time.Period;
 import org.joda.time.format.*;
 
@@ -111,6 +111,9 @@ public class DateUtils {
 		return resources.getString(R.string.PERIOD_JUST_NOW);
 	}
 
+	/**
+	 * past = true,
+	 */
 	public static DateTime parseDateTime(String dateTimeStr) {
 		if (Strings.isNullOrEmpty(dateTimeStr)) {
 			return null;
@@ -140,18 +143,8 @@ public class DateUtils {
 		}
 
 		try {
-			resu = new DateTime(new org.pojava.datetime.DateTime(dateTimeStr).toDate());
-			if (resu!=null) {
-				return resu;
-			}
-		}
-		catch (Exception ex) {
-			Log.w(TAG, "Failed PoJava parse DateTime '"+dateTimeStr+"'. "+ex);
-		}
-
-		try {
 			resu = parseNattyDate(dateTimeStr);
-			if (resu!=null) {
+			if (resu != null) {
 				return resu;
 			}
 		}
@@ -159,7 +152,38 @@ public class DateUtils {
 			Log.e(TAG, "Failed Natty parse DateTime '"+dateTimeStr+"'. "+ex);
 		}
 
+		try {
+			resu = new DateTime(new org.pojava.datetime.DateTime(dateTimeStr).toDate());
+			if (resu != null) {
+				return resu;
+			}
+		}
+		catch (Exception ex) {
+			Log.w(TAG, "Failed PoJava parse DateTime '"+dateTimeStr+"'. "+ex);
+		}
+
 		return resu;
+	}
+
+	/**
+	 * Published date must be in the past.
+	 * reverse month and day 7/12 - 12/7 to have a reasonable publishing date
+	 */
+	public static DateTime parsePublishedDate(String dateTimeStr) {
+		DateTime resu = parseDateTime(dateTimeStr);
+		if (resu.isAfter(DateTime.now())) {
+			//try to fix it by reverse month and day
+			int day = resu.getDayOfMonth();
+			int month = resu.getMonthOfYear();
+			if (day<=12) {
+				resu = new DateTime(resu.getYear(), day, month, resu.getHourOfDay(), resu.getMinuteOfHour(), resu.getSecondOfMinute(), resu.getMillisOfSecond(), resu.getChronology());
+				if (resu.isBefore(DateTime.now())) {
+					Log.d(TAG, "reverse day-month to obtain "+ SDF.format(resu.toDate()));
+					return resu;
+				}
+			}
+		}
+		return null;
 	}
 
 	private static com.joestelmach.natty.Parser nattyParser = new com.joestelmach.natty.Parser();

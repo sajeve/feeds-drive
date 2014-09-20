@@ -92,12 +92,12 @@ public class ArticleFragment extends Fragment {
 			}
 		});
 
-		if (Constants.DEBUG) {
+		/*if (Constants.DEBUG) {
 			mTxtSource.setVisibility(View.VISIBLE);
 		}
 		else {
 			mTxtSource.setVisibility(View.GONE);
-		}
+		}*/
 
 		return mSwipeRefreshLayout;
     }

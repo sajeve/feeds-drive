@@ -229,14 +229,15 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 			mArticleLanguage = mFeedItem.getLanguage();
 		}
 
-		DateTime publishedDateTime = DateUtils.parseDateTime(mFeedItem.getPublishedDate());
+		DateTime publishedDateTime = DateUtils.parsePublishedDate(mFeedItem.getPublishedDate());
 		if (publishedDateTime==null) {
-			if (Constants.DEBUG) {
+			/*if (Constants.DEBUG) {
 				throw new IllegalStateException("Failed parse " + mFeedItem.getPublishedDate());
 			}
 			else {
 				pw.w("Failed parse " + mFeedItem.getPublishedDate());
-			}
+			}*/
+			publishedDateTime = DateTime.now();
 		}
 
 		mArticle = new Article(null, //id
@@ -251,7 +252,7 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 				mArticleLanguage,
 				0L, //openedCount
 				mFeedItem.getPublishedDate(),
-				publishedDateTime==null ? DateTime.now().toDate() : publishedDateTime.toDate(),
+				publishedDateTime.toDate(),
 				null,//date archive
 				null,//last open
 				DateTime.now().toDate(), //last updated
@@ -332,6 +333,26 @@ public class SelectArticleWorkflow extends OncePrifoTask implements Comparable {
 
 		mArticle.setParseNotice(mParseNotice.toString().trim());
 		mArticle.setLastUpdated(DateTime.now().toDate());
+
+		/**
+		 * attempt to fix false publishing date which must be anterior of LastUpdated and LastSuccessDownloaded
+		 */
+		Date minDate = mArticle.getLastUpdated();
+		if (mArticle.getLastDownloadSuccess() != null && minDate.after(mArticle.getLastDownloadSuccess())) {
+			minDate = mArticle.getLastDownloadSuccess();
+		}
+		if (mArticle.getPublishedDate().after(minDate)) {
+			//Fix: the published date must be anterior to minDate.
+			DateTime publishedDate = DateUtils.parsePublishedDate(mArticle.getPublishedDateString());
+			if (publishedDate == null || publishedDate.toDate().after(minDate)) {
+				mArticle.setPublishedDate(minDate);
+				pw.i("Fix published date to minDate: " + DateUtils.SDF.format(mArticle.getPublishedDate()));
+			}
+			else {
+				mArticle.setPublishedDate(publishedDate.toDate());
+				pw.i("Fix published date: " + DateUtils.SDF.format(mArticle.getPublishedDate()));
+			}
+		}
 
 		pw.resetStopwatch();
 

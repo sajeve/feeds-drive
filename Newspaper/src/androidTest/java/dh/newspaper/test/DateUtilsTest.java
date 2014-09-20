@@ -231,8 +231,12 @@ public class DateUtilsTest extends ActivityInstrumentationTestCase2<MainActivity
 			assertEquals(5, d.getMonthOfYear());
 			assertEquals(8, d.getMinuteOfHour());
 		}
+	}
 
-
-
+	public void testParseDate2() {
+		String dateStr = "11/09/2014 (GMT+7)";
+		DateTime d = DateUtils.parsePublishedDate(dateStr);
+		assertEquals(9, d.getMonthOfYear());
+		System.out.println(d);
 	}
 }
