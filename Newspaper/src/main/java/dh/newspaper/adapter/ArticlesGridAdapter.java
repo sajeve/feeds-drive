@@ -3,6 +3,7 @@ package dh.newspaper.adapter;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -152,7 +153,10 @@ public class ArticlesGridAdapter extends BaseAdapter {
 
 			Article article = (Article)this.getItem(position);
 			if (article != null) {
-				String publishDate = DateUtils.getTimeAgo(mContext.getResources(), article.getPublishedDateString());
+				String publishDate = DateUtils.getTimeAgo(mContext.getResources(), article.getPublishedDate());
+				if (TextUtils.isEmpty(publishDate)) {
+					publishDate = article.getPublishedDateString();
+				}
 				/*if (Constants.DEBUG) {
 					publishDate += " | "+StrUtils.domainName(article.getArticleUrl())+" | "+ DateUtils.getTimeAgo(mContext.getResources(), article.getLastDownloadSuccess());
 				}*/

@@ -289,10 +289,18 @@ public class ArticleFragment extends Fragment {
 		if (article == null) {
 			return null;
 		}
-		StringBuilder sb = new StringBuilder();
-		sb.append(DateUtils.getTimeAgo(getResources(), article.getPublishedDateString()));
-		sb.append(" | ");
 
+		String publishedDate;
+		if (Constants.DEBUG) {
+			publishedDate = DateUtils.getTimeAgo(getResources(), article.getPublishedDate()) + " (" + article.getPublishedDateString() + ")";
+		}
+		else {
+			publishedDate = DateUtils.getTimeAgo(getResources(), article.getPublishedDate());
+		}
+
+		StringBuilder sb = new StringBuilder();
+		sb.append(publishedDate);
+		sb.append(" | ");
 		sb.append(getArticleSourceName(article));
 
 		if (!Strings.isNullOrEmpty(article.getAuthor())) {
